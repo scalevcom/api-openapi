@@ -363,7 +363,6 @@ paths:
     parameters:
       - $ref: "#/components/parameters/StoreId"
       - $ref: "#/components/parameters/StorefrontPublicApiKey"
-      - $ref: "#/components/parameters/StorefrontGuestToken"
       - $ref: "#/components/parameters/StorefrontScalevGuestToken"
     get:
       tags:
@@ -375,13 +374,8 @@ paths:
         "200":
           description: Guest cart
           headers:
-            X-Guest-Token:
-              description: Browser-safe guest cart token. Reuse this value in the `X-Guest-Token` request header.
-              schema:
-                type: string
-                format: uuid
             X-Scalev-Guest-Token:
-              description: Same browser-safe guest cart token, exposed under the Scalev-namespaced header.
+              description: Browser-safe guest cart token. Reuse this value in the `X-Scalev-Guest-Token` request header.
               schema:
                 type: string
                 format: uuid
@@ -395,7 +389,6 @@ paths:
     parameters:
       - $ref: "#/components/parameters/StoreId"
       - $ref: "#/components/parameters/StorefrontPublicApiKey"
-      - $ref: "#/components/parameters/StorefrontGuestToken"
       - $ref: "#/components/parameters/StorefrontScalevGuestToken"
     post:
       tags:
@@ -409,13 +402,8 @@ paths:
         "201":
           description: Guest cart
           headers:
-            X-Guest-Token:
-              description: Browser-safe guest cart token. Reuse this value in the `X-Guest-Token` request header.
-              schema:
-                type: string
-                format: uuid
             X-Scalev-Guest-Token:
-              description: Same browser-safe guest cart token, exposed under the Scalev-namespaced header.
+              description: Browser-safe guest cart token. Reuse this value in the `X-Scalev-Guest-Token` request header.
               schema:
                 type: string
                 format: uuid
@@ -431,7 +419,6 @@ paths:
     parameters:
       - $ref: "#/components/parameters/StoreId"
       - $ref: "#/components/parameters/StorefrontPublicApiKey"
-      - $ref: "#/components/parameters/StorefrontGuestToken"
       - $ref: "#/components/parameters/StorefrontScalevGuestToken"
       - $ref: "#/components/parameters/ItemId"
     patch:
@@ -446,13 +433,8 @@ paths:
         "200":
           description: Guest cart
           headers:
-            X-Guest-Token:
-              description: Browser-safe guest cart token. Reuse this value in the `X-Guest-Token` request header.
-              schema:
-                type: string
-                format: uuid
             X-Scalev-Guest-Token:
-              description: Same browser-safe guest cart token, exposed under the Scalev-namespaced header.
+              description: Browser-safe guest cart token. Reuse this value in the `X-Scalev-Guest-Token` request header.
               schema:
                 type: string
                 format: uuid
@@ -474,13 +456,8 @@ paths:
         "200":
           description: Guest cart
           headers:
-            X-Guest-Token:
-              description: Browser-safe guest cart token. Reuse this value in the `X-Guest-Token` request header.
-              schema:
-                type: string
-                format: uuid
             X-Scalev-Guest-Token:
-              description: Same browser-safe guest cart token, exposed under the Scalev-namespaced header.
+              description: Browser-safe guest cart token. Reuse this value in the `X-Scalev-Guest-Token` request header.
               schema:
                 type: string
                 format: uuid
@@ -494,7 +471,6 @@ paths:
     parameters:
       - $ref: "#/components/parameters/StoreId"
       - $ref: "#/components/parameters/StorefrontPublicApiKey"
-      - $ref: "#/components/parameters/StorefrontGuestToken"
       - $ref: "#/components/parameters/StorefrontScalevGuestToken"
     post:
       tags:
@@ -515,7 +491,6 @@ paths:
     parameters:
       - $ref: "#/components/parameters/StoreId"
       - $ref: "#/components/parameters/StorefrontPublicApiKey"
-      - $ref: "#/components/parameters/StorefrontGuestToken"
       - $ref: "#/components/parameters/StorefrontScalevGuestToken"
     post:
       tags:
@@ -529,13 +504,8 @@ paths:
         "201":
           description: Guest checkout order
           headers:
-            X-Guest-Token:
-              description: Browser-safe guest cart token when the request used a guest cart.
-              schema:
-                type: string
-                format: uuid
             X-Scalev-Guest-Token:
-              description: Same browser-safe guest cart token, exposed under the Scalev-namespaced header.
+              description: Browser-safe guest cart token when the request used a guest cart.
               schema:
                 type: string
                 format: uuid
@@ -7478,14 +7448,6 @@ components:
       schema:
         type: string
       description: Publishable storefront public API key for the target store.
-    StorefrontGuestToken:
-      name: X-Guest-Token
-      in: header
-      required: false
-      schema:
-        type: string
-        format: uuid
-      description: Browser-safe guest cart token returned in `X-Guest-Token`. Send it on later guest-cart and guest-checkout calls to keep the same cart after reloads.
     StorefrontScalevGuestToken:
       name: X-Scalev-Guest-Token
       in: header
@@ -7493,7 +7455,7 @@ components:
       schema:
         type: string
         format: uuid
-      description: Scalev-namespaced alias for `X-Guest-Token`. Send either guest-token header, not both.
+      description: Browser-safe guest cart token returned by the first guest-cart response when no token is sent. Send it on later guest-cart and guest-checkout calls to keep the same cart after reloads.
     WabaSendMode:
       name: X-Scalev-Waba-Send-Mode
       in: header
