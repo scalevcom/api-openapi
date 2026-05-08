@@ -15,6 +15,10 @@ info:
     `/v3/stores/{store_id}/public/*`
 
     require the `X-Scalev-Storefront-Api-Key` header.
+
+    Machine-authenticated business requests are rate-limited per API key or OAuth
+    installation. Rate-limit metadata is returned in `X-Ratelimit-*` headers,
+    and `429` responses may be plain text.
   license:
     name: Proprietary
 servers:
@@ -30,6 +34,8 @@ tags:
       `X-Scalev-Storefront-Api-Key`.
   - name: OAuth
     description: Public and machine OAuth token-management endpoints.
+  - name: ChatGPT
+    description: Custom GPT Action endpoints for Scalev HTML Mode draft workflows.
   - name: OAuth Billing
     description: OAuth billing runtime, refund, and developer finance endpoints.
   - name: Customer Auth
@@ -81,10 +87,14 @@ paths:
         - Storefront
       operationId: listStorefrontProducts
       summary: List storefront products
-      description: "Public storefront endpoint."
+      description: "Public storefront endpoint. Returns products visible in the storefront catalog."
       responses:
         "200":
-          $ref: "#/components/responses/PaginatedCollectionResponse"
+          description: Paginated storefront product cards
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontProductListResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
   /v3/stores/{store_id}/public/products/count:
@@ -96,10 +106,14 @@ paths:
         - Storefront
       operationId: countStorefrontProducts
       summary: Count storefront products
-      description: "Public storefront endpoint."
+      description: "Public storefront endpoint. Counts products visible in the storefront catalog."
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Public storefront order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontPublicOrder"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
   /v3/stores/{store_id}/public/products/{slug}:
@@ -112,10 +126,14 @@ paths:
         - Storefront
       operationId: getStorefrontProduct
       summary: Get a storefront product by slug
-      description: "Public storefront endpoint."
+      description: "Public storefront endpoint. Fetches a store-scoped product by slug; products hidden from storefront listing can still be fetched directly."
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Public storefront order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontPublicOrder"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
   /v3/stores/{store_id}/public/categories:
@@ -127,10 +145,182 @@ paths:
         - Storefront
       operationId: listStorefrontCategories
       summary: List storefront categories
-      description: "Public storefront endpoint."
+      description: "Public storefront endpoint. Lists categories that have visible storefront products."
       responses:
         "200":
           $ref: "#/components/responses/CollectionResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/stores/{store_id}/public/payment-methods:
+    parameters:
+      - $ref: "#/components/parameters/StoreId"
+      - $ref: "#/components/parameters/StorefrontPublicApiKey"
+    get:
+      tags:
+        - Storefront
+      operationId: listStorefrontPaymentMethods
+      summary: List storefront payment methods
+      description: Public storefront endpoint. Lists enabled guest-checkout payment methods for the store.
+      responses:
+        "200":
+          description: Enabled payment methods
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontPaymentMethodListResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/stores/{store_id}/public/locations:
+    parameters:
+      - $ref: "#/components/parameters/StoreId"
+      - $ref: "#/components/parameters/StorefrontPublicApiKey"
+    get:
+      tags:
+        - Storefront
+      operationId: searchStorefrontLocations
+      summary: Search storefront delivery locations
+      description: Public storefront endpoint. Supports direct province, city, district, or subdistrict search.
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - name: next_cursor
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Cursor returned by the previous response. Use only one of `next_cursor` or `previous_cursor`.
+        - name: previous_cursor
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Cursor returned by the previous response. Use only one of `next_cursor` or `previous_cursor`.
+      responses:
+        "200":
+          description: Location search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontLocationListResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/stores/{store_id}/public/locations/provinces:
+    parameters:
+      - $ref: "#/components/parameters/StoreId"
+      - $ref: "#/components/parameters/StorefrontPublicApiKey"
+    get:
+      tags:
+        - Storefront
+      operationId: listStorefrontLocationProvinces
+      summary: List storefront delivery provinces
+      responses:
+        "200":
+          description: Province list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontProvinceListResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/stores/{store_id}/public/locations/cities:
+    parameters:
+      - $ref: "#/components/parameters/StoreId"
+      - $ref: "#/components/parameters/StorefrontPublicApiKey"
+    get:
+      tags:
+        - Storefront
+      operationId: listStorefrontLocationCities
+      summary: List storefront delivery cities
+      parameters:
+        - name: province_id
+          in: query
+          required: false
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+          description: Province ID from `/public/locations/provinces`. Required unless `ro_province_id` is provided.
+        - name: ro_province_id
+          in: query
+          required: false
+          deprecated: true
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+          description: Legacy alias for `province_id`.
+      responses:
+        "200":
+          description: City list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontCityListResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/stores/{store_id}/public/locations/subdistricts:
+    parameters:
+      - $ref: "#/components/parameters/StoreId"
+      - $ref: "#/components/parameters/StorefrontPublicApiKey"
+    get:
+      tags:
+        - Storefront
+      operationId: listStorefrontLocationSubdistricts
+      summary: List storefront delivery subdistricts
+      parameters:
+        - name: city_id
+          in: query
+          required: false
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+          description: City ID from `/public/locations/cities`. Required unless `ro_city_id` is provided.
+        - name: ro_city_id
+          in: query
+          required: false
+          deprecated: true
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+          description: Legacy alias for `city_id`.
+      responses:
+        "200":
+          description: Subdistrict list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontLocationListResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/stores/{store_id}/public/locations/{location_id}/postal-codes:
+    parameters:
+      - $ref: "#/components/parameters/StoreId"
+      - $ref: "#/components/parameters/StorefrontPublicApiKey"
+      - $ref: "#/components/parameters/LocationId"
+    get:
+      tags:
+        - Storefront
+      operationId: listStorefrontLocationPostalCodes
+      summary: List storefront delivery postal codes
+      responses:
+        "200":
+          description: Postal code list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontPostalCodeListResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
   /v3/stores/{store_id}/public/variants/pricing:
@@ -143,7 +333,7 @@ paths:
         - Storefront
       operationId: getStorefrontVariantPricing
       summary: Get storefront variant pricing
-      description: "Public storefront endpoint."
+      description: "Public storefront endpoint. Returns pricing for requested store-scoped variants, including variants whose products are hidden from storefront listing."
       responses:
         "200":
           $ref: "#/components/responses/CollectionResponse"
@@ -159,7 +349,7 @@ paths:
         - Storefront
       operationId: getStorefrontVariantAvailability
       summary: Get storefront variant inventory availability
-      description: "Public storefront endpoint."
+      description: "Public storefront endpoint. Returns availability for a requested store-scoped variant, including variants whose products are hidden from storefront listing."
       responses:
         "200":
           description: Variant availability
@@ -173,32 +363,54 @@ paths:
     parameters:
       - $ref: "#/components/parameters/StoreId"
       - $ref: "#/components/parameters/StorefrontPublicApiKey"
+      - $ref: "#/components/parameters/StorefrontScalevGuestToken"
     get:
       tags:
         - Storefront
       operationId: getGuestCart
       summary: Get the guest storefront cart
-      description: "Public storefront endpoint."
+      description: "Public storefront endpoint. Returns guest cart items regardless of storefront listing visibility."
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Guest cart
+          headers:
+            X-Scalev-Guest-Token:
+              description: Browser-safe guest cart token. Reuse this value in the `X-Scalev-Guest-Token` request header.
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuestCart"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
   /v3/stores/{store_id}/public/cart/items:
     parameters:
       - $ref: "#/components/parameters/StoreId"
       - $ref: "#/components/parameters/StorefrontPublicApiKey"
+      - $ref: "#/components/parameters/StorefrontScalevGuestToken"
     post:
       tags:
         - Storefront
       operationId: addGuestCartItem
       summary: Add an item to the guest storefront cart
-      description: "Public storefront endpoint."
+      description: "Public storefront endpoint. Direct cart additions are store-scoped and not blocked by storefront listing visibility."
       requestBody:
         $ref: "#/components/requestBodies/CartItemRequestBody"
       responses:
         "201":
-          $ref: "#/components/responses/CreatedResponse"
+          description: Guest cart
+          headers:
+            X-Scalev-Guest-Token:
+              description: Browser-safe guest cart token. Reuse this value in the `X-Scalev-Guest-Token` request header.
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuestCart"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
         "404":
@@ -207,6 +419,7 @@ paths:
     parameters:
       - $ref: "#/components/parameters/StoreId"
       - $ref: "#/components/parameters/StorefrontPublicApiKey"
+      - $ref: "#/components/parameters/StorefrontScalevGuestToken"
       - $ref: "#/components/parameters/ItemId"
     patch:
       tags:
@@ -218,7 +431,17 @@ paths:
         $ref: "#/components/requestBodies/CartItemUpdateRequestBody"
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Guest cart
+          headers:
+            X-Scalev-Guest-Token:
+              description: Browser-safe guest cart token. Reuse this value in the `X-Scalev-Guest-Token` request header.
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuestCart"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
         "404":
@@ -231,13 +454,24 @@ paths:
       description: "Public storefront endpoint."
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Guest cart
+          headers:
+            X-Scalev-Guest-Token:
+              description: Browser-safe guest cart token. Reuse this value in the `X-Scalev-Guest-Token` request header.
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuestCart"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
   /v3/stores/{store_id}/public/cart/merge:
     parameters:
       - $ref: "#/components/parameters/StoreId"
       - $ref: "#/components/parameters/StorefrontPublicApiKey"
+      - $ref: "#/components/parameters/StorefrontScalevGuestToken"
     post:
       tags:
         - Storefront
@@ -257,17 +491,28 @@ paths:
     parameters:
       - $ref: "#/components/parameters/StoreId"
       - $ref: "#/components/parameters/StorefrontPublicApiKey"
+      - $ref: "#/components/parameters/StorefrontScalevGuestToken"
     post:
       tags:
         - Storefront
       operationId: createGuestCheckout
       summary: Checkout a storefront cart as a guest
-      description: "Public storefront endpoint."
+      description: "Public storefront endpoint. Direct checkout items are store-scoped and not blocked by storefront listing visibility."
       requestBody:
-        $ref: "#/components/requestBodies/GenericJsonRequestBody"
+        $ref: "#/components/requestBodies/GuestCheckoutRequestBody"
       responses:
         "201":
-          $ref: "#/components/responses/CreatedResponse"
+          description: Guest checkout order
+          headers:
+            X-Scalev-Guest-Token:
+              description: Browser-safe guest cart token when the request used a guest cart.
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuestCheckoutResponse"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
         "404":
@@ -313,7 +558,7 @@ paths:
         - Storefront
       operationId: createStorefrontPublicOrderPayment
       summary: Create a payment for a public storefront order
-      description: "Public storefront endpoint."
+      description: Public storefront endpoint. Idempotent for orders that already have payment instructions or already expose a `payment_url`.
       responses:
         "200":
           $ref: "#/components/responses/CreateOrderPaymentResponse"
@@ -331,6 +576,18 @@ paths:
       operationId: checkDiscountCode
       summary: Check discount code validity
       description: "Public storefront endpoint."
+      responses:
+        "200":
+          $ref: "#/components/responses/SuccessResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+  /v3/oauth/.well-known/oauth-authorization-server:
+    get:
+      tags:
+        - OAuth
+      operationId: getOAuthAuthorizationServerMetadata
+      summary: Get OAuth authorization server metadata
+      description: "Public OAuth metadata endpoint. Advertises only `/v3` OAuth endpoints."
       responses:
         "200":
           $ref: "#/components/responses/SuccessResponse"
@@ -435,6 +692,217 @@ paths:
           $ref: "#/components/responses/OAuthInstallationStatusResponse"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
+  /v3/chatgpt/health:
+    get:
+      tags:
+        - ChatGPT
+      operationId: getChatGPTHealth
+      summary: Check ChatGPT integration health
+      description: Public health endpoint. Returns service health only.
+      responses:
+        "200":
+          description: ChatGPT integration health
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                  - service
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  service:
+                    type: string
+                    example: scalev_chatgpt_html_mode
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+  /v3/chatgpt/me:
+    get:
+      tags:
+        - ChatGPT
+      operationId: getChatGPTMe
+      summary: Get authenticated Scalev identity
+      description: Returns the authenticated user and current authorized Scalev business. Treat workspace as this authorized business unless a future API explicitly lists multiple businesses.
+      security:
+        - scalevOAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ChatGPTMeResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+  /v3/chatgpt/stores:
+    get:
+      tags:
+        - ChatGPT
+      operationId: listChatGPTStores
+      summary: List authorized business stores
+      description: Returns stores accessible to the authorized Scalev business.
+      security:
+        - scalevOAuth:
+            - store:list
+      responses:
+        "200":
+          $ref: "#/components/responses/ChatGPTStoresResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+  /v3/chatgpt/pages:
+    get:
+      tags:
+        - ChatGPT
+      operationId: listChatGPTPages
+      summary: List HTML Mode landing pages
+      description: Returns accessible landing pages that use Agent HTML Mode. Draft creation through ChatGPT never publishes pages.
+      security:
+        - scalevOAuth:
+            - page:list
+      parameters:
+        - name: store_id
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filter pages by selected store context.
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Search by page name or slug.
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          $ref: "#/components/responses/ChatGPTPagesResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+  /v3/chatgpt/pages/{page_id}/context:
+    get:
+      tags:
+        - ChatGPT
+      operationId: getChatGPTPageContext
+      summary: Get HTML Mode page context
+      description: Returns page metadata, latest Agent HTML display fields, current CSP policy, selected store context when present, selected products only, selected bundle price options only, draft URL when safe, and capabilities.
+      security:
+        - scalevOAuth:
+            - page:read
+      parameters:
+        - $ref: "#/components/parameters/PageId"
+      responses:
+        "200":
+          $ref: "#/components/responses/ChatGPTPageContextResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/chatgpt/pages/{page_id}/html-mode/capabilities:
+    get:
+      tags:
+        - ChatGPT
+      operationId: getChatGPTHtmlModeCapabilities
+      summary: Get HTML Mode update capabilities
+      description: Returns max payload sizes, allowed CSP keys, current CSP policy, and draft update capability for the page.
+      security:
+        - scalevOAuth:
+            - page:read
+      parameters:
+        - $ref: "#/components/parameters/PageId"
+      responses:
+        "200":
+          $ref: "#/components/responses/ChatGPTCapabilitiesResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/chatgpt/pages/{page_id}/html-mode/validate:
+    post:
+      tags:
+        - ChatGPT
+      operationId: validateChatGPTHtmlMode
+      summary: Validate an HTML Mode payload
+      description: Validates arbitrary Agent HTML Mode payload without saving. Use this before draft creation when feasible.
+      security:
+        - scalevOAuth:
+            - page:update
+      parameters:
+        - $ref: "#/components/parameters/PageId"
+      requestBody:
+        $ref: "#/components/requestBodies/ChatGPTAgentHtmlPayload"
+      responses:
+        "200":
+          $ref: "#/components/responses/ChatGPTValidationResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/chatgpt/pages/{page_id}/html-mode/draft:
+    patch:
+      tags:
+        - ChatGPT
+      operationId: createChatGPTHtmlModeDraft
+      summary: Create an unpublished HTML Mode draft
+      description: Validates and creates an unpublished page display draft version only. This endpoint never publishes; publishing remains dashboard-owned. Use only selected store, product, and bundle price option context from page context.
+      security:
+        - scalevOAuth:
+            - page:update
+      parameters:
+        - $ref: "#/components/parameters/PageId"
+      requestBody:
+        $ref: "#/components/requestBodies/ChatGPTAgentHtmlPayload"
+      responses:
+        "200":
+          $ref: "#/components/responses/ChatGPTDraftResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "422":
+          $ref: "#/components/responses/ValidationFailedResponse"
+  /v3/chatgpt/pages/{page_id}/drafts/{version}:
+    get:
+      tags:
+        - ChatGPT
+      operationId: getChatGPTDraftStatus
+      summary: Get HTML Mode draft status
+      description: Returns draft status, validation warnings, validation errors, and preview URL when safe.
+      security:
+        - scalevOAuth:
+            - page:read
+      parameters:
+        - $ref: "#/components/parameters/PageId"
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Page display version.
+      responses:
+        "200":
+          $ref: "#/components/responses/ChatGPTDraftStatusResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
   /v3/oauth/billing/reservations:
     post:
       tags:
@@ -6968,7 +7436,19 @@ components:
       in: header
       name: authorization
       description: "Send `Authorization: Bearer <api_key>` for machine-authenticated
-        business requests."
+        business requests. API keys are rate-limited per key."
+    scalevOAuth:
+      type: oauth2
+      description: OAuth access tokens are rate-limited per OAuth application and merchant installation.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://api.scalev.com/v3/oauth/authorize
+          tokenUrl: https://api.scalev.com/v3/oauth/token
+          scopes:
+            page:list: List landing pages.
+            page:read: Read landing page context.
+            page:update: Validate and create unpublished landing page drafts.
+            store:list: List stores.
   parameters:
     StoreId:
       name: store_id
@@ -6982,8 +7462,19 @@ components:
       in: path
       required: true
       schema:
+        oneOf:
+          - type: string
+            example: store_vlzpML8edzxO5roOdV7Oyfn6
+          - type: integer
+            example: 3288
+      description: Public store `unique_id`. Legacy numeric store IDs remain accepted for backward compatibility.
+    PageId:
+      name: page_id
+      in: path
+      required: true
+      schema:
         type: integer
-      description: Legacy numeric business store ID.
+      description: Numeric Scalev page ID.
     LocationId:
       name: location_id
       in: path
@@ -6998,6 +7489,14 @@ components:
       schema:
         type: string
       description: Publishable storefront public API key for the target store.
+    StorefrontScalevGuestToken:
+      name: X-Scalev-Guest-Token
+      in: header
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: Browser-safe guest cart token returned by the first guest-cart response when no token is sent. Send it on later guest-cart and guest-checkout calls to keep the same cart after reloads.
     WabaSendMode:
       name: X-Scalev-Waba-Send-Mode
       in: header
@@ -7239,6 +7738,29 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/GenericJsonObject"
+    GuestCheckoutRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/GuestCheckoutRequest"
+    ChatGPTAgentHtmlPayload:
+      required: true
+      description: Body-only HTML Mode payload. Do not include head, meta, title, favicon, crawler, domain, credential, cookie, token, or private backend behavior.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ChatGPTAgentHtmlPayload"
+          examples:
+            landingPageDraft:
+              summary: HTML Mode draft payload
+              value:
+                agent_html: "<main><h1>Launch offer</h1><a href=\"#order\">Buy now</a></main>"
+                agent_css: "main { max-width: 960px; margin: 0 auto; }"
+                agent_js: "const data = window.Scalev.data.get();"
+                agent_csp_policy:
+                  img_src:
+                    - https://cdn.example.com
     OAuthInstallationStatusRequestBody:
       required: true
       content:
@@ -7683,6 +8205,29 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ApiErrorResponse"
+    TooManyRequestsResponse:
+      description: Too Many Requests. Machine-authenticated requests are rate-limited per API key or OAuth installation. Rate-limit responses may be plain text instead of the normal JSON error shape.
+      headers:
+        X-Ratelimit-Limit:
+          description: Request limit for the bucket that applied to this response.
+          schema:
+            type: integer
+        X-Ratelimit-Remaining:
+          description: Requests remaining in the bucket that applied to this response.
+          schema:
+            type: integer
+        X-Ratelimit-Reset:
+          description: Unix timestamp in seconds when the bucket resets.
+          schema:
+            type: integer
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: Too many requests
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiErrorResponse"
     NotFoundResponse:
       description: Not Found
       content:
@@ -7695,6 +8240,71 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ApiErrorResponse"
+    ValidationFailedResponse:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiErrorResponse"
+          examples:
+            validationFailed:
+              value:
+                error_code: validation_failed
+                error: Agent HTML validation failed
+                message: Agent HTML validation failed
+                errors:
+                  - severity: error
+                    code: head_content_not_allowed
+                    field: agent_html
+                    message: Do not include head, meta, link, title, favicon, SEO, crawler, or domain settings.
+    ChatGPTMeResponse:
+      description: Authenticated user and authorized business
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ChatGPTMe"
+    ChatGPTStoresResponse:
+      description: Stores accessible in the authorized business
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ChatGPTStoreCollection"
+    ChatGPTPagesResponse:
+      description: HTML Mode pages accessible in the authorized business
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ChatGPTPageCollection"
+    ChatGPTPageContextResponse:
+      description: HTML Mode page context with selected store products and bundle options only
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ChatGPTPageContext"
+    ChatGPTCapabilitiesResponse:
+      description: HTML Mode capability metadata
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ChatGPTCapabilities"
+    ChatGPTValidationResponse:
+      description: Validation result. Validation never saves.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ChatGPTValidationResult"
+    ChatGPTDraftResponse:
+      description: Unpublished draft metadata. This response never indicates publishing.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ChatGPTDraft"
+    ChatGPTDraftStatusResponse:
+      description: Draft status and preview URL
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ChatGPTDraftStatus"
     OAuthBillingEarningsResponse:
       description: Developer OAuth billing earnings balance
       content:
@@ -8349,6 +8959,357 @@ components:
         - type: string
         - type: number
         - type: boolean
+    ChatGPTAgentCspPolicy:
+      type: object
+      additionalProperties: false
+      properties:
+        connect_src:
+          type: array
+          items:
+            type: string
+        img_src:
+          type: array
+          items:
+            type: string
+        script_src:
+          type: array
+          items:
+            type: string
+        style_src:
+          type: array
+          items:
+            type: string
+        frame_src:
+          type: array
+          items:
+            type: string
+      description: Supported Agent HTML CSP keys. Unsupported keys are rejected.
+    ChatGPTAgentHtmlPayload:
+      type: object
+      additionalProperties: false
+      properties:
+        agent_html:
+          type: string
+          description: Body-only HTML. Do not include doctype, html, body, head, meta, link, title, favicon, SEO, crawler, or domain settings.
+          maxLength: 204800
+        agent_css:
+          type: string
+          maxLength: 102400
+        agent_js:
+          type: string
+          description: JavaScript must use documented window.Scalev runtime APIs only.
+          maxLength: 102400
+        agent_csp_policy:
+          $ref: "#/components/schemas/ChatGPTAgentCspPolicy"
+    ChatGPTValidationIssue:
+      type: object
+      required:
+        - severity
+        - code
+        - field
+        - message
+      properties:
+        severity:
+          type: string
+          enum:
+            - warning
+            - error
+        code:
+          type: string
+          example: head_content_not_allowed
+        field:
+          type: string
+          example: agent_html
+        message:
+          type: string
+      additionalProperties: false
+    ChatGPTValidationResult:
+      type: object
+      required:
+        - valid
+        - validation_warnings
+        - validation_errors
+      properties:
+        valid:
+          type: boolean
+        validation_warnings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatGPTValidationIssue"
+        validation_errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatGPTValidationIssue"
+    ChatGPTCapabilities:
+      type: object
+      required:
+        - max_payload_sizes
+        - allowed_csp_keys
+        - current_csp
+        - can_update
+        - publishing
+      properties:
+        max_payload_sizes:
+          type: object
+          properties:
+            agent_html:
+              type: integer
+              example: 204800
+            agent_css:
+              type: integer
+              example: 102400
+            agent_js:
+              type: integer
+              example: 102400
+        allowed_csp_keys:
+          type: array
+          items:
+            type: string
+          example:
+            - connect_src
+            - img_src
+            - script_src
+            - style_src
+            - frame_src
+        allowed_scalev_runtime_namespaces:
+          type: array
+          items:
+            type: string
+        current_csp:
+          $ref: "#/components/schemas/ChatGPTAgentCspPolicy"
+        can_update:
+          type: boolean
+        publishing:
+          type: string
+          enum:
+            - dashboard_only
+    ChatGPTUserSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        fullname:
+          type: string
+        email:
+          type: string
+          format: email
+      additionalProperties: true
+    ChatGPTBusinessSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        unique_id:
+          type: string
+        username:
+          type: string
+        name:
+          type: string
+      additionalProperties: true
+    ChatGPTMe:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/ChatGPTUserSummary"
+        business:
+          $ref: "#/components/schemas/ChatGPTBusinessSummary"
+        authorized_business:
+          type: object
+          additionalProperties: true
+        oauth_application:
+          type: object
+          additionalProperties: true
+        capabilities:
+          $ref: "#/components/schemas/ChatGPTCapabilities"
+      additionalProperties: true
+    ChatGPTStore:
+      type: object
+      properties:
+        id:
+          type: integer
+        unique_id:
+          type: string
+        uuid:
+          type: string
+        name:
+          type: string
+      additionalProperties: true
+    ChatGPTStoreCollection:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatGPTStore"
+        is_paginated:
+          type: boolean
+          enum:
+            - false
+    ChatGPTPage:
+      type: object
+      properties:
+        id:
+          type: integer
+        unique_id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        is_published:
+          type: boolean
+        store_id:
+          type: integer
+          nullable: true
+        render_mode:
+          type: string
+          enum:
+            - agent_html
+        capabilities:
+          type: object
+          properties:
+            can_read:
+              type: boolean
+            can_update_html_mode:
+              type: boolean
+            can_publish:
+              type: boolean
+              enum:
+                - false
+      additionalProperties: true
+    ChatGPTPageCollection:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatGPTPage"
+        is_paginated:
+          type: boolean
+          enum:
+            - false
+    ChatGPTPageDisplay:
+      type: object
+      properties:
+        id:
+          type: integer
+        version:
+          type: integer
+        render_mode:
+          type: string
+          enum:
+            - agent_html
+        is_published:
+          type: boolean
+        agent_html:
+          type: string
+        agent_css:
+          type: string
+        agent_js:
+          type: string
+        agent_csp_policy:
+          $ref: "#/components/schemas/ChatGPTAgentCspPolicy"
+        agent_store_id:
+          type: integer
+          nullable: true
+        agent_store:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Selected store context with enabled payment methods, selected products, and selected bundle price options only.
+        agent_variant_ids:
+          type: array
+          items:
+            type: integer
+        agent_bundle_price_option_ids:
+          type: array
+          items:
+            type: integer
+      additionalProperties: false
+    ChatGPTPageContext:
+      type: object
+      properties:
+        page:
+          $ref: "#/components/schemas/ChatGPTPage"
+        page_display:
+          $ref: "#/components/schemas/ChatGPTPageDisplay"
+        draft_url:
+          type: string
+          format: uri
+        capabilities:
+          $ref: "#/components/schemas/ChatGPTCapabilities"
+    ChatGPTDraft:
+      type: object
+      required:
+        - page_id
+        - page_display_id
+        - version
+        - render_mode
+        - draft_url
+        - agent_csp_policy
+        - validation_warnings
+      properties:
+        page_id:
+          type: integer
+        page_display_id:
+          type: integer
+        version:
+          type: integer
+        render_mode:
+          type: string
+          enum:
+            - agent_html
+        draft_url:
+          type: string
+          format: uri
+        agent_csp_policy:
+          $ref: "#/components/schemas/ChatGPTAgentCspPolicy"
+        validation_warnings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatGPTValidationIssue"
+    ChatGPTDraftStatus:
+      type: object
+      required:
+        - page_id
+        - page_display_id
+        - version
+        - status
+        - is_published
+        - draft_url
+        - validation_warnings
+        - validation_errors
+      properties:
+        page_id:
+          type: integer
+        page_display_id:
+          type: integer
+        version:
+          type: integer
+        status:
+          type: string
+          enum:
+            - draft
+            - published
+        is_published:
+          type: boolean
+        draft_url:
+          type: string
+          format: uri
+        validation_warnings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatGPTValidationIssue"
+        validation_errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatGPTValidationIssue"
     OAuthBillingEarnings:
       type: object
       required:
@@ -9342,6 +10303,680 @@ components:
         page_size:
           type: integer
       additionalProperties: true
+    StorefrontPriceRange:
+      type: object
+      nullable: true
+      properties:
+        min:
+          oneOf:
+            - type: string
+            - type: number
+        max:
+          oneOf:
+            - type: string
+            - type: number
+      additionalProperties: false
+    StorefrontTaxonomy:
+      type: object
+      nullable: true
+      additionalProperties: true
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        full_path:
+          type: string
+    StorefrontProductCard:
+      type: object
+      required:
+        - id
+        - slug
+        - name
+        - item_type
+        - in_stock
+        - price_range
+        - images
+      properties:
+        id:
+          type: integer
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        meta_thumbnail:
+          type: string
+          nullable: true
+        item_type:
+          type: string
+          description: Product item type or `bundle` for bundle price options.
+        is_multiple:
+          type: boolean
+          nullable: true
+        option1_name:
+          type: string
+          nullable: true
+        option2_name:
+          type: string
+          nullable: true
+        option3_name:
+          type: string
+          nullable: true
+        in_stock:
+          type: boolean
+        price_range:
+          $ref: "#/components/schemas/StorefrontPriceRange"
+        images:
+          type: array
+          items:
+            type: string
+        taxonomy:
+          $ref: "#/components/schemas/StorefrontTaxonomy"
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+      additionalProperties: true
+    StorefrontProductListResponse:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorefrontProductCard"
+        is_paginated:
+          type: boolean
+          enum:
+            - true
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+        next_cursor:
+          type: string
+          nullable: true
+        previous_cursor:
+          type: string
+          nullable: true
+        page_size:
+          type: integer
+      additionalProperties: false
+    StorefrontPaymentMethod:
+      type: object
+      required:
+        - code
+        - label
+        - enabled
+        - requires_redirect
+      properties:
+        code:
+          type: string
+          example: bank_transfer
+        label:
+          type: string
+          example: Bank transfer
+        description:
+          type: string
+          nullable: true
+        enabled:
+          type: boolean
+        requires_redirect:
+          type: boolean
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+      additionalProperties: false
+    StorefrontPaymentMethodListResponse:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorefrontPaymentMethod"
+        is_paginated:
+          type: boolean
+          enum:
+            - false
+      additionalProperties: false
+    StorefrontLocation:
+      type: object
+      required:
+        - id
+        - subdistrict_name
+        - city_name
+        - province_name
+        - display
+      properties:
+        id:
+          type: integer
+        ro_subdistrict_id:
+          type: integer
+          nullable: true
+        subdistrict_name:
+          type: string
+        ro_city_id:
+          type: integer
+          nullable: true
+        city_name:
+          type: string
+        ro_province_id:
+          type: integer
+          nullable: true
+        province_name:
+          type: string
+        display:
+          type: string
+          example: Cempaka Putih, Kota Jakarta Pusat, DKI Jakarta
+      additionalProperties: true
+    StorefrontLocationListResponse:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorefrontLocation"
+        is_paginated:
+          type: boolean
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+        next_cursor:
+          type: string
+          nullable: true
+        previous_cursor:
+          type: string
+          nullable: true
+        page_size:
+          type: integer
+      additionalProperties: true
+    StorefrontProvince:
+      type: object
+      required:
+        - province_id
+        - province_name
+      properties:
+        province_id:
+          type: integer
+        ro_province_id:
+          type: integer
+        province_name:
+          type: string
+      additionalProperties: false
+    StorefrontProvinceListResponse:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorefrontProvince"
+        is_paginated:
+          type: boolean
+          enum:
+            - false
+      additionalProperties: false
+    StorefrontCity:
+      type: object
+      required:
+        - city_id
+        - city_name
+      properties:
+        city_id:
+          type: integer
+        ro_city_id:
+          type: integer
+        city_name:
+          type: string
+      additionalProperties: false
+    StorefrontCityListResponse:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorefrontCity"
+        is_paginated:
+          type: boolean
+          enum:
+            - false
+      additionalProperties: false
+    StorefrontPostalCode:
+      type: object
+      required:
+        - id
+        - postal_code
+      properties:
+        id:
+          type: integer
+        postal_code:
+          type: string
+          example: "10510"
+      additionalProperties: false
+    StorefrontPostalCodeListResponse:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorefrontPostalCode"
+        is_paginated:
+          type: boolean
+          enum:
+            - false
+      additionalProperties: false
+    GuestCart:
+      type: object
+      properties:
+        id:
+          type: integer
+        item_count:
+          type: integer
+        total:
+          oneOf:
+            - type: string
+            - type: number
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      additionalProperties: true
+    GuestCheckoutItem:
+      type: object
+      required:
+        - variant_id
+        - quantity
+      properties:
+        variant_id:
+          type: integer
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 100
+      additionalProperties: false
+    GuestCheckoutRequest:
+      type: object
+      required:
+        - items
+        - customer_name
+        - customer_email
+        - payment_method
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/GuestCheckoutItem"
+        customer_name:
+          type: string
+          maxLength: 200
+        customer_email:
+          type: string
+          format: email
+          maxLength: 254
+        customer_phone:
+          type: string
+          maxLength: 20
+          nullable: true
+        shipping_address:
+          type: string
+          nullable: true
+        shipping_province:
+          type: string
+          nullable: true
+        shipping_city:
+          type: string
+          nullable: true
+        shipping_subdistrict:
+          type: string
+          nullable: true
+        shipping_postal_code:
+          type: string
+          nullable: true
+        shipping_location_id:
+          oneOf:
+            - type: integer
+            - type: string
+        address:
+          type: string
+          nullable: true
+          deprecated: true
+        location:
+          type: string
+          nullable: true
+          deprecated: true
+        location_id:
+          oneOf:
+            - type: integer
+            - type: string
+        postal_code:
+          type: string
+          nullable: true
+          deprecated: true
+        payment_method:
+          type: string
+          example: bank_transfer
+        sub_payment_method:
+          type: string
+          nullable: true
+        courier_service_id:
+          type: integer
+          nullable: true
+        warehouse_unique_id:
+          type: string
+          nullable: true
+        courier_aggregator_code:
+          type: string
+          nullable: true
+        discount_code_code:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      additionalProperties: false
+    GuestCheckoutResponse:
+      type: object
+      required:
+        - order_id
+        - order_secret_slug
+        - public_order_url
+        - payment_url
+        - status
+        - payment_method
+        - created_at
+      properties:
+        order_id:
+          type: string
+        order_secret_slug:
+          type: string
+        public_order_url:
+          type: string
+          format: uri
+          nullable: true
+        payment_url:
+          type: string
+          format: uri
+          nullable: true
+        status:
+          type: string
+        payment_method:
+          type: string
+          example: bank_transfer
+        created_at:
+          type: string
+          format: date-time
+      additionalProperties: true
+    StorefrontMoneyValue:
+      oneOf:
+        - type: string
+          nullable: true
+        - type: number
+    StorefrontPublicOrderTotals:
+      type: object
+      properties:
+        subtotal:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        product_discount:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        shipping_cost:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        shipping_discount:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        discount_code_discount:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        other_income:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        other_income_name:
+          type: string
+          nullable: true
+        total:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+      additionalProperties: false
+    StorefrontPublicFinancialEntity:
+      type: object
+      nullable: true
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+          nullable: true
+        entity_type:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        platform:
+          type: string
+          nullable: true
+      additionalProperties: false
+    StorefrontPublicPayment:
+      type: object
+      properties:
+        method:
+          type: string
+          example: bank_transfer
+        sub_method:
+          type: string
+          nullable: true
+        provider:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        account_holder:
+          type: string
+          nullable: true
+        account_number:
+          type: string
+          nullable: true
+        financial_entity:
+          $ref: "#/components/schemas/StorefrontPublicFinancialEntity"
+        pg_payment_info:
+          type: object
+          additionalProperties: true
+          description: Buyer-facing payment gateway payload. Empty for manual methods such as `bank_transfer`.
+        transferproof_url:
+          type: string
+          nullable: true
+        payment_expiration_at:
+          type: string
+          format: date-time
+          nullable: true
+      additionalProperties: false
+    StorefrontPublicAddress:
+      type: object
+      nullable: true
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+          description: Masked phone number.
+        location:
+          type: integer
+          nullable: true
+        address:
+          type: string
+          nullable: true
+          description: Masked street address.
+        subdistrict:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        province:
+          type: string
+          nullable: true
+        postal_code:
+          type: string
+          nullable: true
+      additionalProperties: false
+    StorefrontPublicShipment:
+      type: object
+      properties:
+        status:
+          type: string
+          nullable: true
+        receipt:
+          type: string
+          nullable: true
+        courier_service:
+          type: object
+          nullable: true
+          additionalProperties: true
+        status_history:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      additionalProperties: false
+    StorefrontPublicOrderLine:
+      type: object
+      properties:
+        id:
+          type: integer
+        variant_id:
+          type: integer
+          nullable: true
+        product_name:
+          type: string
+          nullable: true
+        quantity:
+          type: integer
+        item_type:
+          type: string
+          nullable: true
+        currency:
+          type: string
+          nullable: true
+        pricing_type:
+          type: string
+          nullable: true
+        interval:
+          type: string
+          nullable: true
+        interval_count:
+          type: integer
+          nullable: true
+        variant_sku:
+          type: string
+          nullable: true
+        variant_option1_value:
+          type: string
+          nullable: true
+        variant_option2_value:
+          type: string
+          nullable: true
+        variant_option3_value:
+          type: string
+          nullable: true
+        variant_price:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        product_price:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        discount:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        discount_code_discount:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        weight:
+          type: integer
+          nullable: true
+      additionalProperties: false
+    StorefrontPublicOrder:
+      type: object
+      required:
+        - id
+        - secret_slug
+        - order_id
+        - status
+        - payment_status
+        - payment_method
+        - currency
+        - totals
+        - payment
+        - orderlines
+        - created_at
+      properties:
+        id:
+          type: integer
+        secret_slug:
+          type: string
+        public_order_url:
+          type: string
+          format: uri
+          nullable: true
+        payment_url:
+          type: string
+          format: uri
+          nullable: true
+        order_id:
+          type: string
+        status:
+          type: string
+        payment_status:
+          type: string
+          nullable: true
+        payment_method:
+          type: string
+          example: bank_transfer
+        sub_payment_method:
+          type: string
+          nullable: true
+        currency:
+          type: string
+          example: IDR
+        totals:
+          $ref: "#/components/schemas/StorefrontPublicOrderTotals"
+        payment:
+          $ref: "#/components/schemas/StorefrontPublicPayment"
+        shipping_address:
+          $ref: "#/components/schemas/StorefrontPublicAddress"
+        shipment:
+          $ref: "#/components/schemas/StorefrontPublicShipment"
+        orderlines:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorefrontPublicOrderLine"
+        created_at:
+          type: string
+          format: date-time
+        last_updated_at:
+          type: string
+          format: date-time
+          nullable: true
+      additionalProperties: false
     StorefrontPublicApiKey:
       type: object
       required:
@@ -12648,9 +14283,9 @@ components:
               description: Is Moota integration enabled for this store?
               type: boolean
             sub_payment_methods:
-              description: Xendit VA bank codes
+              description: VA bank sub-payment method codes
               items:
-                description: Xendit VA bank code
+                description: VA bank sub-payment method code
                 enum:
                   - BCA
                   - BNI
@@ -14091,8 +15726,24 @@ components:
         - follow_up_chat_id
       type: object
     CreateOrderPaymentResponseBody:
-      additionalProperties: true
       type: object
+      properties:
+        pg_payment_info:
+          type: object
+          additionalProperties: true
+          description: Payment gateway payload. Empty for manual methods such as `bank_transfer`.
+        public_order_url:
+          type: string
+          format: uri
+          nullable: true
+        payment_url:
+          type: string
+          format: uri
+          nullable: true
+        payment_method:
+          type: string
+          example: bank_transfer
+      additionalProperties: true
     UpdateOrderCustomerRequest:
       properties:
         customer_id:
