@@ -1173,27 +1173,25 @@ paths:
           $ref: "#/components/responses/PaymentRequiredResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-  /v3/stores/{store_id}/public/auth/otp/send:
+  /v3/stores/{store_id}/public/auth/login:
     post:
       tags:
         - Customer Auth
-      operationId: sendCustomerOtp
-      summary: Send a customer login OTP or return direct login tokens
+      operationId: loginCustomer
+      summary: Start customer login
       description: >
-        Public storefront endpoint. If the store does not require customer OTP,
-        successful login returns customer JWT tokens. If the store requires OTP,
-        a successful credential check sends the one-time code and returns `204`
-        with no body.
+        Public storefront endpoint. If the store can complete login directly,
+        a successful credential check returns customer JWT tokens. If the store
+        requires OTP, a successful credential check sends the one-time code and
+        returns a message object so the frontend can show the OTP entry step.
       parameters:
         - $ref: "#/components/parameters/StoreId"
         - $ref: "#/components/parameters/StorefrontPublicApiKey"
       requestBody:
-        $ref: "#/components/requestBodies/CustomerOtpSendRequestBody"
+        $ref: "#/components/requestBodies/CustomerLoginRequestBody"
       responses:
         "200":
-          $ref: "#/components/responses/CustomerAuthTokenResponse"
-        "204":
-          $ref: "#/components/responses/NoContentResponse"
+          $ref: "#/components/responses/CustomerLoginResponse"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
         "401":
@@ -7828,12 +7826,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/SavePasswordRequest"
-    CustomerOtpSendRequestBody:
+    CustomerLoginRequestBody:
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/CustomerOtpSendRequest"
+            $ref: "#/components/schemas/CustomerLoginRequest"
     CustomerOtpVerifyRequestBody:
       required: true
       content:
@@ -8167,6 +8165,14 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/CustomerAuthTokenResponseBody"
+    CustomerLoginResponse:
+      description: Customer login tokens, or an OTP challenge message when the store requires OTP.
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: "#/components/schemas/CustomerAuthTokenResponseBody"
+              - $ref: "#/components/schemas/CustomerLoginOtpChallengeResponseBody"
     WabaAccountResponse:
       description: WABA account
       content:
@@ -10145,7 +10151,7 @@ components:
         password:
           type: string
       additionalProperties: true
-    CustomerOtpSendRequest:
+    CustomerLoginRequest:
       type: object
       required:
         - email
@@ -10162,6 +10168,16 @@ components:
             - customer
             - owner
       additionalProperties: true
+    CustomerLoginOtpChallengeResponseBody:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: OTP challenge message. Show the OTP entry UI and continue with `POST /v3/stores/{store_id}/public/auth/otp/verify`.
+          example: If this email exists in our system, an OTP has been sent to it.
+      additionalProperties: false
     CustomerAuthTokenResponseBody:
       type: object
       required:
