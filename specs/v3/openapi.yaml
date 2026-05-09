@@ -659,7 +659,42 @@ paths:
         - Discounts
       operationId: checkDiscountCode
       summary: Check discount code validity
-      description: "Public storefront endpoint."
+      description: >
+        Public storefront endpoint. Unknown or ineligible codes return a
+        validation result with `is_eligible: false`; the route itself only
+        returns `404` when the store cannot be resolved.
+      parameters:
+        - description: Discount code to validate. `discount_code` is accepted as a compatibility alias.
+          in: query
+          name: code
+          required: true
+          schema:
+            type: string
+        - description: Optional payment method context used by eligibility rules.
+          in: query
+          name: payment_method
+          required: false
+          schema:
+            type: string
+            example: bank_transfer
+        - description: Optional product subtotal context.
+          in: query
+          name: net_product_price
+          required: false
+          schema:
+            $ref: "#/components/schemas/StorefrontMoneyValue"
+        - description: Optional gross revenue context.
+          in: query
+          name: gross_revenue
+          required: false
+          schema:
+            $ref: "#/components/schemas/StorefrontMoneyValue"
+        - description: Optional shipping cost context.
+          in: query
+          name: shipping_cost
+          required: false
+          schema:
+            $ref: "#/components/schemas/StorefrontMoneyValue"
       responses:
         "200":
           description: Discount code validation result
@@ -1401,7 +1436,11 @@ paths:
         - $ref: "#/components/parameters/StoreId"
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Authenticated customer profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerProfileResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
     patch:
@@ -1419,7 +1458,11 @@ paths:
         $ref: "#/components/requestBodies/CustomerProfileUpdateRequestBody"
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Updated authenticated customer profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerProfileUpdateResponse"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
         "401":
@@ -1439,7 +1482,11 @@ paths:
         $ref: "#/components/requestBodies/PasswordRequestBody"
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Customer profile after password update
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerPasswordUpdateResponse"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
         "401":
@@ -1559,7 +1606,11 @@ paths:
         - $ref: "#/components/parameters/StoreId"
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Authenticated customer cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerCart"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
   /v3/stores/{store_id}/customers/me/cart/items:
@@ -1576,8 +1627,12 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/CartItemRequestBody"
       responses:
-        "200":
-          $ref: "#/components/responses/SuccessResponse"
+        "201":
+          description: Updated authenticated customer cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerCartItemAddResponse"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
         "401":
@@ -1598,7 +1653,11 @@ paths:
         $ref: "#/components/requestBodies/CartItemUpdateRequestBody"
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Updated authenticated customer cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerCartItemUpdateResponse"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
         "401":
@@ -1613,7 +1672,11 @@ paths:
         - bearerAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Updated authenticated customer cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerCartItemDeleteResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
   /v3/stores/{store_id}/customers/me/cart/checkout:
@@ -1622,16 +1685,24 @@ paths:
         - Customer Cart
       operationId: checkoutCustomerCart
       summary: Checkout the authenticated customer cart
-      description: "Customer-authenticated storefront endpoint."
+      description: >
+        Customer-authenticated storefront endpoint. This route remains for
+        compatibility; new integrations should prefer
+        `/v3/stores/{store_id}/customers/me/checkout/confirm`.
+      deprecated: true
       security:
         - bearerAuth: []
       parameters:
         - $ref: "#/components/parameters/StoreId"
       requestBody:
-        $ref: "#/components/requestBodies/GenericJsonRequestBody"
+        $ref: "#/components/requestBodies/CustomerCartCheckoutRequestBody"
       responses:
         "201":
-          $ref: "#/components/responses/CreatedResponse"
+          description: Created order from authenticated customer cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerCartCheckoutResponse"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
         "401":
@@ -1757,7 +1828,11 @@ paths:
         - $ref: "#/components/parameters/StoreId"
       responses:
         "200":
-          $ref: "#/components/responses/PaginatedCollectionResponse"
+          description: Authenticated customer order list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerOrderListResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
   /v3/stores/{store_id}/customers/me/orders/{id}:
@@ -1774,7 +1849,11 @@ paths:
         - bearerAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Authenticated customer order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerOrder"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
         "404":
@@ -2001,7 +2080,11 @@ paths:
         - bearerAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Course access for a purchased variant
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerCourseAccessResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
         "404":
@@ -2020,7 +2103,11 @@ paths:
         - bearerAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Course section
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerCourseSection"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
         "404":
@@ -2039,7 +2126,11 @@ paths:
         - bearerAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Course content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerCourseContent"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
         "404":
@@ -2053,10 +2144,14 @@ paths:
       security:
         - bearerAuth: []
       requestBody:
-        $ref: "#/components/requestBodies/GenericJsonRequestBody"
+        $ref: "#/components/requestBodies/CustomerCourseProgressUpdateRequestBody"
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Course content with updated progress
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerCourseProgressUpdateResponse"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
         "401":
@@ -8004,6 +8099,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/CustomerCheckoutConfirmRequest"
+    CustomerCartCheckoutRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CustomerCartCheckoutRequest"
+    CustomerCourseProgressUpdateRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CustomerCourseProgressUpdateRequest"
     JwtRefreshRequestBody:
       required: true
       content:
@@ -10529,6 +10636,87 @@ components:
         is_unsubscribe:
           type: boolean
       additionalProperties: false
+    CustomerProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        avatar:
+          type: string
+          format: uri
+          nullable: true
+        bio_description:
+          type: string
+          nullable: true
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+        sex:
+          type: string
+          nullable: true
+        confirmed_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        is_unsubscribe:
+          type: boolean
+        business_id:
+          type: integer
+      additionalProperties: true
+    CustomerProfileStore:
+      type: object
+      properties:
+        id:
+          type: integer
+        unique_id:
+          type: string
+        name:
+          type: string
+          nullable: true
+        is_customer_otp_required:
+          type: boolean
+          nullable: true
+      additionalProperties: true
+    CustomerProfileResponse:
+      type: object
+      required:
+        - customer
+        - store
+        - is_generated_password_reset
+      properties:
+        customer:
+          $ref: "#/components/schemas/CustomerProfile"
+        store:
+          $ref: "#/components/schemas/CustomerProfileStore"
+        is_generated_password_reset:
+          type: boolean
+      additionalProperties: false
+    CustomerProfileUpdateResponse:
+      $ref: "#/components/schemas/CustomerProfileResponse"
+    CustomerPasswordUpdateResponse:
+      $ref: "#/components/schemas/CustomerProfileResponse"
     CustomerAddressRequest:
       type: object
       properties:
@@ -10777,6 +10965,241 @@ components:
         status:
           type: string
       additionalProperties: false
+    CustomerOrder:
+      type: object
+      properties:
+        id:
+          type: integer
+        order_id:
+          type: string
+        secret_slug:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        payment_status:
+          type: string
+          nullable: true
+        payment_method:
+          type: string
+          nullable: true
+        sub_payment_method:
+          type: string
+          nullable: true
+        currency:
+          type: string
+          nullable: true
+        product_price:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        shipping_cost:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        gross_revenue:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        net_revenue:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        customer:
+          $ref: "#/components/schemas/CustomerProfile"
+        variants:
+          nullable: true
+          type: object
+          additionalProperties: true
+        bundle_price_options:
+          nullable: true
+          type: object
+          additionalProperties: true
+      additionalProperties: true
+    CustomerOrderListResponse:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomerOrder"
+        is_paginated:
+          type: boolean
+          enum:
+            - true
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+        next_cursor:
+          type: string
+          nullable: true
+        previous_cursor:
+          type: string
+          nullable: true
+        page_size:
+          type: integer
+      additionalProperties: true
+    CustomerCourseProgress:
+      type: object
+      properties:
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        progress:
+          type: number
+          format: float
+        is_completed:
+          type: boolean
+      additionalProperties: false
+    CustomerCourseContent:
+      type: object
+      properties:
+        uuid:
+          type: string
+        title:
+          type: string
+          nullable: true
+        text:
+          type: string
+          nullable: true
+        type:
+          type: string
+          nullable: true
+        duration:
+          type: integer
+          nullable: true
+        video_url:
+          type: string
+          nullable: true
+        sequence_order:
+          type: integer
+          nullable: true
+        is_shown:
+          type: boolean
+          nullable: true
+        is_discussion_active:
+          type: boolean
+          nullable: true
+        section_uuid:
+          type: string
+          nullable: true
+        variant_id:
+          type: integer
+          nullable: true
+        boosts:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        progress:
+          $ref: "#/components/schemas/CustomerCourseProgress"
+        is_notification_enabled:
+          type: boolean
+          nullable: true
+        inserted_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+      additionalProperties: true
+    CustomerCourseSection:
+      type: object
+      properties:
+        uuid:
+          type: string
+        title:
+          type: string
+          nullable: true
+        type:
+          type: string
+          nullable: true
+        sequence_order:
+          type: integer
+          nullable: true
+        is_shown:
+          type: boolean
+          nullable: true
+        variant_id:
+          type: integer
+          nullable: true
+        course_contents:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomerCourseContent"
+        progress:
+          $ref: "#/components/schemas/CustomerCourseProgress"
+        inserted_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+      additionalProperties: true
+    CustomerCourseAccessResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        item_type:
+          type: string
+          nullable: true
+        pricing_type:
+          type: string
+          nullable: true
+        interval:
+          type: string
+          nullable: true
+        interval_count:
+          type: integer
+          nullable: true
+        validity_period_unit:
+          type: string
+          nullable: true
+        validity_period:
+          type: integer
+          nullable: true
+        product_id:
+          type: integer
+        description:
+          type: string
+          nullable: true
+        product_name:
+          type: string
+          nullable: true
+        fullname:
+          type: string
+          nullable: true
+        course_settings:
+          type: object
+          nullable: true
+          additionalProperties: true
+        course_sections:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomerCourseSection"
+      additionalProperties: true
+    CustomerCourseProgressUpdateRequest:
+      type: object
+      properties:
+        progress:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+      additionalProperties: true
+    CustomerCourseProgressUpdateResponse:
+      $ref: "#/components/schemas/CustomerCourseContent"
     StorefrontPriceRange:
       type: object
       nullable: true
@@ -11241,6 +11664,22 @@ components:
       additionalProperties: true
     StorefrontCartMergeResponse:
       $ref: "#/components/schemas/GuestCart"
+    CustomerCart:
+      $ref: "#/components/schemas/GuestCart"
+    CustomerCartItemAddResponse:
+      $ref: "#/components/schemas/CustomerCart"
+    CustomerCartItemUpdateResponse:
+      $ref: "#/components/schemas/CustomerCart"
+    CustomerCartItemDeleteResponse:
+      $ref: "#/components/schemas/CustomerCart"
+    CustomerCartCheckoutRequest:
+      allOf:
+        - $ref: "#/components/schemas/CustomerCheckoutConfirmRequest"
+      description: >
+        Compatibility checkout payload for `/customers/me/cart/checkout`.
+        New integrations should use `/customers/me/checkout/confirm`.
+    CustomerCartCheckoutResponse:
+      $ref: "#/components/schemas/GuestCheckoutResponse"
     GuestCheckoutItem:
       type: object
       required:
@@ -11857,7 +12296,10 @@ components:
         - discount_code_discount
       properties:
         discount_code:
-          $ref: "#/components/schemas/StorefrontDiscountCode"
+          type: object
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/StorefrontDiscountCode"
         eligibility_details:
           type: object
           additionalProperties: true
