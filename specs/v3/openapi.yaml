@@ -150,7 +150,11 @@ paths:
       description: "Public storefront endpoint. Lists categories that have visible storefront products."
       responses:
         "200":
-          $ref: "#/components/responses/CollectionResponse"
+          description: Storefront category list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontCategoryListResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
   /v3/stores/{store_id}/public/payment-methods:
@@ -338,7 +342,11 @@ paths:
       description: "Public storefront endpoint. Returns pricing for requested store-scoped variants, including variants whose products are hidden from storefront listing."
       responses:
         "200":
-          $ref: "#/components/responses/CollectionResponse"
+          description: Storefront variant pricing list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontVariantPricingResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
   /v3/stores/{store_id}/public/variants/{variant_id}/availability:
@@ -484,7 +492,17 @@ paths:
         - bearerAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Merged authenticated customer cart
+          headers:
+            X-Scalev-Guest-Token:
+              description: Browser-safe guest cart token used for the merge.
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontCartMergeResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
         "404":
@@ -519,6 +537,62 @@ paths:
           $ref: "#/components/responses/BadRequestResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
+  /v3/stores/{store_id}/public/checkout/shipping-options:
+    parameters:
+      - $ref: "#/components/parameters/StoreId"
+      - $ref: "#/components/parameters/StorefrontPublicApiKey"
+      - $ref: "#/components/parameters/StorefrontScalevGuestToken"
+    post:
+      tags:
+        - Storefront
+      operationId: listGuestCheckoutShippingOptions
+      summary: List guest checkout shipping options
+      description: >
+        Public storefront endpoint. If `X-Scalev-Guest-Token` resolves a
+        non-empty guest cart, the cart is used as the item source. Otherwise the
+        request may provide direct `items[]` with variant IDs. Digital-only carts
+        return an empty non-paginated collection.
+      requestBody:
+        $ref: "#/components/requestBodies/StorefrontCheckoutShippingOptionsRequestBody"
+      responses:
+        "200":
+          description: Guest checkout shipping options
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontCheckoutShippingOptionsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/stores/{store_id}/public/checkout/summary:
+    parameters:
+      - $ref: "#/components/parameters/StoreId"
+      - $ref: "#/components/parameters/StorefrontPublicApiKey"
+      - $ref: "#/components/parameters/StorefrontScalevGuestToken"
+    post:
+      tags:
+        - Storefront
+      operationId: getGuestCheckoutSummary
+      summary: Compute guest checkout summary
+      description: >
+        Public storefront endpoint. Recomputes the selected shipping cost from
+        destination, courier service, warehouse, payment method, and cart items.
+        Client-supplied `shipping_cost` is ignored. Digital-only carts return
+        `shipping_cost: "0"`.
+      requestBody:
+        $ref: "#/components/requestBodies/StorefrontCheckoutSummaryRequestBody"
+      responses:
+        "200":
+          description: Guest checkout summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontCheckoutSummaryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
   /v3/stores/{store_id}/public/orders/{secret_slug}:
     parameters:
       - $ref: "#/components/parameters/StoreId"
@@ -532,7 +606,11 @@ paths:
       description: "Public storefront endpoint."
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Public storefront order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontPublicOrder"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
     patch:
@@ -542,10 +620,14 @@ paths:
       summary: Update a public storefront order
       description: "Public storefront endpoint."
       requestBody:
-        $ref: "#/components/requestBodies/GenericJsonRequestBody"
+        $ref: "#/components/requestBodies/StorefrontPublicOrderUpdateRequestBody"
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Updated public storefront order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontPublicOrderUpdateResponse"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
         "404":
@@ -580,7 +662,11 @@ paths:
       description: "Public storefront endpoint."
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Discount code validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontDiscountCodeCheckResponse"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
   /v3/oauth/.well-known/oauth-authorization-server:
@@ -1563,7 +1649,11 @@ paths:
         - $ref: "#/components/parameters/StoreId"
       responses:
         "200":
-          $ref: "#/components/responses/CollectionResponse"
+          description: Saved checkout addresses
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerCheckoutAddressListResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
   /v3/stores/{store_id}/customers/me/checkout/payment-methods:
@@ -1579,7 +1669,11 @@ paths:
         - $ref: "#/components/parameters/StoreId"
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Available checkout payment methods
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerCheckoutPaymentMethodsResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
   /v3/stores/{store_id}/customers/me/checkout/shipping-options:
@@ -1594,10 +1688,14 @@ paths:
       parameters:
         - $ref: "#/components/parameters/StoreId"
       requestBody:
-        $ref: "#/components/requestBodies/GenericJsonRequestBody"
+        $ref: "#/components/requestBodies/CustomerCheckoutShippingOptionsRequestBody"
       responses:
         "200":
-          $ref: "#/components/responses/CollectionResponse"
+          description: Checkout shipping options
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerCheckoutShippingOptionsResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
   /v3/stores/{store_id}/customers/me/checkout/summary:
@@ -1612,10 +1710,14 @@ paths:
       parameters:
         - $ref: "#/components/parameters/StoreId"
       requestBody:
-        $ref: "#/components/requestBodies/GenericJsonRequestBody"
+        $ref: "#/components/requestBodies/CustomerCheckoutSummaryRequestBody"
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          description: Checkout summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerCheckoutSummaryResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
   /v3/stores/{store_id}/customers/me/checkout/confirm:
@@ -1630,10 +1732,14 @@ paths:
       parameters:
         - $ref: "#/components/parameters/StoreId"
       requestBody:
-        $ref: "#/components/requestBodies/GenericJsonRequestBody"
+        $ref: "#/components/requestBodies/CustomerCheckoutConfirmRequestBody"
       responses:
         "201":
-          $ref: "#/components/responses/CreatedResponse"
+          description: Confirmed checkout order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerCheckoutConfirmResponse"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
         "401":
@@ -7766,6 +7872,24 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/GuestCheckoutRequest"
+    StorefrontCheckoutShippingOptionsRequestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StorefrontCheckoutShippingOptionsRequest"
+    StorefrontCheckoutSummaryRequestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StorefrontCheckoutSummaryRequest"
+    StorefrontPublicOrderUpdateRequestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StorefrontPublicOrderUpdateRequest"
     ChatGPTAgentHtmlPayload:
       required: true
       description: Body-only HTML Mode payload. Do not include head, meta, title, favicon, crawler, domain, credential, cookie, token, or private backend behavior.
@@ -7862,6 +7986,24 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/CustomerAddressRequest"
+    CustomerCheckoutShippingOptionsRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CustomerCheckoutShippingOptionsRequest"
+    CustomerCheckoutSummaryRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CustomerCheckoutSummaryRequest"
+    CustomerCheckoutConfirmRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CustomerCheckoutConfirmRequest"
     JwtRefreshRequestBody:
       required: true
       content:
@@ -8647,6 +8789,89 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/CreateOrderPaymentResponseBody"
+          examples:
+            bankTransfer:
+              summary: Manual bank transfer
+              value:
+                pg_payment_info: {}
+                public_order_url: https://demo.scalev.shop/o/order-secret
+                payment_url: https://demo.scalev.shop/o/order-secret/success
+                payment_method: bank_transfer
+                sub_payment_method: null
+            cod:
+              summary: Cash on delivery
+              value:
+                pg_payment_info: {}
+                public_order_url: https://demo.scalev.shop/o/order-secret
+                payment_url: https://demo.scalev.shop/o/order-secret/success
+                payment_method: cod
+                sub_payment_method: null
+            virtualAccount:
+              summary: Virtual account
+              value:
+                pg_payment_info:
+                  payment_method:
+                    virtual_account:
+                      channel_properties:
+                        virtual_account_number: "880812345678"
+                        customer_name: Customer Name
+                public_order_url: https://demo.scalev.shop/o/order-secret
+                payment_url: https://demo.scalev.shop/o/order-secret/success
+                payment_method: va
+                sub_payment_method: BCA
+            qris:
+              summary: QRIS
+              value:
+                pg_payment_info:
+                  qr_string: "000201010212..."
+                public_order_url: https://demo.scalev.shop/o/order-secret
+                payment_url: https://demo.scalev.shop/o/order-secret/success
+                payment_method: qris
+                sub_payment_method: null
+            ewallet:
+              summary: E-wallet action URL
+              value:
+                pg_payment_info:
+                  actions:
+                    - url_type: WEB
+                      url: https://payments.example/ewallet/web
+                    - url_type: DEEPLINK
+                      url: examplepay://payment/123
+                public_order_url: https://demo.scalev.shop/o/order-secret
+                payment_url: https://demo.scalev.shop/o/order-secret/success
+                payment_method: dana
+                sub_payment_method: null
+            card:
+              summary: Card redirect
+              value:
+                pg_payment_info:
+                  redirect_url: https://payments.example/card/session
+                public_order_url: https://demo.scalev.shop/o/order-secret
+                payment_url: https://demo.scalev.shop/o/order-secret/success
+                payment_method: card
+                sub_payment_method: null
+            invoice:
+              summary: Hosted invoice
+              value:
+                pg_payment_info:
+                  invoice_url: https://payments.example/invoices/inv_123
+                public_order_url: https://demo.scalev.shop/o/order-secret
+                payment_url: https://demo.scalev.shop/o/order-secret/success
+                payment_method: invoice
+                sub_payment_method: null
+            retailOutlet:
+              summary: Alfamart or Indomaret payment code
+              value:
+                pg_payment_info:
+                  payment_method:
+                    over_the_counter:
+                      channel_properties:
+                        payment_code: "1234567890"
+                        customer_name: Customer Name
+                public_order_url: https://demo.scalev.shop/o/order-secret
+                payment_url: https://demo.scalev.shop/o/order-secret/success
+                payment_method: alfamart
+                sub_payment_method: null
     UpdateOrderCustomerResponse:
       description: Customer updated successfully
       content:
@@ -10392,6 +10617,166 @@ components:
         page_size:
           type: integer
       additionalProperties: true
+    CustomerCheckoutAddressListResponse:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomerAddress"
+        is_paginated:
+          type: boolean
+          enum:
+            - false
+      additionalProperties: false
+    CustomerCheckoutPaymentAccount:
+      type: object
+      properties:
+        id:
+          type: integer
+        method:
+          type: string
+          nullable: true
+        account_number:
+          type: string
+          nullable: true
+        account_holder:
+          type: string
+          nullable: true
+        financial_entity_code:
+          type: string
+          nullable: true
+        financial_entity_name:
+          type: string
+          nullable: true
+      additionalProperties: false
+    CustomerCheckoutPaymentMethodsResponse:
+      type: object
+      required:
+        - payment_methods
+        - xendit_va_bank_codes
+        - payment_accounts
+      properties:
+        payment_methods:
+          type: array
+          items:
+            type: string
+        xendit_va_bank_codes:
+          type: object
+          additionalProperties: true
+        payment_accounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomerCheckoutPaymentAccount"
+      additionalProperties: false
+    CustomerCheckoutShippingOptionsRequest:
+      type: object
+      properties:
+        location_id:
+          oneOf:
+            - type: integer
+            - type: string
+        postal_code:
+          type: string
+        payment_method:
+          type: string
+          example: bank_transfer
+      additionalProperties: true
+    CustomerCheckoutSummaryRequest:
+      type: object
+      properties:
+        shipping_cost:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        courier_service_id:
+          oneOf:
+            - type: integer
+            - type: string
+        payment_method:
+          type: string
+          example: bank_transfer
+      additionalProperties: true
+    CustomerCheckoutConfirmRequest:
+      type: object
+      properties:
+        address_id:
+          oneOf:
+            - type: integer
+            - type: string
+        address:
+          type: string
+        location_id:
+          oneOf:
+            - type: integer
+            - type: string
+        postal_code:
+          type: string
+        payment_method:
+          type: string
+          example: bank_transfer
+        sub_payment_method:
+          type: string
+          nullable: true
+        courier_service_id:
+          oneOf:
+            - type: integer
+            - type: string
+        warehouse_unique_id:
+          type: string
+          nullable: true
+        courier_aggregator_code:
+          type: string
+          nullable: true
+        discount_code_code:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      additionalProperties: true
+    CustomerCheckoutShippingOptionsResponse:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorefrontShippingOption"
+        is_paginated:
+          type: boolean
+          enum:
+            - false
+      additionalProperties: false
+    CustomerCheckoutSummaryResponse:
+      $ref: "#/components/schemas/StorefrontCheckoutSummaryResponse"
+    CustomerCheckoutConfirmResponse:
+      type: object
+      required:
+        - order_id
+        - secret_slug
+        - public_order_url
+        - payment_url
+        - status
+      properties:
+        order_id:
+          type: string
+        secret_slug:
+          type: string
+        public_order_url:
+          type: string
+          format: uri
+          nullable: true
+        payment_url:
+          type: string
+          format: uri
+          nullable: true
+        status:
+          type: string
+      additionalProperties: false
     StorefrontPriceRange:
       type: object
       nullable: true
@@ -10416,6 +10801,36 @@ components:
           type: string
         full_path:
           type: string
+    StorefrontCategory:
+      type: object
+      required:
+        - id
+        - name
+        - full_path
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          nullable: true
+        full_path:
+          type: string
+      additionalProperties: false
+    StorefrontCategoryListResponse:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorefrontCategory"
+        is_paginated:
+          type: boolean
+          enum:
+            - false
+      additionalProperties: false
     StorefrontProductCard:
       type: object
       required:
@@ -10549,6 +10964,45 @@ components:
           nullable: true
           additionalProperties: true
       additionalProperties: true
+    StorefrontVariantPricing:
+      type: object
+      required:
+        - variant_id
+        - price
+        - currency
+        - available
+        - available_qty
+      properties:
+        variant_id:
+          type: integer
+        price:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        currency:
+          type: string
+          nullable: true
+        available:
+          type: boolean
+        available_qty:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Null for non-inventory variants with unlimited availability.
+      additionalProperties: false
+    StorefrontVariantPricingResponse:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorefrontVariantPricing"
+        is_paginated:
+          type: boolean
+          enum:
+            - false
+      additionalProperties: false
     StorefrontProductDetail:
       allOf:
         - $ref: "#/components/schemas/StorefrontProductCard"
@@ -10785,6 +11239,8 @@ components:
             type: object
             additionalProperties: true
       additionalProperties: true
+    StorefrontCartMergeResponse:
+      $ref: "#/components/schemas/GuestCart"
     GuestCheckoutItem:
       type: object
       required:
@@ -10912,6 +11368,148 @@ components:
           type: string
           format: date-time
       additionalProperties: true
+    StorefrontCheckoutDestination:
+      type: object
+      required:
+        - location_id
+        - postal_code
+      properties:
+        location_id:
+          oneOf:
+            - type: integer
+            - type: string
+        postal_code:
+          type: string
+      additionalProperties: false
+    StorefrontCheckoutShippingOptionsRequest:
+      type: object
+      properties:
+        items:
+          type: array
+          description: >
+            Optional direct item source. Used only when `X-Scalev-Guest-Token`
+            does not resolve a non-empty guest cart. Direct items support
+            variants only; bundle support comes through the guest cart.
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/GuestCheckoutItem"
+        destination:
+          $ref: "#/components/schemas/StorefrontCheckoutDestination"
+        payment_method:
+          type: string
+          example: bank_transfer
+      additionalProperties: true
+    StorefrontShippingOption:
+      type: object
+      required:
+        - courier_service_id
+        - courier_code
+        - service_code
+        - name
+        - cost
+        - etd
+        - is_cod
+        - warehouse_unique_id
+        - courier_aggregator_code
+      properties:
+        courier_service_id:
+          type: integer
+        courier_code:
+          type: string
+          example: jne
+        service_code:
+          type: string
+          example: REG
+        name:
+          type: string
+          example: Regular
+        cost:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        etd:
+          type: string
+          nullable: true
+          description: Estimated delivery time returned by the courier integration.
+        is_cod:
+          type: boolean
+        warehouse_unique_id:
+          type: string
+        courier_aggregator_code:
+          type: string
+          nullable: true
+      additionalProperties: false
+    StorefrontCheckoutShippingOptionsResponse:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorefrontShippingOption"
+        is_paginated:
+          type: boolean
+          enum:
+            - false
+      additionalProperties: false
+    StorefrontSelectedShippingOption:
+      type: object
+      properties:
+        courier_service_id:
+          oneOf:
+            - type: integer
+            - type: string
+        warehouse_unique_id:
+          type: string
+        courier_aggregator_code:
+          type: string
+          nullable: true
+      additionalProperties: true
+    StorefrontCheckoutSummaryRequest:
+      allOf:
+        - $ref: "#/components/schemas/StorefrontCheckoutShippingOptionsRequest"
+        - type: object
+          properties:
+            courier_service_id:
+              oneOf:
+                - type: integer
+                - type: string
+            warehouse_unique_id:
+              type: string
+            courier_aggregator_code:
+              type: string
+              nullable: true
+            shipping_option:
+              $ref: "#/components/schemas/StorefrontSelectedShippingOption"
+            selected_shipping_option:
+              $ref: "#/components/schemas/StorefrontSelectedShippingOption"
+            shipping_cost:
+              allOf:
+                - $ref: "#/components/schemas/StorefrontMoneyValue"
+              description: Ignored by the API. Shipping cost is recomputed from the selected courier service and destination.
+          additionalProperties: true
+    StorefrontCheckoutSummaryResponse:
+      type: object
+      required:
+        - product_price
+        - shipping_cost
+        - other_income
+        - other_income_name
+        - gross_revenue
+      properties:
+        product_price:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        shipping_cost:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        other_income:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        other_income_name:
+          type: string
+          nullable: true
+        gross_revenue:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+      additionalProperties: false
     StorefrontMoneyValue:
       oneOf:
         - type: string
@@ -10985,13 +11583,14 @@ components:
           additionalProperties: true
           description: >
             Buyer-facing payment gateway payload. Manual methods such as
-            `bank_transfer` and `cod` return an empty object and rely on
-            `payment_url` or public order payment instructions. Virtual account
-            methods expose provider reference and account details under the
-            provider's `payment_method` object. QRIS responses expose QR data or
-            a QR image payload. E-wallet, card, and invoice methods may expose
-            provider actions while the browser should primarily use
-            `payment_url` when a redirect or hosted payment page is required.
+            `bank_transfer` and `cod` can return an empty object while the
+            public order contains the buyer-facing instructions to render.
+            Virtual account methods expose provider reference and account
+            details under the provider's `payment_method` object. QRIS
+            responses expose QR data or a QR image payload. E-wallet, card, and
+            invoice methods may expose provider actions or hosted provider URLs.
+            Storefronts should render their own payment page from these fields
+            and use `payment_url` only as a hosted fallback.
         transferproof_url:
           type: string
           nullable: true
@@ -11166,6 +11765,106 @@ components:
           type: string
           format: date-time
           nullable: true
+      additionalProperties: false
+    StorefrontPublicOrderUpdateRequest:
+      type: object
+      description: Buyer-facing public order update payload, primarily for payment proof and public order metadata updates.
+      properties:
+        transferproof_url:
+          type: string
+          nullable: true
+        transfer_time:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      additionalProperties: true
+    StorefrontPublicOrderUpdateResponse:
+      $ref: "#/components/schemas/StorefrontPublicOrder"
+    StorefrontDiscountCode:
+      type: object
+      properties:
+        id:
+          type: integer
+        business_id:
+          type: integer
+        is_enabled:
+          type: boolean
+        code:
+          type: string
+        applied_to:
+          type: string
+          nullable: true
+        amount_type:
+          type: string
+          nullable: true
+        percentage:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        is_max_amount:
+          type: boolean
+        max_amount:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        amount:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        is_usage_limit:
+          type: boolean
+        usage_limit:
+          type: integer
+          nullable: true
+        current_usage:
+          type: integer
+          nullable: true
+        is_expiry:
+          type: boolean
+        expiry_time:
+          type: string
+          format: date-time
+          nullable: true
+        is_limited_to_pages:
+          type: boolean
+        pages:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        is_limited_to_payment_methods:
+          type: boolean
+        payment_methods:
+          type: array
+          items:
+            type: string
+        is_minimum_revenue:
+          type: boolean
+        minimum_revenue:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        inserted_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+      additionalProperties: true
+    StorefrontDiscountCodeCheckResponse:
+      type: object
+      required:
+        - discount_code
+        - eligibility_details
+        - is_eligible
+        - discount_code_discount
+      properties:
+        discount_code:
+          $ref: "#/components/schemas/StorefrontDiscountCode"
+        eligibility_details:
+          type: object
+          additionalProperties: true
+        is_eligible:
+          type: boolean
+        discount_code_discount:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
       additionalProperties: false
     StorefrontPublicApiKey:
       type: object
@@ -15923,13 +16622,14 @@ components:
           additionalProperties: true
           description: >
             Payment gateway payload. Manual methods such as `bank_transfer` and
-            `cod` return an empty object and rely on `payment_url` or public
-            order payment instructions. Virtual account methods expose provider
-            reference and account details under the provider's `payment_method`
-            object. QRIS responses expose QR data or a QR image payload.
-            E-wallet, card, and invoice methods may expose provider actions
-            while the browser should primarily use `payment_url` when a redirect
-            or hosted payment page is required.
+            `cod` can return an empty object while the public order contains
+            the buyer-facing instructions to render. Virtual account methods
+            expose provider reference and account details under the provider's
+            `payment_method` object. QRIS responses expose QR data or a QR image
+            payload. E-wallet, card, and invoice methods may expose provider
+            actions or hosted provider URLs. Storefronts should render their
+            own payment page from these fields and use `payment_url` only as a
+            hosted fallback.
         public_order_url:
           type: string
           format: uri
