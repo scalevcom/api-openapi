@@ -31,7 +31,8 @@ tags:
   - name: Orders
     description: Authenticated business order management endpoints.
   - name: Storefront
-    description: Public storefront catalog, guest cart, and guest checkout flows.
+    description:
+      Public storefront catalog, guest cart, and guest checkout flows.
       All store-derived public storefront routes require
       `X-Scalev-Storefront-Api-Key`.
   - name: OAuth
@@ -62,7 +63,8 @@ tags:
     description: Authenticated business store lookup endpoints that use legacy
       numeric store IDs.
   - name: Storefront Setup
-    description: Authenticated business setup endpoints for public storefront keys
+    description:
+      Authenticated business setup endpoints for public storefront keys
       and CORS origins.
   - name: Shipping
     description: Authenticated business shipping lookup endpoints.
@@ -75,7 +77,8 @@ tags:
   - name: Business Customers
     description: Authenticated business customer and customer-address management endpoints.
   - name: WABA
-    description: Authenticated WhatsApp Business Account operations and related WABA
+    description:
+      Authenticated WhatsApp Business Account operations and related WABA
       resources.
   - name: WhatsApp Integrations
     description: Authenticated WhatsApp integration management endpoints.
@@ -645,7 +648,11 @@ paths:
       description: Public storefront endpoint. Idempotent for orders that already have payment instructions or already expose a `payment_url`.
       responses:
         "200":
-          $ref: "#/components/responses/CreateOrderPaymentResponse"
+          description: Public storefront order with payment instructions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontPublicOrder"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
         "404":
@@ -765,7 +772,8 @@ paths:
         - OAuth
       operationId: getOAuthInstallationStatus
       summary: Get installed-app status snapshot
-      description: "No OAuth installation scope. OAuth flow endpoint for app-backend
+      description:
+        "No OAuth installation scope. OAuth flow endpoint for app-backend
         installation status lookup."
       requestBody:
         $ref: "#/components/requestBodies/OAuthInstallationStatusRequestBody"
@@ -780,10 +788,12 @@ paths:
         - OAuth
       operationId: exchangeOAuthInstallationLaunchToken
       summary: Exchange an installed-app dashboard launch token
-      description: "No OAuth installation scope. OAuth flow endpoint for exchanging a
+      description:
+        "No OAuth installation scope. OAuth flow endpoint for exchanging a
         one-time Manage launch token for an installed-app status snapshot."
       requestBody:
-        $ref: "#/components/requestBodies/OAuthInstallationLaunchTokenExchangeRequestBo\
+        $ref:
+          "#/components/requestBodies/OAuthInstallationLaunchTokenExchangeRequestBo\
           dy"
       responses:
         "200":
@@ -1007,7 +1017,8 @@ paths:
         - OAuth Billing
       operationId: createOAuthBillingReservation
       summary: Create an OAuth billing reservation
-      description: "No OAuth installation scope. OAuth flow endpoint. Requires an
+      description:
+        "No OAuth installation scope. OAuth flow endpoint. Requires an
         installed-app OAuth access token. JWT and business API key auth do not
         apply on this route."
       security:
@@ -1031,7 +1042,8 @@ paths:
         - OAuth Billing
       operationId: releaseOAuthBillingReservation
       summary: Release an OAuth billing reservation
-      description: "No OAuth installation scope. OAuth flow endpoint. Requires an
+      description:
+        "No OAuth installation scope. OAuth flow endpoint. Requires an
         installed-app OAuth access token. JWT and business API key auth do not
         apply on this route."
       security:
@@ -1049,7 +1061,8 @@ paths:
         - OAuth Billing
       operationId: createOAuthBillingRefund
       summary: Refund a captured OAuth billing charge
-      description: "No OAuth installation scope. OAuth flow endpoint. Requires an
+      description:
+        "No OAuth installation scope. OAuth flow endpoint. Requires an
         installed-app OAuth access token that owns the original
         authorized-business charge. Refunds are full post-capture reversals;
         reservation release remains the pre-capture flow."
@@ -1251,7 +1264,8 @@ paths:
         - OAuth Billing
       operationId: createDeveloperOAuthBillingWithdrawal
       summary: Withdraw developer OAuth billing earnings
-      description: "Requires business auth with `business:manage_developer_settings`.
+      description:
+        "Requires business auth with `business:manage_developer_settings`.
         Xendit is the only supported settlement rail."
       security:
         - bearerAuth: []
@@ -1423,7 +1437,8 @@ paths:
         - Customer Account
       operationId: updateCustomerMe
       summary: Update the authenticated customer profile
-      description: "Customer-authenticated storefront endpoint. Customer email is
+      description:
+        "Customer-authenticated storefront endpoint. Customer email is
         read-only in public v1."
       security:
         - bearerAuth: []
@@ -1864,7 +1879,8 @@ paths:
           required: false
           schema:
             type: string
-        - description: Filter by subscription status (unactivated, active, canceled,
+        - description:
+            Filter by subscription status (unactivated, active, canceled,
             expired)
           in: query
           name: status
@@ -1882,7 +1898,8 @@ paths:
           $ref: "#/components/responses/ListCustomerSubscriptionsResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
-      description: "Customer-authenticated storefront endpoint. Retrieves a paginated
+      description:
+        "Customer-authenticated storefront endpoint. Retrieves a paginated
         list of subscriptions. The data is sorted by id in descending order.
         Uses cursor-based pagination with default page size of 25 and maximum of
         25."
@@ -1904,7 +1921,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Customer-authenticated storefront endpoint. Retrieves detailed
+      description:
+        "Customer-authenticated storefront endpoint. Retrieves detailed
         information about a specific subscription identified by its ID."
   /v3/stores/{store_id}/customers/me/subscriptions/{id}/cancel:
     parameters:
@@ -1924,7 +1942,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Customer-authenticated storefront endpoint. Cancels a subscription
+      description:
+        "Customer-authenticated storefront endpoint. Cancels a subscription
         at period end. The subscription must be active and not already marked
         for cancellation. All active subscription items will be marked for
         cancellation as well. Any pending/scheduled actions will be canceled."
@@ -1946,7 +1965,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Customer-authenticated storefront endpoint. Resumes a subscription
+      description:
+        "Customer-authenticated storefront endpoint. Resumes a subscription
         that was scheduled for cancellation at period end. The subscription must
         be active and have is_cancel_at_period_end = true. All subscription
         items scheduled for cancellation will also be resumed. If the
@@ -1970,7 +1990,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Customer-authenticated storefront endpoint. Retrieves a list of
+      description:
+        "Customer-authenticated storefront endpoint. Retrieves a list of
         variants with higher prices than the current variant of the subscription
         item. Only active subscription items that are not scheduled for
         cancellation are eligible."
@@ -2014,7 +2035,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Customer-authenticated storefront endpoint. Retrieves a list of
+      description:
+        "Customer-authenticated storefront endpoint. Retrieves a list of
         variants with lower prices than the current variant of the subscription
         item. Only active subscription items that are not scheduled for
         cancellation are eligible."
@@ -2177,7 +2199,8 @@ paths:
         - Storefront Setup
       operationId: listStorefrontPublicApiKeys
       summary: List storefront public API keys
-      description: "Requires the `store:read` scope. Uses the authenticated business
+      description:
+        "Requires the `store:read` scope. Uses the authenticated business
         store ID."
       security:
         - bearerAuth: []
@@ -2200,7 +2223,8 @@ paths:
         - Storefront Setup
       operationId: createStorefrontPublicApiKey
       summary: Create a storefront public API key
-      description: "Requires the `store:update` scope. Uses the authenticated business
+      description:
+        "Requires the `store:update` scope. Uses the authenticated business
         store ID."
       security:
         - bearerAuth: []
@@ -2229,7 +2253,8 @@ paths:
         - Storefront Setup
       operationId: revokeStorefrontPublicApiKey
       summary: Revoke a storefront public API key
-      description: "Requires the `store:update` scope. Uses the authenticated business
+      description:
+        "Requires the `store:update` scope. Uses the authenticated business
         store ID."
       security:
         - bearerAuth: []
@@ -2251,7 +2276,8 @@ paths:
         - Storefront Setup
       operationId: listStorefrontAllowedOrigins
       summary: List storefront allowed origins
-      description: "Requires the `store:read` scope. Uses the authenticated business
+      description:
+        "Requires the `store:read` scope. Uses the authenticated business
         store ID."
       security:
         - bearerAuth: []
@@ -2274,7 +2300,8 @@ paths:
         - Storefront Setup
       operationId: createStorefrontAllowedOrigin
       summary: Create a storefront allowed origin
-      description: "Requires the `store:update` scope. Uses the authenticated business
+      description:
+        "Requires the `store:update` scope. Uses the authenticated business
         store ID."
       security:
         - bearerAuth: []
@@ -2305,7 +2332,8 @@ paths:
         - Storefront Setup
       operationId: revokeStorefrontAllowedOrigin
       summary: Revoke a storefront allowed origin
-      description: "Requires the `store:update` scope. Uses the authenticated business
+      description:
+        "Requires the `store:update` scope. Uses the authenticated business
         store ID."
       security:
         - bearerAuth: []
@@ -2752,7 +2780,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `order:create` scope. Retrieve a cursor-paginated
+      description:
+        "Requires the `order:create` scope. Retrieve a cursor-paginated
         list of locations with optional search."
       parameters:
         - description: Number of items per page.
@@ -2844,7 +2873,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `order:create` scope. Retrieve available courier
+      description:
+        "Requires the `order:create` scope. Retrieve available courier
         services based on warehouse, destination, payment method, and package
         weight."
   /v3/shipping-costs/search-warehouse:
@@ -2867,7 +2897,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `order:create` scope. Search for warehouses based on
+      description:
+        "Requires the `order:create` scope. Search for warehouses based on
         order details, store, destination, and product variants."
   /v3/orders:
     get:
@@ -2885,7 +2916,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `order:list` scope. Retrieves a paginated list of
+      description:
+        "Requires the `order:list` scope. Retrieves a paginated list of
         orders with optional filtering. The data is sorted by created_at in
         descending order and cannot be changed. Uses cursor-based pagination
         with default page size of 25 and maximum of 25."
@@ -2910,14 +2942,16 @@ paths:
           required: false
           schema:
             type: string
-        - description: Search term for the selected `search_field`. Defaults to order ID
+        - description:
+            Search term for the selected `search_field`. Defaults to order ID
             search when `search_field` is omitted or unsupported.
           in: query
           name: search
           required: false
           schema:
             type: string
-        - description: Field used by `search`. Defaults to `order_id` when omitted or
+        - description:
+            Field used by `search`. Defaults to `order_id` when omitted or
             unsupported.
           in: query
           name: search_field
@@ -3094,21 +3128,21 @@ paths:
           required: false
           schema:
             enum:
-              - no_payment
-              - bank_transfer
-              - marketplace
               - va
               - qris
-              - ewallet
-              - cod
               - card
-              - gopay
               - invoice
               - alfamart
+              - indomaret
               - ovo
               - dana
               - shopeepay
               - linkaja
+              - gopay
+              - no_payment
+              - bank_transfer
+              - marketplace
+              - cod
             type: string
         - description: Filter orders by shipment status
           in: query
@@ -3186,7 +3220,8 @@ paths:
           required: false
           schema:
             type: string
-        - description: Filter orders by affiliate business ID (for affiliates to see
+        - description:
+            Filter orders by affiliate business ID (for affiliates to see
             orders they brought)
           in: query
           name: affiliate_business_id
@@ -3199,7 +3234,8 @@ paths:
           required: false
           schema:
             type: string
-        - description: "Comma-separated list of columns to include. Available columns:
+        - description:
+            "Comma-separated list of columns to include. Available columns:
             secret_slug, public_order_url, payment_url, final_variants, store,
             origin_address, address_location, handler_phone, order_id,
             destination_address, quantity, product_price, total_weight,
@@ -3245,7 +3281,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `order:create` scope. Create a new order with the
+      description:
+        "Requires the `order:create` scope. Create a new order with the
         provided details."
   /v3/orders/statistics:
     get:
@@ -3263,7 +3300,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `order:statistics:list` scope. Retrieves descriptive
+      description:
+        "Requires the `order:statistics:list` scope. Retrieves descriptive
         statistics about orders, such as total orders, total revenue, and other
         aggregated data. Can be filtered using the same parameters as the orders
         list endpoint."
@@ -3337,14 +3375,16 @@ paths:
           schema:
             default: 0
             type: integer
-        - description: Search term for the selected `search_field`. Defaults to order ID
+        - description:
+            Search term for the selected `search_field`. Defaults to order ID
             search when `search_field` is omitted or unsupported.
           in: query
           name: search
           required: false
           schema:
             type: string
-        - description: Field used by `search`. Defaults to `order_id` when omitted or
+        - description:
+            Field used by `search`. Defaults to `order_id` when omitted or
             unsupported.
           in: query
           name: search_field
@@ -3419,7 +3459,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `order:change_status` scope. Change the status of
+      description:
+        "Requires the `order:change_status` scope. Change the status of
         multiple orders."
   /v3/orders/delete:
     post:
@@ -3483,7 +3524,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `order:change_status` scope. Upload a CSV file to
+      description:
+        "Requires the `order:change_status` scope. Upload a CSV file to
         change status of multiple orders. Template file can be downloaded from
         the link here: https://app.scalev.id/example/update_status_template.csv.
         (1) Leave blank the 'shipment_receipt' field if you don't want to change
@@ -3511,7 +3553,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `order:update` scope. Upload file to update shipment
+      description:
+        "Requires the `order:update` scope. Upload file to update shipment
         receipts (tracking IDs) for multiple orders. Template file can be
         downloaded from the link here:
         https://app.scalev.id/example/receipt_template.csv."
@@ -3535,7 +3578,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `order:create` scope. Upload orders from CSV file.
+      description:
+        "Requires the `order:create` scope. Upload orders from CSV file.
         (1) Archive mode. Choose this mode if you want to import old data from
         another platform you've been using. You can directly create products
         that you made on your previous platform. Orders that are created will
@@ -3567,7 +3611,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `order:create_awb` scope. Generate Air Waybill for
+      description:
+        "Requires the `order:create_awb` scope. Generate Air Waybill for
         multiple orders."
   /v3/orders/cancel-awb:
     post:
@@ -3589,7 +3634,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `order:create_awb` scope. Cancel Air Waybill for
+      description:
+        "Requires the `order:create_awb` scope. Cancel Air Waybill for
         multiple orders."
   /v3/orders/tags:
     get:
@@ -3632,7 +3678,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `order:list` scope. Retrieve a list of unique UTM
+      description:
+        "Requires the `order:list` scope. Retrieve a list of unique UTM
         source values from orders."
       parameters:
         - description: Search term to filter UTM sources
@@ -3657,7 +3704,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `order:list` scope. Retrieve a list of unique UTM
+      description:
+        "Requires the `order:list` scope. Retrieve a list of unique UTM
         medium values from orders."
       parameters:
         - description: Search term to filter UTM mediums
@@ -3682,7 +3730,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `order:list` scope. Retrieve a list of unique UTM
+      description:
+        "Requires the `order:list` scope. Retrieve a list of unique UTM
         campaign values from orders."
       parameters:
         - description: Search term to filter UTM campaigns
@@ -3707,7 +3756,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `order:list` scope. Retrieve a list of unique UTM
+      description:
+        "Requires the `order:list` scope. Retrieve a list of unique UTM
         content values from orders."
       parameters:
         - description: Search term to filter UTM contents
@@ -3732,7 +3782,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `order:list` scope. Retrieve a list of unique UTM
+      description:
+        "Requires the `order:list` scope. Retrieve a list of unique UTM
         term values from orders."
       parameters:
         - description: Search term to filter UTM terms
@@ -3761,7 +3812,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `order:read` scope. Retrieve order details using
+      description:
+        "Requires the `order:read` scope. Retrieve order details using
         payment gateway reference ID."
   /v3/orders/pg-reference-ids:
     get:
@@ -3779,7 +3831,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `order:list` scope. Retrieve orders using multiple
+      description:
+        "Requires the `order:list` scope. Retrieve orders using multiple
         payment gateway reference IDs."
       parameters:
         - description: Comma-separated payment gateway reference IDs
@@ -3808,7 +3861,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `order:read` scope. Retrieve detailed information
+      description:
+        "Requires the `order:read` scope. Retrieve detailed information
         about a specific order."
     patch:
       tags:
@@ -3961,7 +4015,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `order:update` scope. Add a new message to order
+      description:
+        "Requires the `order:update` scope. Add a new message to order
         message history."
   /v3/orders/{id}/payment:
     parameters:
@@ -3985,7 +4040,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `order:update` scope. Create a payment request /
+      description:
+        "Requires the `order:update` scope. Create a payment request /
         intent for an order."
   /v3/orders/{id}/customer:
     parameters:
@@ -4011,7 +4067,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `order:update` scope. Update the customer associated
+      description:
+        "Requires the `order:update` scope. Update the customer associated
         with an order."
   /v3/orders/{id}/shipment:
     parameters:
@@ -4037,7 +4094,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `order:update` scope. Update shipment-related data
+      description:
+        "Requires the `order:update` scope. Update shipment-related data
         for an order."
   /v3/orders/{id}/shipment-receipt:
     parameters:
@@ -4089,7 +4147,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `order:update` scope. Create a new shipment status
+      description:
+        "Requires the `order:update` scope. Create a new shipment status
         history entry for an order."
   /v3/orders/{id}/update-tags:
     parameters:
@@ -4138,7 +4197,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `order:update` scope. Trigger purchase event for
+      description:
+        "Requires the `order:update` scope. Trigger purchase event for
         analytics and tracking."
   /v3/orders/{id}/duplicate:
     parameters:
@@ -4164,7 +4224,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `order:create` scope. Create a duplicate of an order
+      description:
+        "Requires the `order:create` scope. Create a duplicate of an order
         and cancel the original."
   /v3/orders/{id}/check-payment:
     parameters:
@@ -4207,7 +4268,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `order:read` scope. Check the settlement status of an
+      description:
+        "Requires the `order:read` scope. Check the settlement status of an
         order."
   /v3/orders/{id}/send-product-digital:
     parameters:
@@ -4229,7 +4291,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `order:read` scope. Send email containing links to
+      description:
+        "Requires the `order:read` scope. Send email containing links to
         download digital products to customer."
   /v3/orders/{id}/send-lms-access:
     parameters:
@@ -4268,7 +4331,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `product:list` scope. Retrieves a paginated list of
+      description:
+        "Requires the `product:list` scope. Retrieves a paginated list of
         products with optional filtering. The data is sorted by id in descending
         order and cannot be changed. Uses cursor-based pagination with default
         page size of 25 and maximum of 25."
@@ -4293,7 +4357,8 @@ paths:
           required: false
           schema:
             type: string
-        - description: Search term to filter products by name (case-insensitive, partial
+        - description:
+            Search term to filter products by name (case-insensitive, partial
             match)
           in: query
           name: search
@@ -4318,7 +4383,8 @@ paths:
           required: false
           schema:
             type: integer
-        - description: Type of quantity to filter by. Options are 'available_qty' (only
+        - description:
+            Type of quantity to filter by. Options are 'available_qty' (only
             products with variants that have available quantity > 0)
           in: query
           name: qty_type
@@ -4339,14 +4405,16 @@ paths:
           required: false
           schema:
             type: boolean
-        - description: Filter products by ownership. 'true' returns products owned by the
+        - description:
+            Filter products by ownership. 'true' returns products owned by the
             business, 'false' returns shared products
           in: query
           name: is_owned
           required: false
           schema:
             type: boolean
-        - description: Filter products by item type (physical, digital, course, license,
+        - description:
+            Filter products by item type (physical, digital, course, license,
             subscription)
           in: query
           name: item_type
@@ -4395,7 +4463,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `product:create` scope. Creates a new product with
+      description:
+        "Requires the `product:create` scope. Creates a new product with
         the provided data."
   /v3/products/simplified:
     get:
@@ -4418,7 +4487,8 @@ paths:
         by id in descending order and cannot be changed. Uses cursor-based
         pagination with default page size of 25 and maximum of 25."
       parameters:
-        - description: If provided, includes `is_owned_by_store` field in the bundle price
+        - description:
+            If provided, includes `is_owned_by_store` field in the bundle price
             options to indicate if the option is already included in the
             specified store.
           in: query
@@ -4446,7 +4516,8 @@ paths:
           required: false
           schema:
             type: string
-        - description: Search term to filter products by name (case-insensitive, partial
+        - description:
+            Search term to filter products by name (case-insensitive, partial
             match)
           in: query
           name: search
@@ -4471,7 +4542,8 @@ paths:
           required: false
           schema:
             type: integer
-        - description: Type of quantity to filter by. Options are 'available_qty' (only
+        - description:
+            Type of quantity to filter by. Options are 'available_qty' (only
             products with variants that have available quantity > 0)
           in: query
           name: qty_type
@@ -4492,14 +4564,16 @@ paths:
           required: false
           schema:
             type: boolean
-        - description: Filter products by ownership. 'true' returns products owned by the
+        - description:
+            Filter products by ownership. 'true' returns products owned by the
             business, 'false' returns shared products
           in: query
           name: is_owned
           required: false
           schema:
             type: boolean
-        - description: Filter products by item type (physical, digital, course, license,
+        - description:
+            Filter products by item type (physical, digital, course, license,
             subscription)
           in: query
           name: item_type
@@ -4567,7 +4641,8 @@ paths:
           required: false
           schema:
             type: string
-        - description: Search term to filter products by name (case-insensitive, partial
+        - description:
+            Search term to filter products by name (case-insensitive, partial
             match)
           in: query
           name: search
@@ -4592,7 +4667,8 @@ paths:
           required: false
           schema:
             type: integer
-        - description: Type of quantity to filter by. Options are 'available_qty' (only
+        - description:
+            Type of quantity to filter by. Options are 'available_qty' (only
             products with variants that have available quantity > 0)
           in: query
           name: qty_type
@@ -4613,14 +4689,16 @@ paths:
           required: false
           schema:
             type: boolean
-        - description: Filter products by ownership. 'true' returns products owned by the
+        - description:
+            Filter products by ownership. 'true' returns products owned by the
             business, 'false' returns shared products
           in: query
           name: is_owned
           required: false
           schema:
             type: boolean
-        - description: Filter products by item type (physical, digital, course, license,
+        - description:
+            Filter products by item type (physical, digital, course, license,
             subscription)
           in: query
           name: item_type
@@ -4670,7 +4748,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `product:read` scope. Retrieves the details of a
+      description:
+        "Requires the `product:read` scope. Retrieves the details of a
         single product, including its variants and other associated data."
     patch:
       tags:
@@ -4693,7 +4772,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `product:update` scope. Updates the details of a
+      description:
+        "Requires the `product:update` scope. Updates the details of a
         product, including its variants."
     delete:
       tags:
@@ -4712,7 +4792,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `product:delete` scope. Deletes a product and all its
+      description:
+        "Requires the `product:delete` scope. Deletes a product and all its
         associated data."
   /v3/products/{id}/duplicate:
     parameters:
@@ -4734,7 +4815,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `product:create` scope. Creates a copy of an existing
+      description:
+        "Requires the `product:create` scope. Creates a copy of an existing
         product including all variants, digital files, course structure (for
         courses), labels, follow-up chats, and email automation settings. The
         new product name will be suffixed with '(Copy)'. Partnership settings
@@ -4831,7 +4913,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `product:list` scope. Retrieves a paginated list of
+      description:
+        "Requires the `product:list` scope. Retrieves a paginated list of
         product partners."
       parameters:
         - description: Opaque cursor for the next page.
@@ -4918,7 +5001,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `product:list` scope. Retrieves a paginated list of
+      description:
+        "Requires the `product:list` scope. Retrieves a paginated list of
         product-level knowledge items. The data is sorted by id in ascending
         order."
       parameters:
@@ -4963,7 +5047,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `product:update` scope. Creates a new product-level
+      description:
+        "Requires the `product:update` scope. Creates a new product-level
         knowledge item."
   /v3/products/{product_id}/knowledge-items/{id}:
     parameters:
@@ -5050,7 +5135,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `product:update` scope. Generates a new follow up
+      description:
+        "Requires the `product:update` scope. Generates a new follow up
         chat for a product."
   /v3/products/{product_id}/follow-up-chats:
     parameters:
@@ -5072,7 +5158,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `product:list` scope. Retrieves a paginated list of
+      description:
+        "Requires the `product:list` scope. Retrieves a paginated list of
         follow up chats for a product."
       parameters:
         - description: Opaque cursor for the next page.
@@ -5139,7 +5226,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `product:read` scope. Shows a single follow up chat
+      description:
+        "Requires the `product:read` scope. Shows a single follow up chat
         template by ID."
     patch:
       tags:
@@ -5201,7 +5289,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `product:read` scope. Shows a single product variant
+      description:
+        "Requires the `product:read` scope. Shows a single product variant
         by ID."
   /v3/variants/{variant_id}/knowledge-items:
     parameters:
@@ -5223,7 +5312,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `product:list` scope. Retrieves a paginated list of
+      description:
+        "Requires the `product:list` scope. Retrieves a paginated list of
         variant-level knowledge items. The data is sorted by id in ascending
         order."
       parameters:
@@ -5268,7 +5358,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `product:update` scope. Creates a new variant-level
+      description:
+        "Requires the `product:update` scope. Creates a new variant-level
         knowledge item."
   /v3/variants/{variant_id}/knowledge-items/{id}:
     parameters:
@@ -5355,7 +5446,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `product:list` scope. Retrieves a paginated list of
+      description:
+        "Requires the `product:list` scope. Retrieves a paginated list of
         digital product files for a variant."
       parameters:
         - description: Opaque cursor for the next page.
@@ -5421,7 +5513,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `product:read` scope. Shows a single digital product
+      description:
+        "Requires the `product:read` scope. Shows a single digital product
         file by ID."
     delete:
       tags:
@@ -5457,7 +5550,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `product:list` scope. Retrieves a cursor-paginated
+      description:
+        "Requires the `product:list` scope. Retrieves a cursor-paginated
         list of product taxonomies sorted by full_path in ascending order."
       parameters:
         - description: Number of items per page
@@ -5481,7 +5575,8 @@ paths:
           required: false
           schema:
             type: string
-        - description: Search term to filter taxonomies by name (case-insensitive, partial
+        - description:
+            Search term to filter taxonomies by name (case-insensitive, partial
             match)
           in: query
           name: search
@@ -5508,7 +5603,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `product:read` scope. Shows a single product taxonomy
+      description:
+        "Requires the `product:read` scope. Shows a single product taxonomy
         by ID."
   /v3/variants/{id}/course:
     parameters:
@@ -5812,7 +5908,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `bundle:list` scope. Retrieves a paginated list of
+      description:
+        "Requires the `bundle:list` scope. Retrieves a paginated list of
         bundles with optional filtering. The data is sorted by id in descending
         order and cannot be changed. Uses cursor-based pagination with default
         page size of 25 and maximum of 25."
@@ -5837,7 +5934,8 @@ paths:
           required: false
           schema:
             type: string
-        - description: Search term to filter bundles by name (case-insensitive, partial
+        - description:
+            Search term to filter bundles by name (case-insensitive, partial
             match)
           in: query
           name: search
@@ -5850,7 +5948,8 @@ paths:
           required: false
           schema:
             type: boolean
-        - description: Filter bundles that have price options available in the specified
+        - description:
+            Filter bundles that have price options available in the specified
             store ID
           in: query
           name: store_id
@@ -5882,7 +5981,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `bundle:create` scope. Creates a new bundle with the
+      description:
+        "Requires the `bundle:create` scope. Creates a new bundle with the
         provided data."
   /v3/bundles/simplified:
     get:
@@ -5900,14 +6000,16 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `bundle:list` scope. Retrieves a paginated list of
+      description:
+        "Requires the `bundle:list` scope. Retrieves a paginated list of
         bundles with optional filtering. The data is sorted by id in descending
         order and cannot be changed. Uses cursor-based pagination with default
         page size of 25 and maximum of 25. This endpoint returns a simplified
         version of the bundle data, including only essential fields and active
         bundle price options."
       parameters:
-        - description: If provided, includes `is_owned_by_store` field in the bundle price
+        - description:
+            If provided, includes `is_owned_by_store` field in the bundle price
             options to indicate if the option is already included in the
             specified store.
           in: query
@@ -5935,7 +6037,8 @@ paths:
           required: false
           schema:
             type: string
-        - description: Search term to filter bundles by name (case-insensitive, partial
+        - description:
+            Search term to filter bundles by name (case-insensitive, partial
             match)
           in: query
           name: search
@@ -5948,7 +6051,8 @@ paths:
           required: false
           schema:
             type: boolean
-        - description: Filter bundles that have price options available in the specified
+        - description:
+            Filter bundles that have price options available in the specified
             store ID
           in: query
           name: store_id
@@ -5977,7 +6081,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-      description: "Requires the `bundle:list` scope. Retrieves the total count of
+      description:
+        "Requires the `bundle:list` scope. Retrieves the total count of
         bundles for the authenticated business. This endpoint does not support
         any filtering or pagination."
       parameters:
@@ -6001,7 +6106,8 @@ paths:
           required: false
           schema:
             type: string
-        - description: Search term to filter bundles by name (case-insensitive, partial
+        - description:
+            Search term to filter bundles by name (case-insensitive, partial
             match)
           in: query
           name: search
@@ -6014,7 +6120,8 @@ paths:
           required: false
           schema:
             type: boolean
-        - description: Filter bundles that have price options available in the specified
+        - description:
+            Filter bundles that have price options available in the specified
             store ID
           in: query
           name: store_id
@@ -6069,7 +6176,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `bundle:update` scope. Updates an existing bundle
+      description:
+        "Requires the `bundle:update` scope. Updates an existing bundle
         with the provided data."
     delete:
       tags:
@@ -6109,7 +6217,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `bundle:create` scope. Creates a copy of an existing
+      description:
+        "Requires the `bundle:create` scope. Creates a copy of an existing
         bundle including all bundlelines, bundle price options, labels, and
         follow-up chats. The new bundle name will be suffixed with '(Copy)'.
         Partnership settings and store placements are NOT copied."
@@ -6133,7 +6242,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `bundle:read` scope. Retrieves a bundle along with
+      description:
+        "Requires the `bundle:read` scope. Retrieves a bundle along with
         its related entities such as active bundle price options and their
         associated stores and form displays."
   /v3/bundles/{bundle_id}/partners:
@@ -6156,7 +6266,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `bundle:list` scope. Retrieves a paginated list of
+      description:
+        "Requires the `bundle:list` scope. Retrieves a paginated list of
         partners associated with a specific bundle. The data is sorted by id in
         descending order and cannot be changed. Uses cursor-based pagination
         with default page size of 25 and maximum of 25."
@@ -6202,7 +6313,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `bundle:update` scope. Associates a partner with a
+      description:
+        "Requires the `bundle:update` scope. Associates a partner with a
         specific bundle using the provided unique identifier."
   /v3/bundles/{bundle_id}/partners/{id}:
     parameters:
@@ -6225,7 +6337,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `bundle:update` scope. Dissociates a partner from a
+      description:
+        "Requires the `bundle:update` scope. Dissociates a partner from a
         specific bundle by its ID."
   /v3/bundles/{bundle_id}/follow-up-chats/generate:
     parameters:
@@ -6247,7 +6360,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `bundle:update` scope. Generates a new follow up chat
+      description:
+        "Requires the `bundle:update` scope. Generates a new follow up chat
         for a bundle."
   /v3/bundles/{bundle_id}/follow-up-chats:
     parameters:
@@ -6269,7 +6383,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `bundle:list` scope. Retrieves a paginated list of
+      description:
+        "Requires the `bundle:list` scope. Retrieves a paginated list of
         follow up chats for a bundle."
       parameters:
         - description: Opaque cursor for the next page.
@@ -6398,7 +6513,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `bundle:list` scope. Retrieves a paginated list of
+      description:
+        "Requires the `bundle:list` scope. Retrieves a paginated list of
         bundle price options associated with a specific bundle. The data is
         sorted by id in descending order and cannot be changed. Uses
         cursor-based pagination with default page size of 25 and maximum of 25."
@@ -6444,7 +6560,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `bundle:create` scope. Creates a new bundle price
+      description:
+        "Requires the `bundle:create` scope. Creates a new bundle price
         option associated with a specific bundle using the provided data."
   /v3/bundles/{bundle_id}/bundle-price-options/{id}:
     parameters:
@@ -6471,7 +6588,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `bundle:update` scope. Updates an existing bundle
+      description:
+        "Requires the `bundle:update` scope. Updates an existing bundle
         price option associated with a specific bundle using the provided data."
     delete:
       tags:
@@ -6490,7 +6608,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `bundle:delete` scope. Deletes a bundle price option
+      description:
+        "Requires the `bundle:delete` scope. Deletes a bundle price option
         associated with a specific bundle by its ID."
   /v3/bundles/{bundle_id}/bundle-price-options/{id}/relations:
     parameters:
@@ -6513,7 +6632,8 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description: "Requires the `bundle:read` scope. Retrieves a bundle price option
+      description:
+        "Requires the `bundle:read` scope. Retrieves a bundle price option
         along with its related entities such as associated stores and form
         displays."
   /v3/customers:
@@ -7304,7 +7424,8 @@ paths:
         - WABA
       operationId: listWabaMessages
       summary: List WABA customer messages
-      description: "Requires the `waba_account:operate` scope. Message payloads expose
+      description:
+        "Requires the `waba_account:operate` scope. Message payloads expose
         `sender_tag` and no longer expose `sender_type`."
       security:
         - bearerAuth: []
@@ -7313,7 +7434,8 @@ paths:
         - $ref: "#/components/parameters/PageSize"
         - $ref: "#/components/parameters/NextCursor"
         - $ref: "#/components/parameters/PreviousCursor"
-        - description: Primary-key ID of a WhatsApp message to center the first page
+        - description:
+            Primary-key ID of a WhatsApp message to center the first page
             around. Cannot be used with `next_cursor` or `previous_cursor`. If not
             found in this customer message list, `data` is empty.
           in: query
@@ -7335,7 +7457,8 @@ paths:
         - WABA
       operationId: sendWabaMessage
       summary: Send a WABA customer message
-      description: "Requires the `waba_account:operate` scope. Message payloads expose
+      description:
+        "Requires the `waba_account:operate` scope. Message payloads expose
         `sender_tag` and no longer expose `sender_type`."
       security:
         - bearerAuth: []
@@ -7365,7 +7488,8 @@ paths:
         - WABA
       operationId: getWabaMessage
       summary: Get a WABA customer message
-      description: "Requires the `waba_account:operate` scope. Message payloads expose
+      description:
+        "Requires the `waba_account:operate` scope. Message payloads expose
         `sender_tag` and no longer expose `sender_type`."
       security:
         - bearerAuth: []
@@ -7384,7 +7508,8 @@ paths:
         - WABA
       operationId: updateWabaMessage
       summary: Update a WABA customer message
-      description: "Requires the `waba_account:operate` scope. Message payloads expose
+      description:
+        "Requires the `waba_account:operate` scope. Message payloads expose
         `sender_tag` and no longer expose `sender_type`."
       security:
         - bearerAuth: []
@@ -7430,7 +7555,8 @@ paths:
         - WABA
       operationId: sendWabaTypingIndicator
       summary: Send a WABA typing indicator
-      description: "Requires the `waba_account:operate` scope. Sends Meta's typing
+      description:
+        "Requires the `waba_account:operate` scope. Sends Meta's typing
         indicator for an existing inbound message, which also marks that message
         as read."
       security:
@@ -7633,7 +7759,8 @@ components:
       type: apiKey
       in: header
       name: authorization
-      description: "Send `Authorization: Bearer <api_key>` for machine-authenticated
+      description:
+        "Send `Authorization: Bearer <api_key>` for machine-authenticated
         business requests. API keys are rate-limited per key."
     scalevOAuth:
       type: oauth2
@@ -7703,7 +7830,8 @@ components:
         type: string
         enum:
           - mock
-      description: Local/dev simulation override for WABA sends. When set to `mock`
+      description:
+        Local/dev simulation override for WABA sends. When set to `mock`
         outside production, Nexus records a submitted outbound message without
         sending to Meta Graph. Ignored in production.
     ProductSlug:
@@ -7971,7 +8099,7 @@ components:
             landingPageDraft:
               summary: HTML Mode draft payload
               value:
-                agent_html: "<main><h1>Launch offer</h1><a href=\"#order\">Buy now</a></main>"
+                agent_html: '<main><h1>Launch offer</h1><a href="#order">Buy now</a></main>'
                 agent_css: "main { max-width: 960px; margin: 0 auto; }"
                 agent_js: "const data = window.Scalev.data.get();"
                 agent_csp_policy:
@@ -9946,7 +10074,8 @@ components:
       additionalProperties: false
     OAuthBillingMerchantContext:
       type: object
-      description: Safe merchant-facing OAuth app billing summary returned on Volt
+      description:
+        Safe merchant-facing OAuth app billing summary returned on Volt
         transaction payloads. Platform fee, developer net, raw request/response
         bodies, headers, customer message text, and raw webhook payloads are
         intentionally excluded.
@@ -9999,7 +10128,8 @@ components:
       additionalProperties: false
     OAuthBillingCaptureContext:
       type: object
-      description: Safe OAuth app billing capture summary returned on developer-facing
+      description:
+        Safe OAuth app billing capture summary returned on developer-facing
         billing reservation, billing charge, and developer earnings ledger
         payloads. Raw request/response bodies, headers, customer message text,
         and raw webhook payloads are intentionally excluded.
@@ -10058,7 +10188,8 @@ components:
       additionalProperties: false
     OAuthBillingRefundRequest:
       type: object
-      description: Either `billing_reservation_id` or `billing_charge_id` is required.
+      description:
+        Either `billing_reservation_id` or `billing_charge_id` is required.
         If both are supplied, they must identify the same captured charge.
         Refunds are full post-capture reversals.
       required:
@@ -10184,7 +10315,7 @@ components:
           type: string
         page_size:
           type: integer
-      additionalProperties: true
+      additionalProperties: false
       description: Paginated list payload for v3.
     ApiErrorResponse:
       type: object
@@ -10852,21 +10983,39 @@ components:
           type: string
         payment_method:
           type: string
-          description: Customer checkout payment method code selected by the buyer. `no_payment` is not a valid Storefront API v3 checkout payment method.
+          description: Customer checkout payment method code selected by the buyer.
           example: bank_transfer
       additionalProperties: true
     CustomerCheckoutSummaryRequest:
       type: object
       properties:
+        location_id:
+          oneOf:
+            - type: integer
+            - type: string
+        postal_code:
+          type: string
         shipping_cost:
-          $ref: "#/components/schemas/StorefrontMoneyValue"
+          allOf:
+            - $ref: "#/components/schemas/StorefrontMoneyValue"
+          description: Optional compatibility value. Customer checkout summary recomputes the authoritative shipping cost from the selected courier service, warehouse, payment method, destination, and cart items.
         courier_service_id:
           oneOf:
             - type: integer
             - type: string
+        warehouse_unique_id:
+          type: string
+          nullable: true
+        courier_aggregator_code:
+          type: string
+          nullable: true
+        shipping_option:
+          $ref: "#/components/schemas/StorefrontSelectedShippingOption"
+        selected_shipping_option:
+          $ref: "#/components/schemas/StorefrontSelectedShippingOption"
         payment_method:
           type: string
-          description: Storefront payment method code selected by the buyer. `no_payment` is not a valid Storefront API v3 checkout payment method.
+          description: Storefront payment method code selected by the buyer.
           example: bank_transfer
       additionalProperties: true
     CustomerCheckoutConfirmRequest:
@@ -10886,7 +11035,7 @@ components:
           type: string
         payment_method:
           type: string
-          description: Customer checkout payment method code selected by the buyer. `no_payment` is not a valid Storefront API v3 checkout payment method.
+          description: Customer checkout payment method code selected by the buyer.
           example: bank_transfer
         sub_payment_method:
           type: string
@@ -10926,81 +11075,11 @@ components:
     CustomerCheckoutSummaryResponse:
       $ref: "#/components/schemas/StorefrontCheckoutSummaryResponse"
     CustomerCheckoutConfirmResponse:
-      type: object
-      required:
-        - order_id
-        - secret_slug
-        - public_order_url
-        - payment_url
-        - status
-      properties:
-        order_id:
-          type: string
-        secret_slug:
-          type: string
-        public_order_url:
-          type: string
-          format: uri
-          nullable: true
-        payment_url:
-          type: string
-          format: uri
-          nullable: true
-        status:
-          type: string
-      additionalProperties: false
+      $ref: "#/components/schemas/StorefrontCustomerFacingOrder"
     CustomerOrder:
-      type: object
-      properties:
-        id:
-          type: integer
-        order_id:
-          type: string
-        secret_slug:
-          type: string
-          nullable: true
-        status:
-          type: string
-          nullable: true
-        payment_status:
-          type: string
-          nullable: true
-        payment_method:
-          type: string
-          nullable: true
-        sub_payment_method:
-          type: string
-          nullable: true
-        currency:
-          type: string
-          nullable: true
-        product_price:
-          $ref: "#/components/schemas/StorefrontMoneyValue"
-        shipping_cost:
-          $ref: "#/components/schemas/StorefrontMoneyValue"
-        gross_revenue:
-          $ref: "#/components/schemas/StorefrontMoneyValue"
-        net_revenue:
-          $ref: "#/components/schemas/StorefrontMoneyValue"
-        created_at:
-          type: string
-          format: date-time
-          nullable: true
-        last_updated_at:
-          type: string
-          format: date-time
-          nullable: true
-        customer:
-          $ref: "#/components/schemas/CustomerProfile"
-        variants:
-          nullable: true
-          type: object
-          additionalProperties: true
-        bundle_price_options:
-          nullable: true
-          type: object
-          additionalProperties: true
-      additionalProperties: true
+      allOf:
+        - $ref: "#/components/schemas/StorefrontCustomerFacingOrder"
+      description: Customer-facing order DTO. It is a flat, buyer-safe shape derived from the existing `/order/public` response and removes business, store, operator, analytics, net revenue, platform fee, and provider internals.
     CustomerOrderListResponse:
       type: object
       required:
@@ -11460,7 +11539,7 @@ components:
       properties:
         code:
           type: string
-          description: Storefront payment method code. `no_payment` is not returned by Storefront API v3 payment-method discovery.
+          description: Storefront payment method code.
           example: bank_transfer
         label:
           type: string
@@ -11664,7 +11743,7 @@ components:
         Compatibility checkout payload for `/customers/me/cart/checkout`.
         New integrations should use `/customers/me/checkout/confirm`.
     CustomerCartCheckoutResponse:
-      $ref: "#/components/schemas/GuestCheckoutResponse"
+      $ref: "#/components/schemas/StorefrontCustomerFacingOrder"
     GuestCheckoutItem:
       type: object
       required:
@@ -11740,7 +11819,7 @@ components:
           deprecated: true
         payment_method:
           type: string
-          description: Storefront payment method code selected by the buyer. `no_payment` is not a valid Storefront API v3 checkout payment method.
+          description: Storefront payment method code selected by the buyer.
           example: bank_transfer
         sub_payment_method:
           type: string
@@ -11762,37 +11841,7 @@ components:
           nullable: true
       additionalProperties: false
     GuestCheckoutResponse:
-      type: object
-      required:
-        - order_id
-        - order_secret_slug
-        - public_order_url
-        - payment_url
-        - status
-        - payment_method
-        - created_at
-      properties:
-        order_id:
-          type: string
-        order_secret_slug:
-          type: string
-        public_order_url:
-          type: string
-          format: uri
-          nullable: true
-        payment_url:
-          type: string
-          format: uri
-          nullable: true
-        status:
-          type: string
-        payment_method:
-          type: string
-          example: bank_transfer
-        created_at:
-          type: string
-          format: date-time
-      additionalProperties: true
+      $ref: "#/components/schemas/StorefrontPublicOrder"
     StorefrontCheckoutDestination:
       type: object
       required:
@@ -11940,10 +11989,97 @@ components:
         - type: string
           nullable: true
         - type: number
-    StorefrontPublicOrderTotals:
+    StorefrontPublicOrder:
       type: object
+      required:
+        - id
+        - secret_slug
+        - public_order_url
+        - payment_url
+        - order_id
+        - status
+        - payment_status
+        - payment_method
+        - gross_revenue
+        - product_price
+        - shipping_cost
+        - pg_payment_info
+        - orderlines
       properties:
-        subtotal:
+        id:
+          type: integer
+        business:
+          type: object
+          nullable: true
+          additionalProperties: true
+        secret_slug:
+          type: string
+        public_order_url:
+          type: string
+          format: uri
+          nullable: true
+        payment_url:
+          type: string
+          format: uri
+          nullable: true
+        order_id:
+          type: string
+        status:
+          type: string
+        payment_status:
+          type: string
+          nullable: true
+        is_probably_spam:
+          type: boolean
+          nullable: true
+        mark_as_spam_by:
+          type: string
+          nullable: true
+        draft_time:
+          type: string
+          format: date-time
+          nullable: true
+        paid_time:
+          type: string
+          format: date-time
+          nullable: true
+        transfer_time:
+          type: string
+          format: date-time
+          nullable: true
+        transferproof_url:
+          type: string
+          nullable: true
+        chat_message:
+          type: string
+          nullable: true
+        customer_id:
+          type: integer
+          nullable: true
+        discount_code_id:
+          type: integer
+          nullable: true
+        discount_code_code:
+          type: string
+          nullable: true
+        handler_id:
+          type: integer
+          nullable: true
+        page:
+          type: object
+          nullable: true
+          additionalProperties: true
+        gross_revenue:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        scalev_fee:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        payment_fee:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        net_payment_revenue:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        net_revenue:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        product_price:
           $ref: "#/components/schemas/StorefrontMoneyValue"
         product_discount:
           $ref: "#/components/schemas/StorefrontMoneyValue"
@@ -11951,17 +12087,361 @@ components:
           $ref: "#/components/schemas/StorefrontMoneyValue"
         shipping_discount:
           $ref: "#/components/schemas/StorefrontMoneyValue"
-        discount_code_discount:
-          $ref: "#/components/schemas/StorefrontMoneyValue"
         other_income:
           $ref: "#/components/schemas/StorefrontMoneyValue"
         other_income_name:
           type: string
           nullable: true
-        total:
+        unique_code_discount:
           $ref: "#/components/schemas/StorefrontMoneyValue"
+        discount_code_discount:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        discount_code_applied_to:
+          type: string
+          nullable: true
+        pg_payment_info:
+          type: object
+          additionalProperties: true
+          description: >
+            Buyer-facing payment gateway payload. Manual methods such as
+            `bank_transfer` and `cod` can return an empty object. Virtual
+            account methods expose provider reference and account details under
+            the provider's `payment_method` object. QRIS responses expose QR
+            data or a QR image payload. E-wallet, card, and invoice methods may
+            expose provider actions or hosted provider URLs.
+        status_history:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        payment_status_history:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        payment_method:
+          type: string
+          example: bank_transfer
+        sub_payment_method:
+          type: string
+          nullable: true
+        epayment_provider:
+          type: string
+          nullable: true
+        payment_account_holder:
+          type: string
+          nullable: true
+        payment_account_number:
+          type: string
+          nullable: true
+        shipment_status_history:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        shipment_status:
+          type: string
+          nullable: true
+        shipment_receipt:
+          type: string
+          nullable: true
+        courier_service:
+          type: object
+          nullable: true
+          additionalProperties: true
+        variants:
+          type: object
+          additionalProperties: true
+        bundle_price_options:
+          type: object
+          additionalProperties: true
+        final_variants:
+          type: object
+          additionalProperties: true
+        orderlines:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        payment_expiration_at:
+          type: string
+          format: date-time
+          nullable: true
+        affiliate_business_id:
+          type: integer
+          nullable: true
+        affiliate_code:
+          type: string
+          nullable: true
+        affiliate_source:
+          type: string
+          nullable: true
+        store_custom_domain:
+          type: object
+          nullable: true
+          additionalProperties: true
+        store:
+          type: object
+          nullable: true
+          additionalProperties: true
+        destination_address:
+          type: object
+          nullable: true
+          additionalProperties: true
+        customer:
+          type: object
+          nullable: true
+          additionalProperties: true
+      additionalProperties: true
+    StorefrontCustomerFacingOrder:
+      type: object
+      description: Flat buyer-facing order DTO for Storefront API and customer account responses. It keeps the order identity, buyer-owned customer/address data, payment display fields, delivery status, totals including `gross_revenue`, line items, and a small compatibility subset used by the Scalev customer portal (`store.name`, `store.logo`, `store.unique_id`, store display flags, `final_variants`, `status_history`, and dropshipper display totals). It omits business/operator analytics, net revenue, platform fee, provider, CRM, affiliate, and other raw internals.
+      required:
+        - id
+        - secret_slug
+        - public_order_url
+        - payment_url
+        - order_id
+        - store
+        - customer
+        - status
+        - payment_status
+        - payment_method
+        - pg_payment_info
+        - product_price
+        - gross_revenue
+        - final_variants
+        - shipping_cost
+        - orderlines
+      properties:
+        id:
+          type: integer
+        secret_slug:
+          type: string
+        public_order_url:
+          type: string
+          format: uri
+          nullable: true
+        payment_url:
+          type: string
+          format: uri
+          nullable: true
+        order_id:
+          type: string
+        store:
+          $ref: "#/components/schemas/StorefrontCustomerFacingStore"
+        customer:
+          $ref: "#/components/schemas/StorefrontCustomerFacingCustomer"
+        status:
+          type: string
+        draft_time:
+          type: string
+          format: date-time
+          nullable: true
+        pending_time:
+          type: string
+          format: date-time
+          nullable: true
+        confirmed_time:
+          type: string
+          format: date-time
+          nullable: true
+        in_process_time:
+          type: string
+          format: date-time
+          nullable: true
+        ready_time:
+          type: string
+          format: date-time
+          nullable: true
+        shipped_time:
+          type: string
+          format: date-time
+          nullable: true
+        completed_time:
+          type: string
+          format: date-time
+          nullable: true
+        rts_time:
+          type: string
+          format: date-time
+          nullable: true
+        canceled_time:
+          type: string
+          format: date-time
+          nullable: true
+        closed_time:
+          type: string
+          format: date-time
+          nullable: true
+        unpaid_time:
+          type: string
+          format: date-time
+          nullable: true
+        paid_time:
+          type: string
+          format: date-time
+          nullable: true
+        transfer_time:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        status_history:
+          type: array
+          description: Buyer-visible order status timeline retained for Scalev customer portal compatibility.
+          items:
+            type: object
+            additionalProperties: true
+        payment_status:
+          type: string
+          nullable: true
+        payment_method:
+          type: string
+          example: bank_transfer
+        sub_payment_method:
+          type: string
+          nullable: true
+        payment_account_holder:
+          type: string
+          nullable: true
+        payment_account_number:
+          type: string
+          nullable: true
+        transferproof_url:
+          type: string
+          nullable: true
+        pg_payment_info:
+          type: object
+          additionalProperties: true
+        total_quantity:
+          type: integer
+          nullable: true
+        unique_code_discount:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        discount_code_discount:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        discount_code_code:
+          type: string
+          nullable: true
+        discount_code_applied_to:
+          type: string
+          nullable: true
+        product_price:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        product_discount:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        other_income_name:
+          type: string
+          nullable: true
+        other_income:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        gross_revenue:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        gross_revenue_for_dropshipper:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        discount_rate:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        shipping_cost:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        shipping_discount:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        destination_address:
+          $ref: "#/components/schemas/StorefrontCustomerFacingDestinationAddress"
+        final_variants:
+          type: object
+          description: Product-name to quantity map retained for Scalev customer portal order list compatibility. Use `orderlines` for new integrations.
+          additionalProperties:
+            type: integer
+        product_weight:
+          type: integer
+          nullable: true
+        total_weight:
+          type: integer
+          nullable: true
+        is_dropshipping:
+          type: boolean
+          nullable: true
+        courier_service:
+          $ref: "#/components/schemas/StorefrontCustomerFacingCourierService"
+        shipment_receipt:
+          type: string
+          nullable: true
+        shipment_status:
+          type: string
+          nullable: true
+        awb_status:
+          type: string
+          nullable: true
+        shipment_status_history:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        orderlines:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorefrontCustomerFacingOrderLine"
+        notes:
+          type: string
+          nullable: true
       additionalProperties: false
-    StorefrontPublicFinancialEntity:
+    StorefrontCustomerFacingStore:
+      type: object
+      nullable: true
+      properties:
+        name:
+          type: string
+          nullable: true
+        logo:
+          type: string
+          format: uri
+          nullable: true
+        unique_id:
+          type: string
+          nullable: true
+        payment_accounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorefrontCustomerFacingPaymentAccount"
+        days_of_payment_processing:
+          type: integer
+          nullable: true
+        is_show_whatsapp:
+          type: boolean
+          nullable: true
+        is_show_download_invoice:
+          type: boolean
+          nullable: true
+      additionalProperties: false
+    StorefrontCustomerFacingPaymentAccount:
+      type: object
+      properties:
+        id:
+          type: integer
+        unique_id:
+          type: string
+          nullable: true
+        method:
+          type: string
+          nullable: true
+        account_holder:
+          type: string
+          nullable: true
+        account_number:
+          type: string
+          nullable: true
+        financial_entity:
+          $ref: "#/components/schemas/StorefrontCustomerFacingFinancialEntity"
+      additionalProperties: false
+    StorefrontCustomerFacingFinancialEntity:
       type: object
       nullable: true
       properties:
@@ -11979,52 +12459,46 @@ components:
         platform:
           type: string
           nullable: true
-      additionalProperties: false
-    StorefrontPublicPayment:
-      type: object
-      properties:
-        method:
-          type: string
-          example: bank_transfer
-        sub_method:
+        duitku_code:
           type: string
           nullable: true
-        provider:
+        xendit_code:
           type: string
+          nullable: true
+      additionalProperties: false
+    StorefrontCustomerFacingCustomer:
+      type: object
+      nullable: true
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        confirmed_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_updated_at:
+          type: string
+          format: date-time
           nullable: true
         status:
           type: string
           nullable: true
-        account_holder:
-          type: string
-          nullable: true
-        account_number:
-          type: string
-          nullable: true
-        financial_entity:
-          $ref: "#/components/schemas/StorefrontPublicFinancialEntity"
-        pg_payment_info:
-          type: object
-          additionalProperties: true
-          description: >
-            Buyer-facing payment gateway payload. Manual methods such as
-            `bank_transfer` and `cod` can return an empty object while the
-            public order contains the buyer-facing instructions to render.
-            Virtual account methods expose provider reference and account
-            details under the provider's `payment_method` object. QRIS
-            responses expose QR data or a QR image payload. E-wallet, card, and
-            invoice methods may expose provider actions or hosted provider URLs.
-            Storefronts should render their own payment page from these fields
-            and use `payment_url` only as a hosted fallback.
-        transferproof_url:
-          type: string
-          nullable: true
-        payment_expiration_at:
-          type: string
-          format: date-time
-          nullable: true
       additionalProperties: false
-    StorefrontPublicAddress:
+    StorefrontCustomerFacingDestinationAddress:
       type: object
       nullable: true
       properties:
@@ -12036,14 +12510,13 @@ components:
         phone:
           type: string
           nullable: true
-          description: Masked phone number.
         location:
-          type: integer
-          nullable: true
+          oneOf:
+            - type: integer
+            - type: string
         address:
           type: string
           nullable: true
-          description: Masked street address.
         subdistrict:
           type: string
           nullable: true
@@ -12057,41 +12530,56 @@ components:
           type: string
           nullable: true
       additionalProperties: false
-    StorefrontPublicShipment:
+    StorefrontCustomerFacingCourierService:
       type: object
+      nullable: true
       properties:
-        status:
+        id:
+          type: integer
+        name:
           type: string
           nullable: true
-        receipt:
+        code:
           type: string
           nullable: true
-        courier_service:
-          type: object
-          nullable: true
-          additionalProperties: true
-        status_history:
-          type: array
-          items:
-            type: object
-            additionalProperties: true
+        courier:
+          $ref: "#/components/schemas/StorefrontCustomerFacingCourier"
       additionalProperties: false
-    StorefrontPublicOrderLine:
+    StorefrontCustomerFacingCourier:
+      type: object
+      nullable: true
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          nullable: true
+        code:
+          type: string
+          nullable: true
+      additionalProperties: false
+    StorefrontCustomerFacingOrderLine:
       type: object
       properties:
         id:
           type: integer
-        variant_id:
+        quantity:
+          type: integer
+        variant:
           type: integer
           nullable: true
         product_name:
           type: string
           nullable: true
-        quantity:
-          type: integer
         item_type:
           type: string
           nullable: true
+        is_file_enabled:
+          type: boolean
+        is_lms_enabled:
+          type: boolean
+        is_license_enabled:
+          type: boolean
         currency:
           type: string
           nullable: true
@@ -12126,69 +12614,6 @@ components:
           $ref: "#/components/schemas/StorefrontMoneyValue"
         weight:
           type: integer
-          nullable: true
-      additionalProperties: false
-    StorefrontPublicOrder:
-      type: object
-      required:
-        - id
-        - secret_slug
-        - order_id
-        - status
-        - payment_status
-        - payment_method
-        - currency
-        - totals
-        - payment
-        - orderlines
-        - created_at
-      properties:
-        id:
-          type: integer
-        secret_slug:
-          type: string
-        public_order_url:
-          type: string
-          format: uri
-          nullable: true
-        payment_url:
-          type: string
-          format: uri
-          nullable: true
-        order_id:
-          type: string
-        status:
-          type: string
-        payment_status:
-          type: string
-          nullable: true
-        payment_method:
-          type: string
-          example: bank_transfer
-        sub_payment_method:
-          type: string
-          nullable: true
-        currency:
-          type: string
-          example: IDR
-        totals:
-          $ref: "#/components/schemas/StorefrontPublicOrderTotals"
-        payment:
-          $ref: "#/components/schemas/StorefrontPublicPayment"
-        shipping_address:
-          $ref: "#/components/schemas/StorefrontPublicAddress"
-        shipment:
-          $ref: "#/components/schemas/StorefrontPublicShipment"
-        orderlines:
-          type: array
-          items:
-            $ref: "#/components/schemas/StorefrontPublicOrderLine"
-        created_at:
-          type: string
-          format: date-time
-        last_updated_at:
-          type: string
-          format: date-time
           nullable: true
       additionalProperties: false
     StorefrontPublicOrderUpdateRequest:
@@ -12260,7 +12685,7 @@ components:
           type: array
           items:
             type: string
-            description: Customer checkout payment method code. `no_payment` is not returned by Storefront API v3 customer checkout payment-method discovery.
+            description: Customer checkout payment method code.
         is_minimum_revenue:
           type: boolean
         minimum_revenue:
@@ -12327,7 +12752,7 @@ components:
           nullable: true
         payment_method:
           type: string
-          description: Storefront payment method code selected by the buyer. `no_payment` is not a valid Storefront API v3 checkout payment method.
+          description: Storefront payment method code selected by the buyer.
           example: bank_transfer
         net_product_price:
           $ref: "#/components/schemas/StorefrontMoneyValue"
@@ -12549,7 +12974,8 @@ components:
           description: Indicates if the subscription is currently active.
           type: boolean
         is_cancel_at_period_end:
-          description: Indicates if the subscription will cancel at the end of the current
+          description:
+            Indicates if the subscription will cancel at the end of the current
             period.
           type: boolean
         status:
@@ -12594,7 +13020,8 @@ components:
         subscription_items:
           description: List of subscription items associated with the subscription.
           items:
-            description: A simplified representation of a subscription item for listing
+            description:
+              A simplified representation of a subscription item for listing
               purposes.
             properties:
               id:
@@ -12780,11 +13207,13 @@ components:
           description: Indicates if the subscription is currently active.
           type: boolean
         is_cancel_at_period_end:
-          description: Indicates if the subscription will cancel at the end of the current
+          description:
+            Indicates if the subscription will cancel at the end of the current
             period.
           type: boolean
         latest_renewal_invoice:
-          description: The latest renewal invoice for the subscription. Contains details
+          description:
+            The latest renewal invoice for the subscription. Contains details
             about the most recent renewal action.
           nullable: true
           properties:
@@ -12835,7 +13264,8 @@ components:
           title: RenewalInvoice
           type: object
         order_id:
-          description: The order ID associated with the subscription creation. Null for
+          description:
+            The order ID associated with the subscription creation. Null for
             free trial subscriptions.
           nullable: true
           type: integer
@@ -12881,7 +13311,8 @@ components:
         subscription_items:
           description: List of subscription items associated with the subscription.
           items:
-            description: A subscription item representing a purchasable item within a
+            description:
+              A subscription item representing a purchasable item within a
               subscription.
             properties:
               activated_at:
@@ -12914,7 +13345,8 @@ components:
                 format: date-time
                 type: string
               is_cancel_at_period_end:
-                description: Indicates if the item will be canceled at the end of the current
+                description:
+                  Indicates if the item will be canceled at the end of the current
                   period.
                 type: boolean
               license_id:
@@ -12931,7 +13363,8 @@ components:
                 nullable: true
                 type: object
                 oneOf:
-                  - description: A subscription action represents an action performed on a
+                  - description:
+                      A subscription action represents an action performed on a
                       subscription.
                     properties:
                       action_type:
@@ -12977,7 +13410,8 @@ components:
                         format: date-time
                         type: string
                       next_variant_config:
-                        description: The configuration for the next variant after the action is
+                        description:
+                          The configuration for the next variant after the action is
                           executed.
                         nullable: true
                         type: object
@@ -14266,7 +14700,8 @@ components:
           nullable: true
           type: string
         public_order_url:
-          description: Public order URL built from metadata.custom_domain_full_url and
+          description:
+            Public order URL built from metadata.custom_domain_full_url and
             secret_slug.
           nullable: true
           type: string
@@ -15836,7 +16271,8 @@ components:
           description: Secret slug of the order
           type: string
         public_order_url:
-          description: Public order URL built from metadata.custom_domain_full_url and
+          description:
+            Public order URL built from metadata.custom_domain_full_url and
             secret_slug.
           nullable: true
           type: string
@@ -16209,7 +16645,8 @@ components:
           description: Order ID in string format
           type: string
         public_order_url:
-          description: Public order URL built from metadata.custom_domain_full_url and
+          description:
+            Public order URL built from metadata.custom_domain_full_url and
             secret_slug.
           nullable: true
           type: string
@@ -16316,7 +16753,8 @@ components:
           description: Order ID in string format
           type: string
         public_order_url:
-          description: Public order URL built from metadata.custom_domain_full_url and
+          description:
+            Public order URL built from metadata.custom_domain_full_url and
             secret_slug.
           nullable: true
           type: string
@@ -16396,7 +16834,8 @@ components:
           description: Order ID in string format
           type: string
         public_order_url:
-          description: Public order URL built from metadata.custom_domain_full_url and
+          description:
+            Public order URL built from metadata.custom_domain_full_url and
             secret_slug.
           nullable: true
           type: string
@@ -16470,7 +16909,8 @@ components:
                 description: Order ID in string format
                 type: string
               public_order_url:
-                description: Public order URL built from metadata.custom_domain_full_url and
+                description:
+                  Public order URL built from metadata.custom_domain_full_url and
                   secret_slug.
                 nullable: true
                 type: string
@@ -16528,7 +16968,8 @@ components:
         successes:
           properties:
             ORDER_ID:
-              description: Message or shipment receipt or tracking ID for the order with this
+              description:
+                Message or shipment receipt or tracking ID for the order with this
                 ID
               type: string
           type: object
@@ -16805,7 +17246,8 @@ components:
         order_id:
           type: string
         public_order_url:
-          description: Public order URL built from metadata.custom_domain_full_url and
+          description:
+            Public order URL built from metadata.custom_domain_full_url and
             secret_slug.
           nullable: true
           type: string
@@ -16880,7 +17322,8 @@ components:
           description: Order ID in string format
           type: string
         public_order_url:
-          description: Public order URL built from metadata.custom_domain_full_url and
+          description:
+            Public order URL built from metadata.custom_domain_full_url and
             secret_slug.
           nullable: true
           type: string
@@ -17026,7 +17469,8 @@ components:
           description: Order primary key
           type: integer
         public_order_url:
-          description: Public order URL built from metadata.custom_domain_full_url and
+          description:
+            Public order URL built from metadata.custom_domain_full_url and
             secret_slug.
           nullable: true
           type: string
@@ -17335,7 +17779,8 @@ components:
           title: UserSimple
           type: object
         custom_domains:
-          description: List of custom domains from owned stores (where store.business_id
+          description:
+            List of custom domains from owned stores (where store.business_id
             == product.business_id)
           items:
             properties:
@@ -17447,7 +17892,8 @@ components:
           description: Name of the third product option
           type: string
         product_partners:
-          description: List of product partners. Only included for partner products (where
+          description:
+            List of product partners. Only included for partner products (where
             product.business_id != current business). Returns null for owned
             products.
           items:
@@ -17469,7 +17915,8 @@ components:
                   type: object
                 type: array
               affiliate_pro_links:
-                description: Affiliate Pro links for partners (product + checkout, includes
+                description:
+                  Affiliate Pro links for partners (product + checkout, includes
                   ap=<store_short_unique_id>)
                 items:
                   properties:
@@ -18375,7 +18822,8 @@ components:
             type: string
           type: array
         is_owned_by_store:
-          description: If the request is made including `for_store_id` param, it shows
+          description:
+            If the request is made including `for_store_id` param, it shows
             `is_owned_by_store` field in the response, indicating if the product
             is included in the store.
           type: boolean
@@ -19076,7 +19524,8 @@ components:
             type: object
           type: array
         affiliate_pro_links:
-          description: Affiliate Pro links for partners (product + checkout, includes
+          description:
+            Affiliate Pro links for partners (product + checkout, includes
             ap=<store_short_unique_id>)
           items:
             properties:
