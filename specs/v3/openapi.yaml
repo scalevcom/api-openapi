@@ -1260,8 +1260,10 @@ paths:
       description: >
         Public storefront endpoint. When called from a browser origin that is
         registered in the store's Storefront API allowed origins, the reset
-        email link uses that origin. Calls without an `Origin` header fall back
-        to the hosted storefront custom domain.
+        email link uses that origin as
+        `http(s)://<allowed-storefront-host>/reset-password?token=<reset-token>`.
+        Calls without an `Origin` header fall back to the hosted storefront
+        custom domain and use the same `/reset-password?token=...` path.
       parameters:
         - $ref: "#/components/parameters/StoreId"
         - $ref: "#/components/parameters/StorefrontPublicApiKey"
@@ -10120,10 +10122,11 @@ components:
     ForgetPasswordRequest:
       type: object
       description: >
-        Starts a customer password reset. Browser calls should rely on the
-        registered `Origin` header for reset-link hostname selection; the API
-        falls back to the hosted storefront custom domain when `Origin` is not
-        present.
+        Starts a customer password reset. Storefront API reset email links use
+        `http(s)://<allowed-storefront-host>/reset-password?token=<reset-token>`.
+        Browser calls should rely on the registered `Origin` header for
+        reset-link hostname selection; the API falls back to the hosted
+        storefront custom domain when `Origin` is not present.
       required:
         - email
       properties:
