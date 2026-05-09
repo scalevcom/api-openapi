@@ -654,47 +654,22 @@ paths:
     parameters:
       - $ref: "#/components/parameters/StoreId"
       - $ref: "#/components/parameters/StorefrontPublicApiKey"
-    get:
+      - $ref: "#/components/parameters/StorefrontScalevGuestToken"
+    post:
       tags:
         - Discounts
       operationId: checkDiscountCode
       summary: Check discount code validity
       description: >
-        Public storefront endpoint. Unknown or ineligible codes return a
-        validation result with `is_eligible: false`; the route itself only
-        returns `404` when the store cannot be resolved.
-      parameters:
-        - description: Discount code to validate. `discount_code` is accepted as a compatibility alias.
-          in: query
-          name: code
-          required: true
-          schema:
-            type: string
-        - description: Optional payment method context used by eligibility rules.
-          in: query
-          name: payment_method
-          required: false
-          schema:
-            type: string
-            example: bank_transfer
-        - description: Optional product subtotal context.
-          in: query
-          name: net_product_price
-          required: false
-          schema:
-            $ref: "#/components/schemas/StorefrontMoneyValue"
-        - description: Optional gross revenue context.
-          in: query
-          name: gross_revenue
-          required: false
-          schema:
-            $ref: "#/components/schemas/StorefrontMoneyValue"
-        - description: Optional shipping cost context.
-          in: query
-          name: shipping_cost
-          required: false
-          schema:
-            $ref: "#/components/schemas/StorefrontMoneyValue"
+        Public storefront endpoint. Validate discount eligibility against the
+        checkout context before order creation. If `X-Scalev-Guest-Token`
+        resolves a non-empty guest cart, the cart is used as the item source.
+        Otherwise the request may provide direct `items[]` with variant IDs.
+        Unknown or ineligible codes return a validation result with
+        `is_eligible: false`; the route itself only returns `404` when the
+        store cannot be resolved.
+      requestBody:
+        $ref: "#/components/requestBodies/StorefrontDiscountCodeCheckRequestBody"
       responses:
         "200":
           description: Discount code validation result
@@ -8111,6 +8086,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/CustomerCourseProgressUpdateRequest"
+    StorefrontDiscountCodeCheckRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StorefrontDiscountCodeCheckRequest"
     JwtRefreshRequestBody:
       required: true
       content:
@@ -12308,6 +12289,46 @@ components:
         discount_code_discount:
           $ref: "#/components/schemas/StorefrontMoneyValue"
       additionalProperties: false
+    StorefrontDiscountCodeCheckRequest:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          description: Discount code to validate.
+          example: SAVE10
+        items:
+          type: array
+          description: >
+            Optional direct item source. Used only when `X-Scalev-Guest-Token`
+            does not resolve a non-empty guest cart. Direct items support
+            variants only; bundle support comes through the guest cart.
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/GuestCheckoutItem"
+        destination:
+          $ref: "#/components/schemas/StorefrontCheckoutDestination"
+        courier_service_id:
+          oneOf:
+            - type: integer
+            - type: string
+        warehouse_unique_id:
+          type: string
+        courier_aggregator_code:
+          type: string
+          nullable: true
+        payment_method:
+          type: string
+          example: bank_transfer
+        net_product_price:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        gross_revenue:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        shipping_cost:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+      additionalProperties: true
     StorefrontPublicApiKey:
       type: object
       required:
