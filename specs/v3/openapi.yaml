@@ -16,9 +16,11 @@ info:
 
     require the `X-Scalev-Storefront-Api-Key` header.
 
-    Machine-authenticated business requests are rate-limited per API key or OAuth
-    installation. Rate-limit metadata is returned in `X-Ratelimit-*` headers,
-    and `429` responses may be plain text.
+    Storefront API requests made with `X-Scalev-Storefront-Api-Key` or
+    `X-Scalev-Guest-Token` are browser client requests and use the direct
+    client/IP rate limiter. Machine-authenticated business requests are
+    rate-limited per API key or OAuth installation. Rate-limit metadata is
+    returned in `X-Ratelimit-*` headers, and `429` responses may be plain text.
   license:
     name: Proprietary
 servers:
@@ -1177,7 +1179,11 @@ paths:
         - Customer Auth
       operationId: sendCustomerOtp
       summary: Send a customer login OTP or return direct login tokens
-      description: "Public storefront endpoint."
+      description: >
+        Public storefront endpoint. If the store does not require customer OTP,
+        successful login returns customer JWT tokens. If the store requires OTP,
+        a successful credential check sends the one-time code and returns `204`
+        with no body.
       parameters:
         - $ref: "#/components/parameters/StoreId"
         - $ref: "#/components/parameters/StorefrontPublicApiKey"
@@ -1185,7 +1191,7 @@ paths:
         $ref: "#/components/requestBodies/CustomerOtpSendRequestBody"
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          $ref: "#/components/responses/CustomerAuthTokenResponse"
         "204":
           $ref: "#/components/responses/NoContentResponse"
         "400":
@@ -1198,7 +1204,7 @@ paths:
         - Customer Auth
       operationId: verifyCustomerOtp
       summary: Verify a customer login OTP
-      description: "Public storefront endpoint."
+      description: "Public storefront endpoint. A successful OTP verification returns customer JWT tokens."
       parameters:
         - $ref: "#/components/parameters/StoreId"
         - $ref: "#/components/parameters/StorefrontPublicApiKey"
@@ -1206,7 +1212,7 @@ paths:
         $ref: "#/components/requestBodies/CustomerOtpVerifyRequestBody"
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          $ref: "#/components/responses/CustomerAuthTokenResponse"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
         "401":
@@ -1217,7 +1223,7 @@ paths:
         - Customer Auth
       operationId: refreshCustomerJwt
       summary: Refresh a customer JWT
-      description: "Public storefront endpoint."
+      description: "Public storefront endpoint. Refreshes a customer JWT issued by storefront customer auth."
       parameters:
         - $ref: "#/components/parameters/StoreId"
         - $ref: "#/components/parameters/StorefrontPublicApiKey"
@@ -1225,7 +1231,7 @@ paths:
         $ref: "#/components/requestBodies/JwtRefreshRequestBody"
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          $ref: "#/components/responses/CustomerAuthTokenResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
   /v3/stores/{store_id}/public/auth/jwt/blacklist:
@@ -1251,7 +1257,11 @@ paths:
         - Customer Auth
       operationId: startCustomerPasswordReset
       summary: Start a customer password reset flow
-      description: "Public storefront endpoint."
+      description: >
+        Public storefront endpoint. When called from a browser origin that is
+        registered in the store's Storefront API allowed origins, the reset
+        email link uses that origin. Calls without an `Origin` header fall back
+        to the hosted storefront custom domain.
       parameters:
         - $ref: "#/components/parameters/StoreId"
         - $ref: "#/components/parameters/StorefrontPublicApiKey"
@@ -8149,6 +8159,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/RawObjectResponseBody"
+    CustomerAuthTokenResponse:
+      description: Customer JWT tokens for a successful storefront customer login, OTP verification, or refresh.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CustomerAuthTokenResponseBody"
     WabaAccountResponse:
       description: WABA account
       content:
@@ -8206,7 +8222,7 @@ components:
           schema:
             $ref: "#/components/schemas/ApiErrorResponse"
     TooManyRequestsResponse:
-      description: Too Many Requests. Machine-authenticated requests are rate-limited per API key or OAuth installation. Rate-limit responses may be plain text instead of the normal JSON error shape.
+      description: Too Many Requests. Storefront public requests using `X-Scalev-Storefront-Api-Key` or `X-Scalev-Guest-Token` are rate-limited as direct client/browser requests. Machine-authenticated business requests are rate-limited per API key or OAuth installation. Rate-limit responses may be plain text instead of the normal JSON error shape.
       headers:
         X-Ratelimit-Limit:
           description: Request limit for the bucket that applied to this response.
@@ -10103,6 +10119,11 @@ components:
       additionalProperties: true
     ForgetPasswordRequest:
       type: object
+      description: >
+        Starts a customer password reset. Browser calls should rely on the
+        registered `Origin` header for reset-link hostname selection; the API
+        falls back to the hosted storefront custom domain when `Origin` is not
+        present.
       required:
         - email
       properties:
@@ -10137,6 +10158,25 @@ components:
           enum:
             - customer
             - owner
+      additionalProperties: true
+    CustomerAuthTokenResponseBody:
+      type: object
+      required:
+        - access
+        - refresh
+      properties:
+        access:
+          type: string
+          description: >
+            Customer access JWT. Send it as `Authorization: Bearer <token>` to
+            `/v3/stores/{store_id}/customers/me/*`.
+        refresh:
+          type: string
+          description: Refresh token for `POST /v3/stores/{store_id}/public/auth/jwt/refresh`.
+        store_unique_id:
+          type: string
+          nullable: true
+          description: Public store unique ID returned by some OTP verification responses.
       additionalProperties: true
     CustomerOtpVerifyRequest:
       type: object
@@ -10801,7 +10841,15 @@ components:
         pg_payment_info:
           type: object
           additionalProperties: true
-          description: Buyer-facing payment gateway payload. Empty for manual methods such as `bank_transfer`.
+          description: >
+            Buyer-facing payment gateway payload. Manual methods such as
+            `bank_transfer` and `cod` return an empty object and rely on
+            `payment_url` or public order payment instructions. Virtual account
+            methods expose provider reference and account details under the
+            provider's `payment_method` object. QRIS responses expose QR data or
+            a QR image payload. E-wallet, card, and invoice methods may expose
+            provider actions while the browser should primarily use
+            `payment_url` when a redirect or hosted payment page is required.
         transferproof_url:
           type: string
           nullable: true
@@ -15731,18 +15779,32 @@ components:
         pg_payment_info:
           type: object
           additionalProperties: true
-          description: Payment gateway payload. Empty for manual methods such as `bank_transfer`.
+          description: >
+            Payment gateway payload. Manual methods such as `bank_transfer` and
+            `cod` return an empty object and rely on `payment_url` or public
+            order payment instructions. Virtual account methods expose provider
+            reference and account details under the provider's `payment_method`
+            object. QRIS responses expose QR data or a QR image payload.
+            E-wallet, card, and invoice methods may expose provider actions
+            while the browser should primarily use `payment_url` when a redirect
+            or hosted payment page is required.
         public_order_url:
           type: string
           format: uri
           nullable: true
+          description: Buyer-facing public order status URL.
         payment_url:
           type: string
           format: uri
           nullable: true
+          description: Buyer-facing payment or instruction URL. Redirect or open this URL for hosted payment methods.
         payment_method:
           type: string
           example: bank_transfer
+        sub_payment_method:
+          type: string
+          nullable: true
+          description: Provider channel such as a virtual-account bank code when applicable.
       additionalProperties: true
     UpdateOrderCustomerRequest:
       properties:
