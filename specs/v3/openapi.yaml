@@ -111,11 +111,11 @@ paths:
       description: "Public storefront endpoint. Counts products visible in the storefront catalog."
       responses:
         "200":
-          description: Public storefront order
+          description: Storefront product count
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StorefrontPublicOrder"
+                $ref: "#/components/schemas/StorefrontProductCountResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
   /v3/stores/{store_id}/public/products/{slug}:
@@ -131,11 +131,11 @@ paths:
       description: "Public storefront endpoint. Fetches a store-scoped product by slug; products hidden from storefront listing can still be fetched directly."
       responses:
         "200":
-          description: Public storefront order
+          description: Storefront product detail
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StorefrontPublicOrder"
+                $ref: "#/components/schemas/StorefrontProductDetail"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
   /v3/stores/{store_id}/public/categories:
@@ -1221,7 +1221,12 @@ paths:
         - Customer Auth
       operationId: refreshCustomerJwt
       summary: Refresh a customer JWT
-      description: "Public storefront endpoint. Refreshes a customer JWT issued by storefront customer auth."
+      description: >
+        Public storefront endpoint. Refreshes a customer JWT issued by
+        storefront customer auth. Refresh tokens are single-use and rotate on
+        every successful refresh; store the returned `refresh` value and
+        discard the previous one. Reusing an already-rotated refresh token
+        revokes the refresh-token family.
       parameters:
         - $ref: "#/components/parameters/StoreId"
         - $ref: "#/components/parameters/StorefrontPublicApiKey"
@@ -1238,7 +1243,10 @@ paths:
         - Customer Auth
       operationId: blacklistCustomerJwt
       summary: Blacklist customer JWTs
-      description: "Public storefront endpoint."
+      description: >
+        Public storefront endpoint. Revokes the supplied customer tokens. When
+        a tracked refresh token is supplied, the refresh-token family is
+        revoked so later refresh attempts fail.
       parameters:
         - $ref: "#/components/parameters/StoreId"
         - $ref: "#/components/parameters/StorefrontPublicApiKey"
@@ -1278,7 +1286,11 @@ paths:
         - Customer Auth
       operationId: saveCustomerPassword
       summary: Save a new customer password from a reset token
-      description: "Public storefront endpoint."
+      description: >
+        Public storefront endpoint. Saves a new customer password with the
+        reset token from `/reset-password?token=...`. Storefronts should read
+        this token from the URL; customers should not be asked to copy it
+        manually.
       parameters:
         - $ref: "#/components/parameters/StoreId"
         - $ref: "#/components/parameters/StorefrontPublicApiKey"
@@ -10183,6 +10195,9 @@ components:
       required:
         - access
         - refresh
+        - token_type
+        - expires_in
+        - refresh_expires_in
       properties:
         access:
           type: string
@@ -10192,6 +10207,19 @@ components:
         refresh:
           type: string
           description: Refresh token for `POST /v3/stores/{store_id}/public/auth/jwt/refresh`.
+        token_type:
+          type: string
+          enum:
+            - Bearer
+          description: Token type to use in the `Authorization` header.
+        expires_in:
+          type: integer
+          description: Access token lifetime in seconds.
+          example: 900
+        refresh_expires_in:
+          type: integer
+          description: Refresh token lifetime in seconds. Refresh tokens rotate on every refresh and are single-use.
+          example: 2592000
         store_unique_id:
           type: string
           nullable: true
@@ -10221,6 +10249,7 @@ components:
       properties:
         refresh:
           type: string
+          description: Current customer refresh token. Refresh tokens are single-use; store the new `refresh` returned by this endpoint and discard the previous one.
       additionalProperties: true
     JwtBlacklistRequest:
       type: object
@@ -10229,6 +10258,7 @@ components:
       properties:
         tokens:
           type: array
+          description: Customer access and refresh tokens to revoke. When a tracked refresh token is supplied, the refresh token family is revoked.
           items:
             type: string
       additionalProperties: true
@@ -10439,6 +10469,99 @@ components:
           format: date-time
           nullable: true
       additionalProperties: true
+    StorefrontProductCountResponse:
+      type: object
+      required:
+        - total
+      properties:
+        total:
+          type: integer
+          minimum: 0
+      additionalProperties: false
+    StorefrontVariant:
+      type: object
+      properties:
+        id:
+          type: integer
+        uuid:
+          type: string
+          nullable: true
+        unique_id:
+          type: string
+          nullable: true
+        sku:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        fullname:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        rich_description:
+          type: string
+          nullable: true
+        option1_value:
+          type: string
+          nullable: true
+        option2_value:
+          type: string
+          nullable: true
+        option3_value:
+          type: string
+          nullable: true
+        item_type:
+          type: string
+        currency:
+          type: string
+          nullable: true
+        price:
+          oneOf:
+            - type: string
+            - type: number
+        pricing_type:
+          type: string
+          nullable: true
+        interval:
+          type: string
+          nullable: true
+        interval_count:
+          type: integer
+          nullable: true
+        images:
+          type: array
+          items:
+            type: string
+        is_inventory:
+          type: boolean
+          nullable: true
+        is_active:
+          type: boolean
+          nullable: true
+        weight:
+          type: integer
+          nullable: true
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+      additionalProperties: true
+    StorefrontProductDetail:
+      allOf:
+        - $ref: "#/components/schemas/StorefrontProductCard"
+        - type: object
+          properties:
+            rich_description:
+              type: string
+              nullable: true
+            variants:
+              type: array
+              items:
+                $ref: "#/components/schemas/StorefrontVariant"
+          additionalProperties: true
     StorefrontProductListResponse:
       type: object
       required:
