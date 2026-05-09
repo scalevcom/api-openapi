@@ -10852,6 +10852,7 @@ components:
           type: string
         payment_method:
           type: string
+          description: Customer checkout payment method code selected by the buyer. `no_payment` is not a valid Storefront API v3 checkout payment method.
           example: bank_transfer
       additionalProperties: true
     CustomerCheckoutSummaryRequest:
@@ -10865,6 +10866,7 @@ components:
             - type: string
         payment_method:
           type: string
+          description: Storefront payment method code selected by the buyer. `no_payment` is not a valid Storefront API v3 checkout payment method.
           example: bank_transfer
       additionalProperties: true
     CustomerCheckoutConfirmRequest:
@@ -10884,6 +10886,7 @@ components:
           type: string
         payment_method:
           type: string
+          description: Customer checkout payment method code selected by the buyer. `no_payment` is not a valid Storefront API v3 checkout payment method.
           example: bank_transfer
         sub_payment_method:
           type: string
@@ -11457,6 +11460,7 @@ components:
       properties:
         code:
           type: string
+          description: Storefront payment method code. `no_payment` is not returned by Storefront API v3 payment-method discovery.
           example: bank_transfer
         label:
           type: string
@@ -11736,6 +11740,7 @@ components:
           deprecated: true
         payment_method:
           type: string
+          description: Storefront payment method code selected by the buyer. `no_payment` is not a valid Storefront API v3 checkout payment method.
           example: bank_transfer
         sub_payment_method:
           type: string
@@ -12255,6 +12260,7 @@ components:
           type: array
           items:
             type: string
+            description: Customer checkout payment method code. `no_payment` is not returned by Storefront API v3 customer checkout payment-method discovery.
         is_minimum_revenue:
           type: boolean
         minimum_revenue:
@@ -12321,6 +12327,7 @@ components:
           nullable: true
         payment_method:
           type: string
+          description: Storefront payment method code selected by the buyer. `no_payment` is not a valid Storefront API v3 checkout payment method.
           example: bank_transfer
         net_product_price:
           $ref: "#/components/schemas/StorefrontMoneyValue"
