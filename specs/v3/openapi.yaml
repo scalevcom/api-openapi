@@ -169,7 +169,7 @@ paths:
         - Storefront
       operationId: listStorefrontPaymentMethods
       summary: List storefront payment methods
-      description: Public storefront endpoint. Lists enabled guest-checkout payment methods for the store.
+      description: Public storefront endpoint. Lists enabled public checkout payment methods for the store.
       responses:
         "200":
           description: Enabled payment methods
@@ -510,7 +510,7 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-  /v3/stores/{store_id}/public/guest-checkout:
+  /v3/stores/{store_id}/public/checkout:
     parameters:
       - $ref: "#/components/parameters/StoreId"
       - $ref: "#/components/parameters/StorefrontPublicApiKey"
@@ -518,14 +518,19 @@ paths:
     post:
       tags:
         - Storefront
-      operationId: createGuestCheckout
-      summary: Checkout a storefront cart as a guest
-      description: "Public storefront endpoint. Direct checkout items are store-scoped and not blocked by storefront listing visibility."
+      operationId: createPublicCheckout
+      summary: Create a public checkout order
+      description: >
+        Public storefront endpoint. Create an order from direct `items`, from
+        the guest cart referenced by `X-Scalev-Guest-Token`, or from direct
+        `items` while clearing the referenced guest cart after successful order
+        creation. Direct checkout items are store-scoped and not blocked by
+        storefront listing visibility.
       requestBody:
-        $ref: "#/components/requestBodies/GuestCheckoutRequestBody"
+        $ref: "#/components/requestBodies/PublicCheckoutRequestBody"
       responses:
         "201":
-          description: Guest checkout order
+          description: Public checkout order
           headers:
             X-Scalev-Guest-Token:
               description: Browser-safe guest cart token when the request used a guest cart.
@@ -535,7 +540,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GuestCheckoutResponse"
+                $ref: "#/components/schemas/PublicCheckoutResponse"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
         "404":
@@ -548,13 +553,13 @@ paths:
     post:
       tags:
         - Storefront
-      operationId: listGuestCheckoutShippingOptions
+      operationId: listPublicCheckoutShippingOptions
       summary: List guest checkout shipping options
       description: >
-        Public storefront endpoint. If `X-Scalev-Guest-Token` resolves a
-        non-empty guest cart, the cart is used as the item source. Otherwise the
-        request may provide direct `items[]` with variant IDs. Digital-only carts
-        return an empty non-paginated collection.
+        Public storefront endpoint. Direct `items` use the same typed checkout
+        item union as final public checkout. When direct `items` are omitted,
+        the guest cart referenced by `X-Scalev-Guest-Token` is used as the item
+        source. Digital-only carts return an empty non-paginated collection.
       requestBody:
         $ref: "#/components/requestBodies/StorefrontCheckoutShippingOptionsRequestBody"
       responses:
@@ -576,11 +581,12 @@ paths:
     post:
       tags:
         - Storefront
-      operationId: getGuestCheckoutSummary
+      operationId: getPublicCheckoutSummary
       summary: Compute guest checkout summary
       description: >
         Public storefront endpoint. Recomputes the selected shipping cost from
-        destination, courier service, warehouse, payment method, and cart items.
+        destination, courier service, warehouse, payment method, and either
+        direct `items` or the guest cart referenced by `X-Scalev-Guest-Token`.
         Client-supplied `shipping_cost` is ignored. Digital-only carts return
         `shipping_cost: "0"`.
       requestBody:
@@ -1669,41 +1675,16 @@ paths:
                 $ref: "#/components/schemas/CustomerCartItemDeleteResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
-  /v3/stores/{store_id}/customers/me/cart/checkout:
-    post:
-      tags:
-        - Customer Cart
-      operationId: checkoutCustomerCart
-      summary: Checkout the authenticated customer cart
-      description: >
-        Customer-authenticated storefront endpoint. This route remains for
-        compatibility; new integrations should prefer
-        `/v3/stores/{store_id}/customers/me/checkout/confirm`.
-      deprecated: true
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/StoreId"
-      requestBody:
-        $ref: "#/components/requestBodies/CustomerCartCheckoutRequestBody"
-      responses:
-        "201":
-          description: Created order from authenticated customer cart
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CustomerCartCheckoutResponse"
-        "400":
-          $ref: "#/components/responses/BadRequestResponse"
-        "401":
-          $ref: "#/components/responses/UnauthorizedResponse"
   /v3/stores/{store_id}/customers/me/checkout/addresses:
     get:
       tags:
         - Customer Checkout
       operationId: listCheckoutAddresses
       summary: List saved checkout addresses
-      description: "Customer-authenticated storefront endpoint."
+      description: >
+        Customer-authenticated storefront endpoint. Direct `items` use the same
+        typed checkout item union as final customer checkout. When direct
+        `items` are omitted, `cart_id` selects the customer cart item source.
       security:
         - bearerAuth: []
       parameters:
@@ -1743,7 +1724,10 @@ paths:
         - Customer Checkout
       operationId: listCheckoutShippingOptions
       summary: Get checkout shipping options
-      description: "Customer-authenticated storefront endpoint."
+      description: >
+        Customer-authenticated storefront endpoint. Direct `items` use the same
+        typed checkout item union as final customer checkout. When direct
+        `items` are omitted, `cart_id` selects the customer cart item source.
       security:
         - bearerAuth: []
       parameters:
@@ -1757,15 +1741,22 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CustomerCheckoutShippingOptionsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
   /v3/stores/{store_id}/customers/me/checkout/summary:
     post:
       tags:
         - Customer Checkout
       operationId: getCheckoutSummary
       summary: Compute checkout summary
-      description: "Customer-authenticated storefront endpoint."
+      description: >
+        Customer-authenticated storefront endpoint. Recomputes the selected
+        shipping cost from destination, courier service, warehouse, payment
+        method, and either direct `items` or the cart referenced by `cart_id`.
       security:
         - bearerAuth: []
       parameters:
@@ -1779,32 +1770,43 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CustomerCheckoutSummaryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
-  /v3/stores/{store_id}/customers/me/checkout/confirm:
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/stores/{store_id}/customers/me/checkout:
     post:
       tags:
         - Customer Checkout
-      operationId: confirmCheckout
-      summary: Confirm checkout
-      description: "Customer-authenticated storefront endpoint."
+      operationId: createCustomerCheckout
+      summary: Create an authenticated customer checkout order
+      description: >
+        Customer-authenticated storefront endpoint. Create an order from direct
+        `items`, from a customer cart referenced by `cart_id`, or from direct
+        `items` while clearing the referenced cart after successful order
+        creation. Carts must belong to the authenticated customer and current
+        store.
       security:
         - bearerAuth: []
       parameters:
         - $ref: "#/components/parameters/StoreId"
       requestBody:
-        $ref: "#/components/requestBodies/CustomerCheckoutConfirmRequestBody"
+        $ref: "#/components/requestBodies/CustomerCheckoutRequestBody"
       responses:
         "201":
-          description: Confirmed checkout order
+          description: Customer checkout order
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CustomerCheckoutConfirmResponse"
+                $ref: "#/components/schemas/CustomerCheckoutResponse"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
   /v3/stores/{store_id}/customers/me/orders:
     get:
       tags:
@@ -7821,7 +7823,7 @@ components:
       schema:
         type: string
         format: uuid
-      description: Browser-safe guest cart token returned by the first guest-cart response when no token is sent. Send it on later guest-cart and guest-checkout calls to keep the same cart after reloads.
+      description: Browser-safe guest cart token returned by the first guest-cart response when no token is sent. Send it on later guest-cart and public checkout calls to keep the same cart after reloads.
     WabaSendMode:
       name: X-Scalev-Waba-Send-Mode
       in: header
@@ -8064,12 +8066,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/GenericJsonObject"
-    GuestCheckoutRequestBody:
+    PublicCheckoutRequestBody:
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/GuestCheckoutRequest"
+            $ref: "#/components/schemas/PublicCheckoutRequest"
     StorefrontCheckoutShippingOptionsRequestBody:
       required: false
       content:
@@ -8196,18 +8198,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/CustomerCheckoutSummaryRequest"
-    CustomerCheckoutConfirmRequestBody:
+    CustomerCheckoutRequestBody:
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/CustomerCheckoutConfirmRequest"
-    CustomerCartCheckoutRequestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/CustomerCartCheckoutRequest"
+            $ref: "#/components/schemas/CustomerCheckoutRequest"
     CustomerCourseProgressUpdateRequestBody:
       required: true
       content:
@@ -10975,6 +10971,21 @@ components:
     CustomerCheckoutShippingOptionsRequest:
       type: object
       properties:
+        items:
+          type: array
+          description: >
+            Optional direct item source. If supplied, these items are used for
+            the shipping-options calculation. Otherwise `cart_id` selects the
+            authenticated customer's active cart.
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/StorefrontCheckoutItem"
+        cart_id:
+          oneOf:
+            - type: integer
+            - type: string
+          description: Authenticated customer cart ID to use when `items` is omitted.
         location_id:
           oneOf:
             - type: integer
@@ -10989,6 +11000,21 @@ components:
     CustomerCheckoutSummaryRequest:
       type: object
       properties:
+        items:
+          type: array
+          description: >
+            Optional direct item source. If supplied, these items are used for
+            the checkout summary. Otherwise `cart_id` selects the authenticated
+            customer's active cart.
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/StorefrontCheckoutItem"
+        cart_id:
+          oneOf:
+            - type: integer
+            - type: string
+          description: Authenticated customer cart ID to use when `items` is omitted.
         location_id:
           oneOf:
             - type: integer
@@ -11018,9 +11044,29 @@ components:
           description: Storefront payment method code selected by the buyer.
           example: bank_transfer
       additionalProperties: true
-    CustomerCheckoutConfirmRequest:
+    CustomerCheckoutRequest:
       type: object
+      required:
+        - payment_method
       properties:
+        items:
+          type: array
+          description: >
+            Optional direct item source. If supplied, direct items create the
+            order. If `cart_id` is also supplied, the referenced cart is cleared
+            after successful order creation.
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/StorefrontCheckoutItem"
+        cart_id:
+          oneOf:
+            - type: integer
+            - type: string
+          description: >
+            Authenticated customer cart ID. Used as the order source when
+            `items` is omitted. When `items` is also supplied, the cart is only
+            cleared after successful order creation.
         address_id:
           oneOf:
             - type: integer
@@ -11074,7 +11120,7 @@ components:
       additionalProperties: false
     CustomerCheckoutSummaryResponse:
       $ref: "#/components/schemas/StorefrontCheckoutSummaryResponse"
-    CustomerCheckoutConfirmResponse:
+    CustomerCheckoutResponse:
       $ref: "#/components/schemas/StorefrontPublicOrder"
     CustomerOrder:
       allOf:
@@ -11736,41 +11782,71 @@ components:
       $ref: "#/components/schemas/CustomerCart"
     CustomerCartItemDeleteResponse:
       $ref: "#/components/schemas/CustomerCart"
-    CustomerCartCheckoutRequest:
-      allOf:
-        - $ref: "#/components/schemas/CustomerCheckoutConfirmRequest"
-      description: >
-        Compatibility checkout payload for `/customers/me/cart/checkout`.
-        New integrations should use `/customers/me/checkout/confirm`.
-    CustomerCartCheckoutResponse:
-      $ref: "#/components/schemas/StorefrontPublicOrder"
-    GuestCheckoutItem:
+    StorefrontCheckoutItem:
+      oneOf:
+        - $ref: "#/components/schemas/StorefrontCheckoutVariantItem"
+        - $ref: "#/components/schemas/StorefrontCheckoutBundlePriceOptionItem"
+      discriminator:
+        propertyName: type
+        mapping:
+          variant: "#/components/schemas/StorefrontCheckoutVariantItem"
+          bundle_price_option: "#/components/schemas/StorefrontCheckoutBundlePriceOptionItem"
+    StorefrontCheckoutVariantItem:
       type: object
       required:
+        - type
         - variant_id
         - quantity
       properties:
+        type:
+          type: string
+          enum:
+            - variant
         variant_id:
           type: integer
+          minimum: 1
         quantity:
           type: integer
           minimum: 1
           maximum: 100
       additionalProperties: false
-    GuestCheckoutRequest:
+    StorefrontCheckoutBundlePriceOptionItem:
       type: object
       required:
-        - items
+        - type
+        - bundle_price_option_id
+        - quantity
+      properties:
+        type:
+          type: string
+          enum:
+            - bundle_price_option
+        bundle_price_option_id:
+          type: integer
+          minimum: 1
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 100
+      additionalProperties: false
+    PublicCheckoutRequest:
+      type: object
+      required:
         - customer_name
         - customer_email
         - payment_method
       properties:
         items:
           type: array
+          description: >
+            Optional direct item source. If supplied, direct items create the
+            order. If `X-Scalev-Guest-Token` references a guest cart, that cart
+            is cleared after successful order creation. If omitted, the guest
+            cart referenced by `X-Scalev-Guest-Token` creates the order.
           minItems: 1
           maxItems: 50
           items:
-            $ref: "#/components/schemas/GuestCheckoutItem"
+            $ref: "#/components/schemas/StorefrontCheckoutItem"
         customer_name:
           type: string
           maxLength: 200
@@ -11840,7 +11916,7 @@ components:
           type: string
           nullable: true
       additionalProperties: false
-    GuestCheckoutResponse:
+    PublicCheckoutResponse:
       $ref: "#/components/schemas/StorefrontPublicOrder"
     StorefrontCheckoutDestination:
       type: object
@@ -11861,13 +11937,13 @@ components:
         items:
           type: array
           description: >
-            Optional direct item source. Used only when `X-Scalev-Guest-Token`
-            does not resolve a non-empty guest cart. Direct items support
-            variants only; bundle support comes through the guest cart.
+            Optional direct item source. If supplied, these items are used for
+            the shipping-options calculation. Otherwise the guest cart
+            referenced by `X-Scalev-Guest-Token` is used.
           minItems: 1
           maxItems: 50
           items:
-            $ref: "#/components/schemas/GuestCheckoutItem"
+            $ref: "#/components/schemas/StorefrontCheckoutItem"
         destination:
           $ref: "#/components/schemas/StorefrontCheckoutDestination"
         payment_method:
@@ -12732,13 +12808,13 @@ components:
         items:
           type: array
           description: >
-            Optional direct item source. Used only when `X-Scalev-Guest-Token`
-            does not resolve a non-empty guest cart. Direct items support
-            variants only; bundle support comes through the guest cart.
+            Optional direct item source. If supplied, these items are used for
+            discount eligibility. Otherwise the guest cart referenced by
+            `X-Scalev-Guest-Token` is used.
           minItems: 1
           maxItems: 50
           items:
-            $ref: "#/components/schemas/GuestCheckoutItem"
+            $ref: "#/components/schemas/StorefrontCheckoutItem"
         destination:
           $ref: "#/components/schemas/StorefrontCheckoutDestination"
         courier_service_id:
