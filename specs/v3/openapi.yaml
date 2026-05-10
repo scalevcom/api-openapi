@@ -11075,7 +11075,7 @@ components:
     CustomerCheckoutSummaryResponse:
       $ref: "#/components/schemas/StorefrontCheckoutSummaryResponse"
     CustomerCheckoutConfirmResponse:
-      $ref: "#/components/schemas/StorefrontCustomerFacingOrder"
+      $ref: "#/components/schemas/StorefrontPublicOrder"
     CustomerOrder:
       allOf:
         - $ref: "#/components/schemas/StorefrontCustomerFacingOrder"
@@ -11743,7 +11743,7 @@ components:
         Compatibility checkout payload for `/customers/me/cart/checkout`.
         New integrations should use `/customers/me/checkout/confirm`.
     CustomerCartCheckoutResponse:
-      $ref: "#/components/schemas/StorefrontCustomerFacingOrder"
+      $ref: "#/components/schemas/StorefrontPublicOrder"
     GuestCheckoutItem:
       type: object
       required:
