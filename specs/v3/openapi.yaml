@@ -141,6 +141,64 @@ paths:
                 $ref: "#/components/schemas/StorefrontProductDetail"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
+  /v3/stores/{store_id}/public/bundle-price-options:
+    parameters:
+      - $ref: "#/components/parameters/StoreId"
+      - $ref: "#/components/parameters/StorefrontPublicApiKey"
+    get:
+      tags:
+        - Storefront
+      operationId: listStorefrontBundlePriceOptions
+      summary: List storefront bundle price options
+      description: "Public storefront endpoint. Returns bundle price options visible in the storefront catalog."
+      responses:
+        "200":
+          description: Paginated storefront bundle price option cards
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontBundlePriceOptionListResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/stores/{store_id}/public/bundle-price-options/count:
+    parameters:
+      - $ref: "#/components/parameters/StoreId"
+      - $ref: "#/components/parameters/StorefrontPublicApiKey"
+    get:
+      tags:
+        - Storefront
+      operationId: countStorefrontBundlePriceOptions
+      summary: Count storefront bundle price options
+      description: "Public storefront endpoint. Counts bundle price options visible in the storefront catalog."
+      responses:
+        "200":
+          description: Storefront bundle price option count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontBundlePriceOptionCountResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/stores/{store_id}/public/bundle-price-options/{slug}:
+    parameters:
+      - $ref: "#/components/parameters/StoreId"
+      - $ref: "#/components/parameters/StorefrontPublicApiKey"
+      - $ref: "#/components/parameters/BundlePriceOptionSlug"
+    get:
+      tags:
+        - Storefront
+      operationId: getStorefrontBundlePriceOption
+      summary: Get a storefront bundle price option by slug
+      description: "Public storefront endpoint. Fetches a store-scoped bundle price option by slug; bundle price options hidden from storefront listing can still be fetched directly."
+      responses:
+        "200":
+          description: Storefront bundle price option detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontBundlePriceOptionDetail"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
   /v3/stores/{store_id}/public/categories:
     parameters:
       - $ref: "#/components/parameters/StoreId"
@@ -7842,6 +7900,12 @@ components:
       required: true
       schema:
         type: string
+    BundlePriceOptionSlug:
+      name: slug
+      in: path
+      required: true
+      schema:
+        type: string
     SecretSlug:
       name: secret_slug
       in: path
@@ -11425,6 +11489,110 @@ components:
           type: integer
           minimum: 0
       additionalProperties: false
+    StorefrontBundlePriceOptionCard:
+      type: object
+      required:
+        - id
+        - slug
+        - name
+        - item_type
+        - in_stock
+        - price_range
+        - images
+      properties:
+        id:
+          type: integer
+          description: Bundle price option ID.
+        slug:
+          type: string
+        name:
+          type: string
+          description: Public bundle display name.
+        description:
+          type: string
+          nullable: true
+        meta_thumbnail:
+          type: string
+          nullable: true
+        item_type:
+          type: string
+          enum:
+            - bundle_price_option
+        is_multiple:
+          type: boolean
+          nullable: true
+        option1_name:
+          type: string
+          nullable: true
+        option2_name:
+          type: string
+          nullable: true
+        option3_name:
+          type: string
+          nullable: true
+        in_stock:
+          type: boolean
+        price_range:
+          $ref: "#/components/schemas/StorefrontPriceRange"
+        images:
+          type: array
+          items:
+            type: string
+        taxonomy:
+          $ref: "#/components/schemas/StorefrontTaxonomy"
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+      additionalProperties: true
+    StorefrontBundlePriceOptionCountResponse:
+      type: object
+      required:
+        - total
+      properties:
+        total:
+          type: integer
+          minimum: 0
+      additionalProperties: false
+    StorefrontBundleLine:
+      type: object
+      required:
+        - variant_id
+        - quantity
+      properties:
+        variant_id:
+          type: integer
+        quantity:
+          type: integer
+          minimum: 1
+        variant_name:
+          type: string
+          nullable: true
+        product_name:
+          type: string
+          nullable: true
+      additionalProperties: false
+    StorefrontBundlePriceOptionDetail:
+      allOf:
+        - $ref: "#/components/schemas/StorefrontBundlePriceOptionCard"
+        - type: object
+          properties:
+            rich_description:
+              type: string
+              nullable: true
+            bpo_name:
+              type: string
+              description: Bundle price option display name.
+            price:
+              $ref: "#/components/schemas/StorefrontMoneyValue"
+            weight_bump:
+              type: integer
+              nullable: true
+            bundlelines:
+              type: array
+              items:
+                $ref: "#/components/schemas/StorefrontBundleLine"
+          additionalProperties: true
     StorefrontVariant:
       type: object
       properties:
@@ -11558,6 +11726,33 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/StorefrontProductCard"
+        is_paginated:
+          type: boolean
+          enum:
+            - true
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+        next_cursor:
+          type: string
+          nullable: true
+        previous_cursor:
+          type: string
+          nullable: true
+        page_size:
+          type: integer
+      additionalProperties: false
+    StorefrontBundlePriceOptionListResponse:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorefrontBundlePriceOptionCard"
         is_paginated:
           type: boolean
           enum:
