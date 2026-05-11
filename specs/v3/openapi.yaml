@@ -11162,7 +11162,7 @@ components:
         notes:
           type: string
           nullable: true
-      additionalProperties: true
+      additionalProperties: false
     CustomerCheckoutShippingOptionsResponse:
       type: object
       required:
