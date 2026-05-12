@@ -10,7 +10,7 @@
     "build:site": "node ./scripts/build-site.mjs"
   },
   "devDependencies": {
-    "@redocly/cli": "^2.25.1",
-    "yaml": "^2.8.3"
+    "@redocly/cli": "2.25.1",
+    "yaml": "2.8.3"
   }
 }
