@@ -12321,7 +12321,20 @@ components:
         business:
           type: object
           nullable: true
-          additionalProperties: true
+          additionalProperties: false
+          properties:
+            username:
+              type: string
+              nullable: true
+            contact_email:
+              type: string
+              nullable: true
+            aff_code:
+              type: string
+              nullable: true
+            logo:
+              type: string
+              nullable: true
         secret_slug:
           type: string
         public_order_url:
@@ -12342,9 +12355,6 @@ components:
         is_probably_spam:
           type: boolean
           nullable: true
-        mark_as_spam_by:
-          type: string
-          nullable: true
         draft_time:
           type: string
           format: date-time
@@ -12360,34 +12370,27 @@ components:
         transferproof_url:
           type: string
           nullable: true
+        handler_phone:
+          type: string
+          nullable: true
         chat_message:
           type: string
           nullable: true
         customer_id:
           type: integer
           nullable: true
-        discount_code_id:
-          type: integer
-          nullable: true
         discount_code_code:
           type: string
-          nullable: true
-        handler_id:
-          type: integer
           nullable: true
         page:
           type: object
           nullable: true
-          additionalProperties: true
+          additionalProperties: false
+          properties:
+            slug:
+              type: string
+              nullable: true
         gross_revenue:
-          $ref: "#/components/schemas/StorefrontMoneyValue"
-        scalev_fee:
-          $ref: "#/components/schemas/StorefrontMoneyValue"
-        payment_fee:
-          $ref: "#/components/schemas/StorefrontMoneyValue"
-        net_payment_revenue:
-          $ref: "#/components/schemas/StorefrontMoneyValue"
-        net_revenue:
           $ref: "#/components/schemas/StorefrontMoneyValue"
         product_price:
           $ref: "#/components/schemas/StorefrontMoneyValue"
@@ -12406,9 +12409,6 @@ components:
           $ref: "#/components/schemas/StorefrontMoneyValue"
         discount_code_discount:
           $ref: "#/components/schemas/StorefrontMoneyValue"
-        discount_code_applied_to:
-          type: string
-          nullable: true
         pg_payment_info:
           type: object
           additionalProperties: true
@@ -12420,11 +12420,6 @@ components:
             data or a QR image payload. E-wallet, card, and invoice methods may
             expose provider actions or hosted provider URLs.
         status_history:
-          type: array
-          items:
-            type: object
-            additionalProperties: true
-        payment_status_history:
           type: array
           items:
             type: object
@@ -12448,60 +12443,165 @@ components:
           type: array
           items:
             type: object
-            additionalProperties: true
-        shipment_status:
-          type: string
-          nullable: true
+            additionalProperties: false
+            properties:
+              timestamp_source:
+                type: string
+                nullable: true
+              status:
+                type: string
+                nullable: true
+              description:
+                type: string
+                nullable: true
         shipment_receipt:
           type: string
           nullable: true
         courier_service:
           type: object
           nullable: true
-          additionalProperties: true
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+              nullable: true
+            courier:
+              type: object
+              nullable: true
+              additionalProperties: false
+              properties:
+                name:
+                  type: string
+                  nullable: true
         variants:
           type: object
           additionalProperties: true
         bundle_price_options:
           type: object
           additionalProperties: true
-        final_variants:
-          type: object
-          additionalProperties: true
         orderlines:
           type: array
           items:
             type: object
-            additionalProperties: true
+            additionalProperties: false
+            properties:
+              quantity:
+                type: integer
+              product_name:
+                type: string
+                nullable: true
+              item_type:
+                type: string
+                nullable: true
+              variant_option1_value:
+                type: string
+                nullable: true
+              variant_option2_value:
+                type: string
+                nullable: true
+              variant_option3_value:
+                type: string
+                nullable: true
+              variant_price:
+                $ref: "#/components/schemas/StorefrontMoneyValue"
         payment_expiration_at:
           type: string
           format: date-time
           nullable: true
-        affiliate_business_id:
-          type: integer
-          nullable: true
-        affiliate_code:
-          type: string
-          nullable: true
-        affiliate_source:
-          type: string
-          nullable: true
         store_custom_domain:
           type: object
           nullable: true
-          additionalProperties: true
+          additionalProperties: false
+          properties:
+            full_url:
+              type: string
+              nullable: true
         store:
           type: object
           nullable: true
-          additionalProperties: true
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+              nullable: true
+            payment_accounts:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                properties:
+                  id:
+                    type: integer
+                  account_holder:
+                    type: string
+                    nullable: true
+                  account_number:
+                    type: string
+                    nullable: true
+                  method:
+                    type: string
+                    nullable: true
+                  financial_entity:
+                    type: object
+                    nullable: true
+                    additionalProperties: false
+                    properties:
+                      id:
+                        type: integer
+                      code:
+                        type: string
+                        nullable: true
+                      name:
+                        type: string
+                        nullable: true
+            custom_domain:
+              type: object
+              nullable: true
+              additionalProperties: false
+              properties:
+                full_url:
+                  type: string
+                  nullable: true
+            days_of_payment_processing:
+              type: integer
+              nullable: true
+            is_show_whatsapp:
+              type: boolean
+              nullable: true
+            is_show_download_invoice:
+              type: boolean
+              nullable: true
         destination_address:
           type: object
           nullable: true
-          additionalProperties: true
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+              nullable: true
+            phone:
+              type: string
+              nullable: true
+            address:
+              type: string
+              nullable: true
+            subdistrict:
+              type: string
+              nullable: true
+            city:
+              type: string
+              nullable: true
+            province:
+              type: string
+              nullable: true
         customer:
           type: object
           nullable: true
-          additionalProperties: true
+          additionalProperties: false
+          properties:
+            email:
+              type: string
+              nullable: true
       additionalProperties: true
     StorefrontCustomerFacingOrder:
       type: object
