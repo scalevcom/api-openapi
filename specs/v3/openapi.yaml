@@ -560,7 +560,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PublicCheckoutResponse"
+                $ref: "#/components/schemas/StorefrontPublicOrder"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
         "404":
@@ -656,7 +656,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StorefrontPublicOrderUpdateResponse"
+                $ref: "#/components/schemas/StorefrontPublicOrder"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
         "404":
@@ -1820,7 +1820,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CustomerCheckoutResponse"
+                $ref: "#/components/schemas/StorefrontPublicOrder"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
         "401":
@@ -1865,7 +1865,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CustomerOrder"
+                $ref: "#/components/schemas/StorefrontCustomerFacingOrder"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
         "404":
@@ -11180,12 +11180,6 @@ components:
       additionalProperties: false
     CustomerCheckoutSummaryResponse:
       $ref: "#/components/schemas/StorefrontCheckoutSummaryResponse"
-    CustomerCheckoutResponse:
-      $ref: "#/components/schemas/StorefrontPublicOrder"
-    CustomerOrder:
-      allOf:
-        - $ref: "#/components/schemas/StorefrontCustomerFacingOrder"
-      description: Customer-facing order DTO. It is a flat, buyer-safe shape derived from the existing `/order/public` response and removes business, store, operator, analytics, net revenue, platform fee, and provider internals.
     CustomerOrderListResponse:
       type: object
       required:
@@ -11195,7 +11189,7 @@ components:
         data:
           type: array
           items:
-            $ref: "#/components/schemas/CustomerOrder"
+            $ref: "#/components/schemas/StorefrontCustomerFacingOrder"
         is_paginated:
           type: boolean
           enum:
@@ -12150,8 +12144,6 @@ components:
           type: string
           nullable: true
       additionalProperties: false
-    PublicCheckoutResponse:
-      $ref: "#/components/schemas/StorefrontPublicOrder"
     StorefrontCheckoutDestination:
       type: object
       required:
@@ -13041,8 +13033,6 @@ components:
           type: string
           nullable: true
       additionalProperties: true
-    StorefrontPublicOrderUpdateResponse:
-      $ref: "#/components/schemas/StorefrontPublicOrder"
     StorefrontDiscountCode:
       type: object
       properties:
