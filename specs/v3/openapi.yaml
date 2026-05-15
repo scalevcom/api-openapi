@@ -683,6 +683,34 @@ paths:
           $ref: "#/components/responses/BadRequestResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
+  /v3/stores/{store_id}/public/orders/{secret_slug}/transfer-proof-upload:
+    parameters:
+      - $ref: "#/components/parameters/StoreId"
+      - $ref: "#/components/parameters/StorefrontPublicApiKey"
+      - $ref: "#/components/parameters/SecretSlug"
+    post:
+      tags:
+        - Storefront
+      operationId: createStorefrontPublicOrderTransferProofUpload
+      summary: Create a transfer proof upload URL
+      description: >
+        Public storefront endpoint for manual `bank_transfer` payment
+        confirmation. Returns a direct-to-storage `upload_url` plus the public
+        `file_url`. Upload the image with `PUT upload_url`, then set the order's
+        `transferproof_url` with `PATCH /v3/stores/{store_id}/public/orders/{secret_slug}`.
+      requestBody:
+        $ref: "#/components/requestBodies/StorefrontPublicOrderTransferProofUploadRequestBody"
+      responses:
+        "200":
+          description: Transfer proof upload metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontPublicOrderTransferProofUpload"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
   /v3/stores/{store_id}/public/discount-codes/check:
     parameters:
       - $ref: "#/components/parameters/StoreId"
@@ -712,6 +740,78 @@ paths:
                 $ref: "#/components/schemas/StorefrontDiscountCodeCheckResponse"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
+  /v3/stores/{store_id}/public/analytics/meta/events:
+    parameters:
+      - $ref: "#/components/parameters/StoreId"
+      - $ref: "#/components/parameters/StorefrontPublicApiKey"
+    post:
+      tags:
+        - Storefront
+      operationId: sendStorefrontMetaConversionEvent
+      summary: Send a Meta Conversion API event
+      description: >
+        Public storefront endpoint. Sends browser-collected conversion events
+        through Scalev using the Meta pixels configured on the store's hosted
+        storefront analytics setup. The store path selects the storefront; do
+        not send a custom domain to identify the store. A `204` means the
+        payload was accepted for asynchronous delivery.
+      requestBody:
+        $ref: "#/components/requestBodies/StorefrontMetaConversionEventRequestBody"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContentResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/stores/{store_id}/public/analytics/tiktok/events:
+    parameters:
+      - $ref: "#/components/parameters/StoreId"
+      - $ref: "#/components/parameters/StorefrontPublicApiKey"
+    post:
+      tags:
+        - Storefront
+      operationId: sendStorefrontTiktokConversionEvent
+      summary: Send a TikTok Events API event
+      description: >
+        Public storefront endpoint. Sends browser-collected conversion events
+        through Scalev using the TikTok pixels configured on the store's hosted
+        storefront analytics setup. The store path selects the storefront; do
+        not send a custom domain to identify the store. A `204` means the
+        payload was accepted for asynchronous delivery.
+      requestBody:
+        $ref: "#/components/requestBodies/StorefrontTiktokConversionEventRequestBody"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContentResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/stores/{store_id}/public/analytics/snackvideo/events:
+    parameters:
+      - $ref: "#/components/parameters/StoreId"
+      - $ref: "#/components/parameters/StorefrontPublicApiKey"
+    post:
+      tags:
+        - Storefront
+      operationId: sendStorefrontSnackVideoConversionEvent
+      summary: Send a SnackVideo Events API event
+      description: >
+        Public storefront endpoint. Sends browser-collected conversion events
+        through Scalev using the SnackVideo server pixels configured on the
+        store's hosted storefront analytics setup. The store path selects the
+        storefront; do not send a custom domain to identify the store. A `204`
+        means the payload was accepted for asynchronous delivery.
+      requestBody:
+        $ref: "#/components/requestBodies/StorefrontSnackVideoConversionEventRequestBody"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContentResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
   /v3/oauth/.well-known/oauth-authorization-server:
     get:
       tags:
@@ -8116,6 +8216,30 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/StorefrontPublicOrderUpdateRequest"
+    StorefrontPublicOrderTransferProofUploadRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StorefrontPublicOrderTransferProofUploadRequest"
+    StorefrontMetaConversionEventRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StorefrontMetaConversionEventRequest"
+    StorefrontTiktokConversionEventRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StorefrontTiktokConversionEventRequest"
+    StorefrontSnackVideoConversionEventRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StorefrontSnackVideoConversionEventRequest"
     ChatGPTAgentHtmlPayload:
       required: true
       description: Body-only HTML Mode payload. Do not include head, meta, title, favicon, crawler, domain, credential, cookie, token, or private backend behavior.
@@ -13029,10 +13153,74 @@ components:
           type: string
           format: date-time
           nullable: true
+        financial_entity_id:
+          type: integer
+          nullable: true
+          description: Financial entity selected from `store.payment_accounts[].financial_entity.id`.
+        payment_account:
+          type: string
+          nullable: true
+          description: Optional payment account unique ID selected by the buyer.
+        payment_account_holder:
+          type: string
+          nullable: true
+        payment_account_number:
+          type: string
+          nullable: true
         notes:
           type: string
           nullable: true
       additionalProperties: true
+    StorefrontPublicOrderTransferProofUploadRequest:
+      type: object
+      required:
+        - filename
+        - content_type
+        - content_length
+      properties:
+        filename:
+          type: string
+          example: transfer-proof.png
+        content_type:
+          type: string
+          enum:
+            - image/jpeg
+            - image/png
+            - image/webp
+        content_length:
+          type: integer
+          minimum: 1
+          maximum: 10485760
+          description: File size in bytes. Maximum 10 MB.
+      additionalProperties: false
+    StorefrontPublicOrderTransferProofUpload:
+      type: object
+      required:
+        - key
+        - filename
+        - content_type
+        - size_in_bytes
+        - file_url
+        - upload_url
+      properties:
+        key:
+          type: string
+          description: Storage object key created by Scalev.
+        filename:
+          type: string
+        content_type:
+          type: string
+        size_in_bytes:
+          type: integer
+        file_url:
+          type: string
+          format: uri
+          description: Public file URL to send as `transferproof_url` after upload succeeds.
+        upload_url:
+          type: string
+          format: uri
+          description: Presigned URL for direct `PUT` upload.
+      additionalProperties: false
     StorefrontDiscountCode:
       type: object
       properties:
@@ -13160,6 +13348,284 @@ components:
           $ref: "#/components/schemas/StorefrontMoneyValue"
         shipping_cost:
           $ref: "#/components/schemas/StorefrontMoneyValue"
+      additionalProperties: true
+    StorefrontAnalyticsVariantItem:
+      type: object
+      required:
+        - variant_unique_id
+        - quantity
+      properties:
+        variant_unique_id:
+          type: string
+          description: Variant unique ID from the storefront product payload.
+        quantity:
+          type: integer
+          minimum: 1
+      additionalProperties: false
+    StorefrontAnalyticsBundlePriceOptionItem:
+      type: object
+      required:
+        - bundle_price_option_unique_id
+        - quantity
+      properties:
+        bundle_price_option_unique_id:
+          type: string
+          description: Bundle price option unique ID from the storefront bundle payload.
+        quantity:
+          type: integer
+          minimum: 1
+      additionalProperties: false
+    StorefrontMetaConversionUserData:
+      type: object
+      properties:
+        fn:
+          type: string
+          nullable: true
+          description: Buyer first name.
+        ln:
+          type: string
+          nullable: true
+          description: Buyer last name.
+        em:
+          type: string
+          nullable: true
+          description: Buyer email.
+        ph:
+          type: string
+          nullable: true
+          description: Buyer phone number.
+        ct:
+          type: string
+          nullable: true
+          description: Buyer city.
+        st:
+          type: string
+          nullable: true
+          description: Buyer state or province.
+        country:
+          type: string
+          nullable: true
+          example: id
+        fbc:
+          type: string
+          nullable: true
+        fbp:
+          type: string
+          nullable: true
+        external_id:
+          type: string
+          nullable: true
+        location_id:
+          type: integer
+          nullable: true
+        client_ip_address:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Filled from the observed API request IP.
+        client_user_agent:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Filled from the observed API request user agent.
+      additionalProperties: true
+    StorefrontMetaConversionEvent:
+      type: object
+      required:
+        - event_id
+        - event_name
+      properties:
+        event_id:
+          type: string
+        event_name:
+          type: string
+          example: AddToCart
+        parameters:
+          type: object
+          additionalProperties: true
+      additionalProperties: false
+    StorefrontMetaConversionEventRequest:
+      type: object
+      required:
+        - user_data
+        - events
+      properties:
+        event_source_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Full storefront page URL for the event. The API strips query parameters before sending to Meta.
+        referrer_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Browser referrer URL. The API uses this with `event_source_url` to choose checkout versus home storefront analytics configuration.
+        user_data:
+          $ref: "#/components/schemas/StorefrontMetaConversionUserData"
+        events:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/StorefrontMetaConversionEvent"
+        variants:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorefrontAnalyticsVariantItem"
+        bundle_price_options:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorefrontAnalyticsBundlePriceOptionItem"
+      additionalProperties: true
+    StorefrontTiktokConversionUserData:
+      type: object
+      properties:
+        email:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        external_id:
+          type: string
+          nullable: true
+        ttclid:
+          type: string
+          nullable: true
+        ttp:
+          type: string
+          nullable: true
+        user_agent:
+          type: string
+          nullable: true
+          description: Defaults to the observed API request user agent when omitted.
+        ip:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Filled from the observed API request IP.
+      additionalProperties: true
+    StorefrontTiktokConversionEvent:
+      type: object
+      required:
+        - event_id
+        - event
+      properties:
+        event_id:
+          type: string
+        event:
+          type: string
+          example: AddToCart
+        parameters:
+          type: object
+          additionalProperties: true
+      additionalProperties: false
+    StorefrontTiktokConversionEventRequest:
+      type: object
+      required:
+        - event_source_url
+        - user
+        - events
+      properties:
+        event_source_url:
+          type: string
+          format: uri
+          description: Full storefront page URL for the event. The API strips query parameters before sending to TikTok.
+        referrer_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Browser referrer URL. The API uses this with `event_source_url` to choose checkout versus home storefront analytics configuration.
+        user:
+          $ref: "#/components/schemas/StorefrontTiktokConversionUserData"
+        events:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/StorefrontTiktokConversionEvent"
+        variants:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorefrontAnalyticsVariantItem"
+        bundle_price_options:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorefrontAnalyticsBundlePriceOptionItem"
+      additionalProperties: true
+    StorefrontSnackVideoConversionEventProperties:
+      type: object
+      properties:
+        content_type:
+          type: string
+          nullable: true
+        content_category:
+          type: string
+          nullable: true
+        content_name:
+          type: string
+          nullable: true
+        currency:
+          type: string
+          nullable: true
+          example: IDR
+        value:
+          type: integer
+          nullable: true
+        quantity:
+          type: integer
+          nullable: true
+        price:
+          type: integer
+          nullable: true
+        query:
+          type: string
+          nullable: true
+        mapping_id:
+          type: string
+          nullable: true
+      additionalProperties: true
+    StorefrontSnackVideoConversionEvent:
+      type: object
+      required:
+        - event_name
+      properties:
+        event_name:
+          type: string
+          example: addToCart
+        properties:
+          $ref: "#/components/schemas/StorefrontSnackVideoConversionEventProperties"
+      additionalProperties: false
+    StorefrontSnackVideoConversionEventRequest:
+      type: object
+      required:
+        - click_id
+        - events
+      properties:
+        click_id:
+          type: string
+          description: SnackVideo click ID.
+        event_source_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Optional full storefront page URL used to choose checkout versus home storefront analytics configuration.
+        referrer_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Optional browser referrer URL used to choose checkout versus home storefront analytics configuration.
+        events:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/StorefrontSnackVideoConversionEvent"
+        variants:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorefrontAnalyticsVariantItem"
+        bundle_price_options:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorefrontAnalyticsBundlePriceOptionItem"
       additionalProperties: true
     StorefrontPublicApiKey:
       type: object
