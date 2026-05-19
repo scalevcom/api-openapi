@@ -9838,22 +9838,11 @@ components:
           type: string
         agent_csp_policy:
           $ref: "#/components/schemas/ChatGPTAgentCspPolicy"
-        agent_store_id:
-          type: integer
-          nullable: true
-        agent_store:
+        form_display:
           type: object
           nullable: true
           additionalProperties: true
-          description: Selected store context with enabled payment methods, selected products, and selected bundle price options only.
-        agent_variant_ids:
-          type: array
-          items:
-            type: integer
-        agent_bundle_price_option_ids:
-          type: array
-          items:
-            type: integer
+          description: HTML Checkout form context backed by the page display form display. Null for HTML Sales pages.
       additionalProperties: false
     ChatGPTPageContext:
       type: object
