@@ -989,7 +989,7 @@ paths:
         - ChatGPT
       operationId: listChatGPTPages
       summary: List HTML Mode landing pages
-      description: Returns accessible landing pages that use Agent HTML Mode. Draft creation through ChatGPT never publishes pages.
+      description: Returns accessible landing pages that use HTML Mode. Draft creation through ChatGPT never publishes pages.
       security:
         - scalevOAuth:
             - page:list
@@ -1026,7 +1026,7 @@ paths:
         - ChatGPT
       operationId: getChatGPTPageContext
       summary: Get HTML Mode page context
-      description: Returns page metadata, latest Agent HTML display fields, current CSP policy, selected store context when present, selected products only, selected bundle price options only, draft URL when safe, and capabilities.
+      description: Returns page metadata, latest HTML Mode display fields, current CSP policy, selected store context when present, selected products only, selected bundle price options only, draft URL when safe, and capabilities.
       security:
         - scalevOAuth:
             - page:read
@@ -1068,14 +1068,14 @@ paths:
         - ChatGPT
       operationId: validateChatGPTHtmlMode
       summary: Validate an HTML Mode payload
-      description: Validates arbitrary Agent HTML Mode payload without saving. Use this before draft creation when feasible.
+      description: Validates arbitrary HTML Mode payload without saving. Use this before draft creation when feasible.
       security:
         - scalevOAuth:
             - page:update
       parameters:
         - $ref: "#/components/parameters/PageId"
       requestBody:
-        $ref: "#/components/requestBodies/ChatGPTAgentHtmlPayload"
+        $ref: "#/components/requestBodies/ChatGPTHtmlModePayload"
       responses:
         "200":
           $ref: "#/components/responses/ChatGPTValidationResponse"
@@ -1098,7 +1098,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/PageId"
       requestBody:
-        $ref: "#/components/requestBodies/ChatGPTAgentHtmlPayload"
+        $ref: "#/components/requestBodies/ChatGPTHtmlModePayload"
       responses:
         "200":
           $ref: "#/components/responses/ChatGPTDraftResponse"
@@ -8240,21 +8240,21 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/StorefrontSnackVideoConversionEventRequest"
-    ChatGPTAgentHtmlPayload:
+    ChatGPTHtmlModePayload:
       required: true
       description: Body-only HTML Mode payload. Do not include head, meta, title, favicon, crawler, domain, credential, cookie, token, or private backend behavior.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ChatGPTAgentHtmlPayload"
+            $ref: "#/components/schemas/ChatGPTHtmlModePayload"
           examples:
             landingPageDraft:
               summary: HTML Mode draft payload
               value:
-                agent_html: '<main><h1>Launch offer</h1><a href="#order">Buy now</a></main>'
-                agent_css: "main { max-width: 960px; margin: 0 auto; }"
-                agent_js: "const data = window.Scalev.data.get();"
-                agent_csp_policy:
+                html_code: '<main><h1>Launch offer</h1><a href="#order">Buy now</a></main>'
+                css_code: "main { max-width: 960px; margin: 0 auto; }"
+                js_code: "const data = window.Scalev.data.get();"
+                csp_policy:
                   img_src:
                     - https://cdn.example.com
     OAuthInstallationStatusRequestBody:
@@ -8790,12 +8790,12 @@ components:
             validationFailed:
               value:
                 error_code: validation_failed
-                error: Agent HTML validation failed
-                message: Agent HTML validation failed
+                error: HTML Mode validation failed
+                message: HTML Mode validation failed
                 errors:
                   - severity: error
                     code: head_content_not_allowed
-                    field: agent_html
+                    field: html_code
                     message: Do not include head, meta, link, title, favicon, SEO, crawler, or domain settings.
     ChatGPTMeResponse:
       description: Authenticated user and authorized business
@@ -9582,7 +9582,7 @@ components:
         - type: string
         - type: number
         - type: boolean
-    ChatGPTAgentCspPolicy:
+    ChatGPTHtmlModeCspPolicy:
       type: object
       additionalProperties: false
       properties:
@@ -9606,24 +9606,24 @@ components:
           type: array
           items:
             type: string
-      description: Supported Agent HTML CSP keys. Unsupported keys are rejected.
-    ChatGPTAgentHtmlPayload:
+      description: Supported HTML Mode CSP keys. Unsupported keys are rejected.
+    ChatGPTHtmlModePayload:
       type: object
       additionalProperties: false
       properties:
-        agent_html:
+        html_code:
           type: string
           description: Body-only HTML. Do not include doctype, html, body, head, meta, link, title, favicon, SEO, crawler, or domain settings.
           maxLength: 204800
-        agent_css:
+        css_code:
           type: string
           maxLength: 102400
-        agent_js:
+        js_code:
           type: string
           description: JavaScript must use documented window.Scalev runtime APIs only.
           maxLength: 102400
-        agent_csp_policy:
-          $ref: "#/components/schemas/ChatGPTAgentCspPolicy"
+        csp_policy:
+          $ref: "#/components/schemas/ChatGPTHtmlModeCspPolicy"
     ChatGPTValidationIssue:
       type: object
       required:
@@ -9642,7 +9642,7 @@ components:
           example: head_content_not_allowed
         field:
           type: string
-          example: agent_html
+          example: html_code
         message:
           type: string
       additionalProperties: false
@@ -9675,13 +9675,13 @@ components:
         max_payload_sizes:
           type: object
           properties:
-            agent_html:
+            html_code:
               type: integer
               example: 204800
-            agent_css:
+            css_code:
               type: integer
               example: 102400
-            agent_js:
+            js_code:
               type: integer
               example: 102400
         allowed_csp_keys:
@@ -9699,7 +9699,7 @@ components:
           items:
             type: string
         current_csp:
-          $ref: "#/components/schemas/ChatGPTAgentCspPolicy"
+          $ref: "#/components/schemas/ChatGPTHtmlModeCspPolicy"
         can_update:
           type: boolean
         publishing:
@@ -9790,7 +9790,7 @@ components:
         render_mode:
           type: string
           enum:
-            - agent_html
+            - html_mode
         capabilities:
           type: object
           properties:
@@ -9827,17 +9827,17 @@ components:
         render_mode:
           type: string
           enum:
-            - agent_html
+            - html_mode
         is_published:
           type: boolean
-        agent_html:
+        html_code:
           type: string
-        agent_css:
+        css_code:
           type: string
-        agent_js:
+        js_code:
           type: string
-        agent_csp_policy:
-          $ref: "#/components/schemas/ChatGPTAgentCspPolicy"
+        csp_policy:
+          $ref: "#/components/schemas/ChatGPTHtmlModeCspPolicy"
         form_display:
           type: object
           nullable: true
@@ -9864,7 +9864,7 @@ components:
         - version
         - render_mode
         - draft_url
-        - agent_csp_policy
+        - csp_policy
         - validation_warnings
       properties:
         page_id:
@@ -9876,12 +9876,12 @@ components:
         render_mode:
           type: string
           enum:
-            - agent_html
+            - html_mode
         draft_url:
           type: string
           format: uri
-        agent_csp_policy:
-          $ref: "#/components/schemas/ChatGPTAgentCspPolicy"
+        csp_policy:
+          $ref: "#/components/schemas/ChatGPTHtmlModeCspPolicy"
         validation_warnings:
           type: array
           items:
