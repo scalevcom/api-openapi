@@ -10213,34 +10213,57 @@ components:
             HTML Checkout configuration. Omit or send null for HTML Sales pages.
         fb_pixel_ids:
           type: array
+          description: >
+            Scalev record IDs for Meta/Facebook pixels to attach to this page
+            display. These are the numeric Scalev pixel records, not the
+            provider pixel code. Send an empty array for no Meta/Facebook
+            pixels.
           items:
             type: integer
         tiktok_pixel_ids:
           type: array
+          description: >
+            Scalev record IDs for TikTok pixels to attach to this page display.
+            These are the numeric Scalev pixel records, not the provider pixel
+            code. Send an empty array for no TikTok pixels.
           items:
             type: integer
         kwai_client_pixel_ids:
           type: array
+          description: >
+            Scalev record IDs for SnackVideo browser pixels to attach to this
+            page display. Send an empty array for no SnackVideo browser pixels.
           items:
             type: integer
         kwai_server_pixel_ids:
           type: array
+          description: >
+            Scalev record IDs for SnackVideo Events API pixels to attach to
+            this page display. Send an empty array for no SnackVideo server
+            pixels.
           items:
             type: integer
         onload_fb_events:
           type: array
+          description:
+            Meta/Facebook events fired automatically when the page loads.
           items:
             type: string
         onload_tiktok_events:
           type: array
+          description: TikTok events fired automatically when the page loads.
           items:
             type: string
         onload_kwai_client_events:
           type: array
+          description:
+            SnackVideo browser events fired automatically when the page loads.
           items:
             type: string
         onload_kwai_server_events:
           type: array
+          description:
+            SnackVideo server events fired automatically when the page loads.
           items:
             type: string
         fb_events_onload_parameters:
@@ -10313,18 +10336,29 @@ components:
           description: Required for `custom_url`.
         onsubmit_fb_events:
           type: array
+          description:
+            Meta/Facebook events fired after HTML Checkout order creation
+            succeeds.
           items:
             type: string
         onsubmit_tiktok_events:
           type: array
+          description:
+            TikTok events fired after HTML Checkout order creation succeeds.
           items:
             type: string
         onsubmit_kwai_client_events:
           type: array
+          description:
+            SnackVideo browser events fired after HTML Checkout order creation
+            succeeds.
           items:
             type: string
         onsubmit_kwai_server_events:
           type: array
+          description:
+            SnackVideo server events fired after HTML Checkout order creation
+            succeeds.
           items:
             type: string
         fb_events_onsubmit_parameters:
