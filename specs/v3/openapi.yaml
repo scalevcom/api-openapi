@@ -43,6 +43,10 @@ tags:
     description:
       Authenticated business landing page endpoints. The documented payloads
       focus on HTML Mode pages.
+  - name: Analytics Setup
+    description:
+      Authenticated business analytics provider catalogs and pixel/container
+      endpoints used when configuring landing page displays.
   - name: OAuth Billing
     description: OAuth billing runtime, refund, and developer finance endpoints.
   - name: Customer Auth
@@ -64,8 +68,9 @@ tags:
   - name: Locations
     description: Authenticated business location lookup endpoints.
   - name: Business Stores
-    description: Authenticated business store lookup endpoints that use legacy
-      numeric store IDs.
+    description:
+      Authenticated business store lookup endpoints. These routes use direct
+      numeric Scalev store database IDs.
   - name: Storefront Setup
     description:
       Authenticated business setup endpoints for public storefront keys
@@ -1245,6 +1250,664 @@ paths:
         - apiKeyAuth: []
         - scalevOAuth:
             - page:update
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContentResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/fb-standard-events:
+    get:
+      tags:
+        - Analytics Setup
+      operationId: listFacebookStandardEvents
+      summary: List Facebook standard events
+      description: "Requires the `fb_pixel:list` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - fb_pixel:list
+      parameters:
+        - description: Number of items per page.
+          in: query
+          name: page_size
+          required: false
+          schema:
+            type: integer
+        - description: Opaque cursor for the next page.
+          in: query
+          name: next_cursor
+          required: false
+          schema:
+            type: string
+        - description: Opaque cursor for the previous page.
+          in: query
+          name: previous_cursor
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/AnalyticsStandardEventCollectionResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+  /v3/tiktok-standard-events:
+    get:
+      tags:
+        - Analytics Setup
+      operationId: listTiktokStandardEvents
+      summary: List TikTok standard events
+      description: "Requires the `tiktok_pixel:list` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - tiktok_pixel:list
+      parameters:
+        - description: Number of items per page.
+          in: query
+          name: page_size
+          required: false
+          schema:
+            type: integer
+        - description: Opaque cursor for the next page.
+          in: query
+          name: next_cursor
+          required: false
+          schema:
+            type: string
+        - description: Opaque cursor for the previous page.
+          in: query
+          name: previous_cursor
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/AnalyticsStandardEventCollectionResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+  /v3/kwai-standard-events:
+    get:
+      tags:
+        - Analytics Setup
+      operationId: listKwaiStandardEvents
+      summary: List SnackVideo standard events
+      description: "Requires the `kwai_pixel:list` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - kwai_pixel:list
+      parameters:
+        - description: Filter by SnackVideo event channel.
+          in: query
+          name: type
+          required: false
+          schema:
+            type: string
+            enum:
+              - client
+              - server
+        - description: Number of items per page.
+          in: query
+          name: page_size
+          required: false
+          schema:
+            type: integer
+        - description: Opaque cursor for the next page.
+          in: query
+          name: next_cursor
+          required: false
+          schema:
+            type: string
+        - description: Opaque cursor for the previous page.
+          in: query
+          name: previous_cursor
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/AnalyticsStandardEventCollectionResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+  /v3/fb-pixels:
+    get:
+      tags:
+        - Analytics Setup
+      operationId: listFacebookPixels
+      summary: List Facebook pixels
+      description: "Requires the `fb_pixel:list` scope. The returned `id` is the Scalev record ID used in landing page display configuration; `pixel_id` is the provider ID sent to Meta."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - fb_pixel:list
+      parameters:
+        - description: Search by name or provider pixel ID.
+          in: query
+          name: search
+          required: false
+          schema:
+            type: string
+        - description: Number of items per page.
+          in: query
+          name: page_size
+          required: false
+          schema:
+            type: integer
+        - description: Opaque cursor for the next page.
+          in: query
+          name: next_cursor
+          required: false
+          schema:
+            type: string
+        - description: Opaque cursor for the previous page.
+          in: query
+          name: previous_cursor
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/MetaPixelCollectionResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+    post:
+      tags:
+        - Analytics Setup
+      operationId: createFacebookPixel
+      summary: Create a Facebook pixel
+      description: "Requires the `fb_pixel:create` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - fb_pixel:create
+      requestBody:
+        $ref: "#/components/requestBodies/MetaPixelRequestBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/MetaPixelResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+  /v3/fb-pixels/{id}:
+    parameters:
+      - $ref: "#/components/parameters/GenericId"
+    get:
+      tags:
+        - Analytics Setup
+      operationId: getFacebookPixel
+      summary: Get a Facebook pixel
+      description: "Requires the `fb_pixel:read` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - fb_pixel:read
+      responses:
+        "200":
+          $ref: "#/components/responses/MetaPixelResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+    patch:
+      tags:
+        - Analytics Setup
+      operationId: updateFacebookPixel
+      summary: Update a Facebook pixel
+      description: "Requires the `fb_pixel:update` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - fb_pixel:update
+      requestBody:
+        $ref: "#/components/requestBodies/MetaPixelRequestBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/MetaPixelResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+    delete:
+      tags:
+        - Analytics Setup
+      operationId: deleteFacebookPixel
+      summary: Delete a Facebook pixel
+      description: "Requires the `fb_pixel:delete` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - fb_pixel:delete
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContentResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/tiktok-pixels:
+    get:
+      tags:
+        - Analytics Setup
+      operationId: listTiktokPixels
+      summary: List TikTok pixels
+      description: "Requires the `tiktok_pixel:list` scope. The returned `id` is the Scalev record ID used in landing page display configuration; `pixel_id` is the provider ID sent to TikTok."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - tiktok_pixel:list
+      parameters:
+        - description: Search by name or provider pixel ID.
+          in: query
+          name: search
+          required: false
+          schema:
+            type: string
+        - description: Number of items per page.
+          in: query
+          name: page_size
+          required: false
+          schema:
+            type: integer
+        - description: Opaque cursor for the next page.
+          in: query
+          name: next_cursor
+          required: false
+          schema:
+            type: string
+        - description: Opaque cursor for the previous page.
+          in: query
+          name: previous_cursor
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/TiktokPixelCollectionResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+    post:
+      tags:
+        - Analytics Setup
+      operationId: createTiktokPixel
+      summary: Create a TikTok pixel
+      description: "Requires the `tiktok_pixel:create` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - tiktok_pixel:create
+      requestBody:
+        $ref: "#/components/requestBodies/TiktokPixelRequestBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/TiktokPixelResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+  /v3/tiktok-pixels/{id}:
+    parameters:
+      - $ref: "#/components/parameters/GenericId"
+    get:
+      tags:
+        - Analytics Setup
+      operationId: getTiktokPixel
+      summary: Get a TikTok pixel
+      description: "Requires the `tiktok_pixel:read` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - tiktok_pixel:read
+      responses:
+        "200":
+          $ref: "#/components/responses/TiktokPixelResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+    patch:
+      tags:
+        - Analytics Setup
+      operationId: updateTiktokPixel
+      summary: Update a TikTok pixel
+      description: "Requires the `tiktok_pixel:update` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - tiktok_pixel:update
+      requestBody:
+        $ref: "#/components/requestBodies/TiktokPixelRequestBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/TiktokPixelResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+    delete:
+      tags:
+        - Analytics Setup
+      operationId: deleteTiktokPixel
+      summary: Delete a TikTok pixel
+      description: "Requires the `tiktok_pixel:delete` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - tiktok_pixel:delete
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContentResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/kwai-pixels:
+    get:
+      tags:
+        - Analytics Setup
+      operationId: listKwaiPixels
+      summary: List SnackVideo pixels
+      description: "Requires the `kwai_pixel:list` scope. The returned `id` is the Scalev record ID used in landing page display configuration; `pixel_id` is the provider ID sent to SnackVideo."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - kwai_pixel:list
+      parameters:
+        - description: Filter by SnackVideo pixel channel.
+          in: query
+          name: type
+          required: false
+          schema:
+            type: string
+            enum:
+              - client
+              - server
+        - description: Number of items per page.
+          in: query
+          name: page_size
+          required: false
+          schema:
+            type: integer
+        - description: Opaque cursor for the next page.
+          in: query
+          name: next_cursor
+          required: false
+          schema:
+            type: string
+        - description: Opaque cursor for the previous page.
+          in: query
+          name: previous_cursor
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/KwaiPixelCollectionResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+    post:
+      tags:
+        - Analytics Setup
+      operationId: createKwaiPixel
+      summary: Create a SnackVideo pixel
+      description: "Requires the `kwai_pixel:create` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - kwai_pixel:create
+      requestBody:
+        $ref: "#/components/requestBodies/KwaiPixelRequestBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/KwaiPixelResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+  /v3/kwai-pixels/{id}:
+    parameters:
+      - $ref: "#/components/parameters/GenericId"
+    get:
+      tags:
+        - Analytics Setup
+      operationId: getKwaiPixel
+      summary: Get a SnackVideo pixel
+      description: "Requires the `kwai_pixel:read` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - kwai_pixel:read
+      responses:
+        "200":
+          $ref: "#/components/responses/KwaiPixelResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+    patch:
+      tags:
+        - Analytics Setup
+      operationId: updateKwaiPixel
+      summary: Update a SnackVideo pixel
+      description: "Requires the `kwai_pixel:update` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - kwai_pixel:update
+      requestBody:
+        $ref: "#/components/requestBodies/KwaiPixelRequestBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/KwaiPixelResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+    delete:
+      tags:
+        - Analytics Setup
+      operationId: deleteKwaiPixel
+      summary: Delete a SnackVideo pixel
+      description: "Requires the `kwai_pixel:delete` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - kwai_pixel:delete
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContentResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/gtm:
+    get:
+      tags:
+        - Analytics Setup
+      operationId: listGtmContainers
+      summary: List Google Tag Manager containers
+      description: "Requires the `gtm:list` scope. The returned `id` is the Scalev record ID used in landing page display configuration; `container_id` is the GTM provider ID."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - gtm:list
+      parameters:
+        - description: Search by name or container ID.
+          in: query
+          name: search
+          required: false
+          schema:
+            type: string
+        - description: Number of items per page.
+          in: query
+          name: page_size
+          required: false
+          schema:
+            type: integer
+        - description: Opaque cursor for the next page.
+          in: query
+          name: next_cursor
+          required: false
+          schema:
+            type: string
+        - description: Opaque cursor for the previous page.
+          in: query
+          name: previous_cursor
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/GtmContainerCollectionResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+    post:
+      tags:
+        - Analytics Setup
+      operationId: createGtmContainer
+      summary: Create a Google Tag Manager container
+      description: "Requires the `gtm:create` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - gtm:create
+      requestBody:
+        $ref: "#/components/requestBodies/GtmContainerRequestBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/GtmContainerResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+  /v3/gtm/{id}:
+    parameters:
+      - $ref: "#/components/parameters/GenericId"
+    get:
+      tags:
+        - Analytics Setup
+      operationId: getGtmContainer
+      summary: Get a Google Tag Manager container
+      description: "Requires the `gtm:read` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - gtm:read
+      responses:
+        "200":
+          $ref: "#/components/responses/GtmContainerResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+    patch:
+      tags:
+        - Analytics Setup
+      operationId: updateGtmContainer
+      summary: Update a Google Tag Manager container
+      description: "Requires the `gtm:update` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - gtm:update
+      requestBody:
+        $ref: "#/components/requestBodies/GtmContainerRequestBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/GtmContainerResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+    delete:
+      tags:
+        - Analytics Setup
+      operationId: deleteGtmContainer
+      summary: Delete a Google Tag Manager container
+      description: "Requires the `gtm:delete` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - gtm:delete
       responses:
         "204":
           $ref: "#/components/responses/NoContentResponse"
@@ -2611,10 +3274,12 @@ paths:
         - Business Stores
       operationId: listBusinessStoresSimplified
       summary: List stores in simplified business format
-      description: "Requires the `store:read` scope."
+      description: "Requires the `store:list` scope."
       security:
         - bearerAuth: []
         - apiKeyAuth: []
+        - scalevOAuth:
+            - store:list
       parameters:
         - description: Number of items per page.
           in: query
@@ -2655,6 +3320,8 @@ paths:
       security:
         - bearerAuth: []
         - apiKeyAuth: []
+        - scalevOAuth:
+            - store:read
       responses:
         "200":
           description: Storefront public API key list
@@ -2679,6 +3346,8 @@ paths:
       security:
         - bearerAuth: []
         - apiKeyAuth: []
+        - scalevOAuth:
+            - store:update
       responses:
         "200":
           description: Storefront public API key
@@ -2709,6 +3378,8 @@ paths:
       security:
         - bearerAuth: []
         - apiKeyAuth: []
+        - scalevOAuth:
+            - store:update
       responses:
         "204":
           $ref: "#/components/responses/NoContentResponse"
@@ -2732,6 +3403,8 @@ paths:
       security:
         - bearerAuth: []
         - apiKeyAuth: []
+        - scalevOAuth:
+            - store:read
       responses:
         "200":
           description: Storefront allowed origin list
@@ -2756,6 +3429,8 @@ paths:
       security:
         - bearerAuth: []
         - apiKeyAuth: []
+        - scalevOAuth:
+            - store:update
       requestBody:
         $ref: "#/components/requestBodies/StorefrontAllowedOriginRequestBody"
       responses:
@@ -2788,6 +3463,8 @@ paths:
       security:
         - bearerAuth: []
         - apiKeyAuth: []
+        - scalevOAuth:
+            - store:update
       responses:
         "204":
           $ref: "#/components/responses/NoContentResponse"
@@ -2809,6 +3486,8 @@ paths:
       security:
         - bearerAuth: []
         - apiKeyAuth: []
+        - scalevOAuth:
+            - product:list
       parameters:
         - description: Number of items per page.
           in: query
@@ -2830,7 +3509,7 @@ paths:
             type: string
       responses:
         "200":
-          $ref: "#/components/responses/PaginatedCollectionResponse"
+          $ref: "#/components/responses/BusinessStoreProductCollectionResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
@@ -2849,6 +3528,8 @@ paths:
       security:
         - bearerAuth: []
         - apiKeyAuth: []
+        - scalevOAuth:
+            - bundle:list
       parameters:
         - description: Number of items per page.
           in: query
@@ -2870,7 +3551,7 @@ paths:
             type: string
       responses:
         "200":
-          $ref: "#/components/responses/PaginatedCollectionResponse"
+          $ref: "#/components/responses/BusinessStoreBundleCollectionResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
@@ -2890,9 +3571,11 @@ paths:
       security:
         - bearerAuth: []
         - apiKeyAuth: []
+        - scalevOAuth:
+            - bundle:read
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          $ref: "#/components/responses/BusinessStoreBundleResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
@@ -2911,6 +3594,8 @@ paths:
       security:
         - bearerAuth: []
         - apiKeyAuth: []
+        - scalevOAuth:
+            - store:update
       requestBody:
         required: true
         content:
@@ -2952,9 +3637,11 @@ paths:
       security:
         - bearerAuth: []
         - apiKeyAuth: []
+        - scalevOAuth:
+            - bundle:read
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          $ref: "#/components/responses/BusinessStoreBundlePriceOptionResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
@@ -2970,6 +3657,8 @@ paths:
       security:
         - bearerAuth: []
         - apiKeyAuth: []
+        - scalevOAuth:
+            - store:update
       responses:
         "204":
           $ref: "#/components/responses/NoContentResponse"
@@ -2996,6 +3685,8 @@ paths:
       security:
         - bearerAuth: []
         - apiKeyAuth: []
+        - scalevOAuth:
+            - bundle:read
       responses:
         "200":
           $ref: "#/components/responses/SuccessResponse"
@@ -3018,9 +3709,11 @@ paths:
       security:
         - bearerAuth: []
         - apiKeyAuth: []
+        - scalevOAuth:
+            - product:read
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          $ref: "#/components/responses/BusinessStoreVariantResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
@@ -3039,6 +3732,8 @@ paths:
       security:
         - bearerAuth: []
         - apiKeyAuth: []
+        - scalevOAuth:
+            - store:read
       parameters:
         - description: Search query.
           in: query
@@ -3085,6 +3780,8 @@ paths:
       security:
         - bearerAuth: []
         - apiKeyAuth: []
+        - scalevOAuth:
+            - store:read
       responses:
         "200":
           $ref: "#/components/responses/CollectionResponse"
@@ -3106,6 +3803,8 @@ paths:
       security:
         - bearerAuth: []
         - apiKeyAuth: []
+        - scalevOAuth:
+            - payment_account:list
       parameters:
         - description: Number of items per page.
           in: query
@@ -3134,6 +3833,48 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
+  /v3/stores/{store_id}/sales-people:
+    parameters:
+      - $ref: "#/components/parameters/BusinessStoreId"
+    get:
+      tags:
+        - Business Stores
+      operationId: listBusinessStoreSalesPeople
+      summary: List sales people for a business store
+      description: "Requires the `store:read` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - store:read
+      parameters:
+        - description: Number of items per page.
+          in: query
+          name: page_size
+          required: false
+          schema:
+            type: integer
+        - description: Opaque cursor for the next page.
+          in: query
+          name: next_cursor
+          required: false
+          schema:
+            type: string
+        - description: Opaque cursor for the previous page.
+          in: query
+          name: previous_cursor
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/BusinessStoreSalesPersonCollectionResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
   /v3/stores/{store_id}/pages:
     parameters:
       - $ref: "#/components/parameters/BusinessStoreId"
@@ -3146,6 +3887,8 @@ paths:
       security:
         - bearerAuth: []
         - apiKeyAuth: []
+        - scalevOAuth:
+            - page:list
       parameters:
         - description: Number of items per page.
           in: query
@@ -8226,6 +8969,32 @@ components:
             page:update: Update landing pages.
             page:delete: Delete landing pages.
             store:list: List stores.
+            store:read: Read store setup data.
+            product:list: List products.
+            product:read: Read product variants.
+            bundle:list: List bundles.
+            bundle:read: Read bundle price options.
+            payment_account:list: List payment accounts.
+            fb_pixel:list: List Facebook pixels and standard events.
+            fb_pixel:read: Read Facebook pixels.
+            fb_pixel:create: Create Facebook pixels.
+            fb_pixel:update: Update Facebook pixels.
+            fb_pixel:delete: Delete Facebook pixels.
+            tiktok_pixel:list: List TikTok pixels and standard events.
+            tiktok_pixel:read: Read TikTok pixels.
+            tiktok_pixel:create: Create TikTok pixels.
+            tiktok_pixel:update: Update TikTok pixels.
+            tiktok_pixel:delete: Delete TikTok pixels.
+            kwai_pixel:list: List SnackVideo pixels and standard events.
+            kwai_pixel:read: Read SnackVideo pixels.
+            kwai_pixel:create: Create SnackVideo pixels.
+            kwai_pixel:update: Update SnackVideo pixels.
+            kwai_pixel:delete: Delete SnackVideo pixels.
+            gtm:list: List Google Tag Manager containers.
+            gtm:read: Read Google Tag Manager containers.
+            gtm:create: Create Google Tag Manager containers.
+            gtm:update: Update Google Tag Manager containers.
+            gtm:delete: Delete Google Tag Manager containers.
   parameters:
     StoreId:
       name: store_id
@@ -8239,12 +9008,9 @@ components:
       in: path
       required: true
       schema:
-        oneOf:
-          - type: string
-            example: store_vlzpML8edzxO5roOdV7Oyfn6
-          - type: integer
-            example: 3288
-      description: Public store `unique_id`. Legacy numeric store IDs remain accepted for backward compatibility.
+        type: integer
+        example: 3288
+      description: Numeric Scalev store database ID for authenticated business routes.
     PageId:
       name: page_id
       in: path
@@ -9001,6 +9767,34 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/BundlePriceOptionRequest"
+    MetaPixelRequestBody:
+      description: Facebook pixel data.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MetaPixelRequest"
+    TiktokPixelRequestBody:
+      description: TikTok pixel data.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TiktokPixelRequest"
+    KwaiPixelRequestBody:
+      description: SnackVideo pixel data.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/KwaiPixelRequest"
+    GtmContainerRequestBody:
+      description: Google Tag Manager container data.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/GtmContainerRequest"
     LandingPageCreateRequestBody:
       description: Landing page data to create. HTML Mode payload is documented here.
       required: true
@@ -9205,6 +9999,96 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/LandingPageDisplayCollectionResponseBody"
+    AnalyticsStandardEventCollectionResponse:
+      description: Paginated analytics standard event list
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AnalyticsStandardEventCollectionResponseBody"
+    MetaPixelResponse:
+      description: Facebook pixel
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MetaPixel"
+    MetaPixelCollectionResponse:
+      description: Paginated Facebook pixel list
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MetaPixelCollectionResponseBody"
+    TiktokPixelResponse:
+      description: TikTok pixel
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TiktokPixel"
+    TiktokPixelCollectionResponse:
+      description: Paginated TikTok pixel list
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TiktokPixelCollectionResponseBody"
+    KwaiPixelResponse:
+      description: SnackVideo pixel
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/KwaiPixel"
+    KwaiPixelCollectionResponse:
+      description: Paginated SnackVideo pixel list
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/KwaiPixelCollectionResponseBody"
+    GtmContainerResponse:
+      description: Google Tag Manager container
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/GtmContainer"
+    GtmContainerCollectionResponse:
+      description: Paginated Google Tag Manager container list
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/GtmContainerCollectionResponseBody"
+    BusinessStoreProductCollectionResponse:
+      description: Paginated products attached to the store
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BusinessStoreProductCollectionResponseBody"
+    BusinessStoreBundleCollectionResponse:
+      description: Paginated bundles attached to the store
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BusinessStoreBundleCollectionResponseBody"
+    BusinessStoreBundleResponse:
+      description: Store-scoped bundle
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BusinessStoreBundle"
+    BusinessStoreBundlePriceOptionResponse:
+      description: Store-scoped bundle price option
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BusinessStoreBundlePriceOption"
+    BusinessStoreVariantResponse:
+      description: Store-scoped product variant
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Variant"
+    BusinessStoreSalesPersonCollectionResponse:
+      description: Paginated sales people attached to the store
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BusinessStoreSalesPersonCollectionResponseBody"
     NoContentResponse:
       description: Success with no response body
     BadRequestResponse:
@@ -10163,8 +11047,12 @@ components:
         is_disable_client_tagging:
           type: boolean
         client_analytics_config:
-          type: object
-          additionalProperties: true
+          type: string
+          nullable: true
+          enum:
+            - head
+            - body_close_delay
+            - web_worker
     LandingPageDisplayRequest:
       type: object
       required:
@@ -10469,6 +11357,498 @@ components:
         page_size:
           type: integer
       additionalProperties: false
+    AnalyticsStandardEvent:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - event_name
+      properties:
+        id:
+          type: integer
+        event_name:
+          type: string
+        type:
+          type: string
+          nullable: true
+          enum:
+            - client
+            - server
+          description: Present for SnackVideo standard events.
+    AnalyticsStandardEventCollectionResponseBody:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsStandardEvent"
+        is_paginated:
+          type: boolean
+          enum:
+            - true
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+        next_cursor:
+          nullable: true
+          type: string
+        previous_cursor:
+          nullable: true
+          type: string
+        page_size:
+          type: integer
+      additionalProperties: false
+    MetaPixelRequest:
+      type: object
+      additionalProperties: true
+      properties:
+        name:
+          type: string
+        pixel_id:
+          type: string
+          description: Provider pixel ID from Meta.
+        is_conversion_api:
+          type: boolean
+        conversion_token:
+          type: string
+        test_event_code:
+          type: string
+    MetaPixel:
+      allOf:
+        - $ref: "#/components/schemas/MetaPixelRequest"
+        - type: object
+          required:
+            - id
+            - name
+            - pixel_id
+            - errors
+            - display
+          properties:
+            id:
+              type: integer
+              description: Scalev record ID to use in landing page display configuration.
+            errors:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+            display:
+              type: string
+    MetaPixelCollectionResponseBody:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetaPixel"
+        is_paginated:
+          type: boolean
+          enum:
+            - true
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+        next_cursor:
+          nullable: true
+          type: string
+        previous_cursor:
+          nullable: true
+          type: string
+        page_size:
+          type: integer
+      additionalProperties: false
+    TiktokPixelRequest:
+      type: object
+      additionalProperties: true
+      properties:
+        name:
+          type: string
+        pixel_id:
+          type: string
+          description: Provider pixel ID from TikTok.
+        is_conversion_api:
+          type: boolean
+        conversion_token:
+          type: string
+        test_event_code:
+          type: string
+    TiktokPixel:
+      allOf:
+        - $ref: "#/components/schemas/TiktokPixelRequest"
+        - type: object
+          required:
+            - id
+            - name
+            - pixel_id
+            - errors
+            - display
+          properties:
+            id:
+              type: integer
+              description: Scalev record ID to use in landing page display configuration.
+            errors:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+            display:
+              type: string
+    TiktokPixelCollectionResponseBody:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/TiktokPixel"
+        is_paginated:
+          type: boolean
+          enum:
+            - true
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+        next_cursor:
+          nullable: true
+          type: string
+        previous_cursor:
+          nullable: true
+          type: string
+        page_size:
+          type: integer
+      additionalProperties: false
+    KwaiPixelRequest:
+      type: object
+      additionalProperties: true
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - client
+            - server
+        pixel_id:
+          type: string
+          description: Provider pixel ID from SnackVideo.
+        is_test_mode:
+          type: boolean
+        conversion_token:
+          type: string
+    KwaiPixel:
+      allOf:
+        - $ref: "#/components/schemas/KwaiPixelRequest"
+        - type: object
+          required:
+            - id
+            - name
+            - type
+            - pixel_id
+            - errors
+            - display
+          properties:
+            id:
+              type: integer
+              description: Scalev record ID to use in landing page display configuration.
+            errors:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+            display:
+              type: string
+    KwaiPixelCollectionResponseBody:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/KwaiPixel"
+        is_paginated:
+          type: boolean
+          enum:
+            - true
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+        next_cursor:
+          nullable: true
+          type: string
+        previous_cursor:
+          nullable: true
+          type: string
+        page_size:
+          type: integer
+      additionalProperties: false
+    GtmContainerRequest:
+      type: object
+      additionalProperties: true
+      properties:
+        name:
+          type: string
+        container_id:
+          type: string
+          description: Provider GTM container ID.
+    GtmContainer:
+      allOf:
+        - $ref: "#/components/schemas/GtmContainerRequest"
+        - type: object
+          required:
+            - id
+            - name
+            - container_id
+            - display
+          properties:
+            id:
+              type: integer
+              description: Scalev record ID to use in landing page display configuration.
+            display:
+              type: string
+    GtmContainerCollectionResponseBody:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/GtmContainer"
+        is_paginated:
+          type: boolean
+          enum:
+            - true
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+        next_cursor:
+          nullable: true
+          type: string
+        previous_cursor:
+          nullable: true
+          type: string
+        page_size:
+          type: integer
+      additionalProperties: false
+    BusinessStoreVariantSummary:
+      type: object
+      additionalProperties: true
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+          description: Scalev variant record ID used by checkout/form_display payloads.
+        unique_id:
+          type: string
+        fullname:
+          type: string
+        sku:
+          type: string
+        price:
+          type: number
+    BusinessStoreProduct:
+      type: object
+      additionalProperties: true
+      required:
+        - id
+        - is_visible
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        display:
+          type: string
+        is_visible:
+          type: boolean
+          description: Whether this product is visible in this store.
+        variants:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusinessStoreVariantSummary"
+    BusinessStoreProductCollectionResponseBody:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusinessStoreProduct"
+        is_paginated:
+          type: boolean
+          enum:
+            - true
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+        next_cursor:
+          nullable: true
+          type: string
+        previous_cursor:
+          nullable: true
+          type: string
+        page_size:
+          type: integer
+      additionalProperties: false
+    BusinessStoreBundlePriceOption:
+      type: object
+      additionalProperties: true
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+          description: Scalev bundle price option record ID used by checkout/form_display payloads.
+        name:
+          type: string
+        price:
+          type: number
+        is_visible:
+          type: boolean
+          description: Present on store-scoped bundle responses.
+    BusinessStoreBundle:
+      type: object
+      additionalProperties: true
+      required:
+        - id
+        - bundle_price_options
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        display:
+          type: string
+        bundle_price_options:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusinessStoreBundlePriceOption"
+    BusinessStoreBundleCollectionResponseBody:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusinessStoreBundle"
+        is_paginated:
+          type: boolean
+          enum:
+            - true
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+        next_cursor:
+          nullable: true
+          type: string
+        previous_cursor:
+          nullable: true
+          type: string
+        page_size:
+          type: integer
+      additionalProperties: false
+    BusinessStoreUser:
+      type: object
+      additionalProperties: true
+      properties:
+        id:
+          type: integer
+        fullname:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        avatar:
+          type: string
+    BusinessStoreRole:
+      type: object
+      additionalProperties: true
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+    BusinessStoreBusinessUser:
+      type: object
+      additionalProperties: true
+      properties:
+        id:
+          type: integer
+        user:
+          $ref: "#/components/schemas/BusinessStoreUser"
+        role:
+          $ref: "#/components/schemas/BusinessStoreRole"
+        business_phone:
+          type: string
+    BusinessStoreSalesPerson:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - percentage
+        - business_user
+      properties:
+        id:
+          type: integer
+        percentage:
+          type: number
+        business_user:
+          $ref: "#/components/schemas/BusinessStoreBusinessUser"
+        weekly_schedule:
+          type: object
+          additionalProperties: true
+    BusinessStoreSalesPersonCollectionResponseBody:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusinessStoreSalesPerson"
+        is_paginated:
+          type: boolean
+          enum:
+            - true
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+        next_cursor:
+          nullable: true
+          type: string
+        previous_cursor:
+          nullable: true
+          type: string
+        page_size:
+          type: integer
+      additionalProperties: false
     LandingPageTagUpdateRequest:
       type: object
       additionalProperties: false
@@ -10600,8 +11980,12 @@ components:
             is_disable_client_tagging:
               type: boolean
             client_analytics_config:
-              type: object
-              additionalProperties: true
+              type: string
+              nullable: true
+              enum:
+                - head
+                - body_close_delay
+                - web_worker
             custom_domains:
               type: array
               items:
@@ -10637,8 +12021,12 @@ components:
         is_disable_client_tagging:
           type: boolean
         client_analytics_config:
-          type: object
-          additionalProperties: true
+          type: string
+          nullable: true
+          enum:
+            - head
+            - body_close_delay
+            - web_worker
         business:
           type: object
           nullable: true
@@ -13821,6 +15209,12 @@ components:
             days_of_payment_processing:
               type: integer
               nullable: true
+            is_auto_expire:
+              type: boolean
+              nullable: true
+            auto_expire_days:
+              type: integer
+              nullable: true
             is_show_whatsapp:
               type: boolean
               nullable: true
@@ -14078,6 +15472,12 @@ components:
           items:
             $ref: "#/components/schemas/StorefrontCustomerFacingPaymentAccount"
         days_of_payment_processing:
+          type: integer
+          nullable: true
+        is_auto_expire:
+          type: boolean
+          nullable: true
+        auto_expire_days:
           type: integer
           nullable: true
         is_show_whatsapp:
