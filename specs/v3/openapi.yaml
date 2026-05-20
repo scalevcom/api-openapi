@@ -10261,7 +10261,11 @@ components:
       properties:
         store_id:
           type: integer
-          description: Required for HTML Checkout pages.
+          description: >
+            Required for HTML Checkout pages. After a page has a saved
+            `store_id`, new displays for that page must use the same
+            `form_display.store_id`; a different store or missing store context
+            is rejected.
         variant_ids:
           type: array
           items:
