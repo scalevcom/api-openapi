@@ -39,6 +39,10 @@ tags:
     description: Public and machine OAuth token-management endpoints.
   - name: ChatGPT
     description: Custom GPT Action endpoints for Scalev HTML Mode draft workflows.
+  - name: Landing Pages
+    description:
+      Authenticated business landing page endpoints. The documented payloads
+      focus on HTML Mode pages.
   - name: OAuth Billing
     description: OAuth billing runtime, refund, and developer finance endpoints.
   - name: Customer Auth
@@ -926,6 +930,330 @@ paths:
           $ref: "#/components/responses/OAuthInstallationStatusResponse"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
+  /v3/pages:
+    get:
+      tags:
+        - Landing Pages
+      operationId: listLandingPages
+      summary: List landing pages
+      description:
+        Business-scoped landing page list. Returns Builder and HTML Mode pages
+        visible to the authenticated business.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - page:list
+      parameters:
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/NextCursor"
+        - $ref: "#/components/parameters/PreviousCursor"
+      responses:
+        "200":
+          $ref: "#/components/responses/LandingPageCollectionResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+    post:
+      tags:
+        - Landing Pages
+      operationId: createLandingPage
+      summary: Create a landing page
+      description:
+        Creates a business-scoped landing page using the same page creation
+        behavior as Landing Page Studio. The request body below documents the
+        HTML Mode payload.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - page:create
+      requestBody:
+        $ref: "#/components/requestBodies/LandingPageCreateRequestBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/LandingPageResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "422":
+          $ref: "#/components/responses/ValidationFailedResponse"
+  /v3/pages/simplified:
+    get:
+      tags:
+        - Landing Pages
+      operationId: listLandingPagesSimplified
+      summary: List simplified landing pages
+      description:
+        Business-scoped simplified landing page list using the same page
+        filtering as Landing Page Studio.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - page:list
+      parameters:
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/NextCursor"
+        - $ref: "#/components/parameters/PreviousCursor"
+      responses:
+        "200":
+          $ref: "#/components/responses/LandingPageSimplifiedCollectionResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+  /v3/pages/tags:
+    get:
+      tags:
+        - Landing Pages
+      operationId: listLandingPageTags
+      summary: List landing page tags
+      description: Lists landing page tags visible to the authenticated business.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - page:list
+      responses:
+        "200":
+          $ref: "#/components/responses/LandingPageTagCollectionResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+  /v3/pages/{id}:
+    parameters:
+      - $ref: "#/components/parameters/LandingPageId"
+    get:
+      tags:
+        - Landing Pages
+      operationId: getLandingPage
+      summary: Get a landing page
+      description:
+        Returns a business-scoped landing page with its current published page
+        display when one is selected.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - page:read
+      responses:
+        "200":
+          $ref: "#/components/responses/LandingPageResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+    patch:
+      tags:
+        - Landing Pages
+      operationId: updateLandingPage
+      summary: Update a landing page
+      description: >
+        Updates business-scoped landing page metadata and publishing state using
+        the same page update behavior as Landing Page Studio. Send
+        `is_published: true` with `current_page_display_id` to publish a page
+        display, or `is_published: false` with `current_page_display_id: null`
+        to unpublish the page.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - page:update
+      requestBody:
+        $ref: "#/components/requestBodies/LandingPageUpdateRequestBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/LandingPageResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "422":
+          $ref: "#/components/responses/ValidationFailedResponse"
+    delete:
+      tags:
+        - Landing Pages
+      operationId: deleteLandingPage
+      summary: Delete a landing page
+      description:
+        Soft-deletes a business-scoped landing page. Builder and HTML Mode pages
+        are both deletable through this endpoint.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - page:delete
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContentResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/pages/{id}/public:
+    parameters:
+      - $ref: "#/components/parameters/LandingPageId"
+    get:
+      tags:
+        - Landing Pages
+      operationId: getLandingPagePublicView
+      summary: Get landing page public view data
+      description:
+        Returns the authenticated public rendering payload for a landing page.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - page:read
+      responses:
+        "200":
+          $ref: "#/components/responses/LandingPagePublicResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/pages/{id}/update-tags:
+    parameters:
+      - $ref: "#/components/parameters/LandingPageId"
+    post:
+      tags:
+        - Landing Pages
+      operationId: updateLandingPageTags
+      summary: Update landing page tags
+      description: Replaces the tags assigned to a landing page.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - page:update
+      requestBody:
+        $ref: "#/components/requestBodies/LandingPageTagUpdateRequestBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/LandingPageResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/pages/{page_id}/page-displays:
+    parameters:
+      - $ref: "#/components/parameters/LandingPagePageId"
+    get:
+      tags:
+        - Landing Pages
+      operationId: listLandingPageDisplays
+      summary: List landing page displays
+      description: Lists saved displays for a landing page.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - page:list
+      parameters:
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/NextCursor"
+        - $ref: "#/components/parameters/PreviousCursor"
+      responses:
+        "200":
+          $ref: "#/components/responses/LandingPageDisplayCollectionResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+    post:
+      tags:
+        - Landing Pages
+      operationId: createLandingPageDisplay
+      summary: Create a landing page display
+      description:
+        Creates a new display for an existing landing page. The request body
+        below documents the HTML Mode page display payload.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - page:update
+      requestBody:
+        $ref: "#/components/requestBodies/LandingPageDisplayRequestBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/LandingPageDisplayResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "422":
+          $ref: "#/components/responses/ValidationFailedResponse"
+  /v3/pages/{page_id}/page-displays/{display_id}:
+    parameters:
+      - $ref: "#/components/parameters/LandingPagePageId"
+      - $ref: "#/components/parameters/LandingPageDisplayId"
+    get:
+      tags:
+        - Landing Pages
+      operationId: getLandingPageDisplay
+      summary: Get a landing page display
+      description: Returns one saved landing page display.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - page:read
+      responses:
+        "200":
+          $ref: "#/components/responses/LandingPageDisplayResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+    delete:
+      tags:
+        - Landing Pages
+      operationId: deleteLandingPageDisplay
+      summary: Delete a landing page display
+      description: Deletes one saved landing page display.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - page:update
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContentResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
   /v3/chatgpt/health:
     get:
       tags:
@@ -7893,8 +8221,10 @@ components:
           tokenUrl: https://api.scalev.com/v3/oauth/token
           scopes:
             page:list: List landing pages.
-            page:read: Read landing page context.
-            page:update: Validate and create unpublished landing page drafts.
+            page:read: Read landing pages and HTML Mode page context.
+            page:create: Create landing pages.
+            page:update: Update landing pages.
+            page:delete: Delete landing pages.
             store:list: List stores.
   parameters:
     StoreId:
@@ -7922,6 +8252,27 @@ components:
       schema:
         type: integer
       description: Numeric Scalev page ID.
+    LandingPageId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Numeric Scalev landing page ID.
+    LandingPagePageId:
+      name: page_id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Numeric Scalev landing page ID.
+    LandingPageDisplayId:
+      name: display_id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Numeric Scalev landing page display ID.
     LocationId:
       name: location_id
       in: path
@@ -8650,6 +9001,120 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/BundlePriceOptionRequest"
+    LandingPageCreateRequestBody:
+      description: Landing page data to create. HTML Mode payload is documented here.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LandingPageCreateRequest"
+          examples:
+            html_sales_page:
+              summary: HTML sales page
+              value:
+                name: API HTML Page
+                slug: api-html-page
+                is_published: true
+                page_display:
+                  schema_version: 2
+                  render_mode: html_mode
+                  html_code: "<main>Hello</main>"
+                  css_code: "main { color: #111827; }"
+                  js_code: "console.log('ready')"
+                  meta:
+                    lang: id
+                  banner:
+                    type: no_banner
+                  header: {}
+                  general: {}
+                  sidebar: []
+                  main: []
+                  onload_fb_events: []
+                  onload_tiktok_events: []
+                  onload_kwai_client_events: []
+                  onload_kwai_server_events: []
+                  fb_events_onload_parameters: {}
+                  tiktok_events_onload_parameters: {}
+                  kwai_client_events_onload_parameters: {}
+                  kwai_server_events_onload_parameters: {}
+            html_checkout_page:
+              summary: HTML checkout page
+              value:
+                name: API HTML Checkout Page
+                slug: api-html-checkout-page
+                is_published: true
+                page_display:
+                  schema_version: 2
+                  render_mode: html_mode
+                  html_code: "<main>Checkout</main>"
+                  meta:
+                    lang: id
+                  banner:
+                    type: no_banner
+                  header: {}
+                  general: {}
+                  sidebar: []
+                  main: []
+                  onload_fb_events: []
+                  onload_tiktok_events: []
+                  onload_kwai_client_events: []
+                  onload_kwai_server_events: []
+                  fb_events_onload_parameters: {}
+                  tiktok_events_onload_parameters: {}
+                  kwai_client_events_onload_parameters: {}
+                  kwai_server_events_onload_parameters: {}
+                  form_display:
+                    store_id: 3288
+                    variant_ids:
+                      - 12345
+                    after_submit_event: direct_to_whatsapp
+                    handler_assignment: rotator
+    LandingPageUpdateRequestBody:
+      description: Landing page metadata and publishing fields to update.
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LandingPageUpdateRequest"
+    LandingPageDisplayRequestBody:
+      description: Landing page display data to create. HTML Mode payload is documented here.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LandingPageDisplayRequest"
+          examples:
+            html_sales_display:
+              summary: HTML Mode display
+              value:
+                schema_version: 2
+                render_mode: html_mode
+                html_code: "<main>Hello</main>"
+                css_code: "main { color: #111827; }"
+                js_code: "console.log('ready')"
+                meta:
+                  lang: id
+                banner:
+                  type: no_banner
+                header: {}
+                general: {}
+                sidebar: []
+                main: []
+                onload_fb_events: []
+                onload_tiktok_events: []
+                onload_kwai_client_events: []
+                onload_kwai_server_events: []
+                fb_events_onload_parameters: {}
+                tiktok_events_onload_parameters: {}
+                kwai_client_events_onload_parameters: {}
+                kwai_server_events_onload_parameters: {}
+    LandingPageTagUpdateRequestBody:
+      description: Landing page tags to assign.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LandingPageTagUpdateRequest"
     StorefrontAllowedOriginRequestBody:
       required: true
       content:
@@ -8719,6 +9184,48 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/PaginatedCollectionResponseBody"
+    LandingPageResponse:
+      description: Landing page
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LandingPage"
+    LandingPageCollectionResponse:
+      description: Paginated landing page list
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LandingPageCollectionResponseBody"
+    LandingPageSimplifiedCollectionResponse:
+      description: Paginated simplified landing page list
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LandingPageSimplifiedCollectionResponseBody"
+    LandingPageTagCollectionResponse:
+      description: Landing page tags
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LandingPageTagCollectionResponseBody"
+    LandingPagePublicResponse:
+      description: Landing page public rendering payload
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LandingPagePublic"
+    LandingPageDisplayResponse:
+      description: Landing page display
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LandingPageDisplay"
+    LandingPageDisplayCollectionResponse:
+      description: Paginated landing page display list
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LandingPageDisplayCollectionResponseBody"
     NoContentResponse:
       description: Success with no response body
     BadRequestResponse:
@@ -9624,6 +10131,660 @@ components:
           maxLength: 102400
         csp_policy:
           $ref: "#/components/schemas/ChatGPTHtmlModeCspPolicy"
+    LandingPageCreateRequest:
+      type: object
+      required:
+        - name
+        - slug
+        - page_display
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          example: API HTML Page
+        slug:
+          type: string
+          example: api-html-page
+        is_published:
+          type: boolean
+          description: When true, publishes the created page display.
+        store_id:
+          type: integer
+          nullable: true
+          description:
+            Optional top-level store association. HTML Checkout store context is
+            configured through `page_display.form_display.store_id`.
+        page_display:
+          $ref: "#/components/schemas/LandingPageDisplayRequest"
+    LandingPageUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        is_published:
+          type: boolean
+          description: >
+            Set true to publish `current_page_display_id`; set false with
+            `current_page_display_id: null` to unpublish the page.
+        current_page_display_id:
+          type: integer
+          nullable: true
+          description:
+            Required together with `is_published` when changing published state.
+        store_id:
+          type: integer
+          nullable: true
+        is_sending_email_invoice:
+          type: boolean
+        is_disable_custom_font:
+          type: boolean
+        is_disable_client_tagging:
+          type: boolean
+        client_analytics_config:
+          type: object
+          additionalProperties: true
+    LandingPageDisplayRequest:
+      type: object
+      required:
+        - schema_version
+        - render_mode
+        - meta
+        - banner
+        - header
+        - general
+        - sidebar
+        - main
+        - onload_fb_events
+        - onload_tiktok_events
+        - onload_kwai_client_events
+        - onload_kwai_server_events
+        - fb_events_onload_parameters
+        - tiktok_events_onload_parameters
+        - kwai_client_events_onload_parameters
+        - kwai_server_events_onload_parameters
+      additionalProperties: true
+      properties:
+        schema_version:
+          type: integer
+          example: 2
+        render_mode:
+          type: string
+          enum:
+            - html_mode
+            - builder
+          description:
+            HTML Mode requests use `html_mode`. Builder payload details are not
+            documented here.
+        html_code:
+          type: string
+          description: Body-only HTML for HTML Mode.
+          maxLength: 204800
+        css_code:
+          type: string
+          maxLength: 102400
+        js_code:
+          type: string
+          maxLength: 102400
+        csp_policy:
+          $ref: "#/components/schemas/ChatGPTHtmlModeCspPolicy"
+        meta:
+          type: object
+          additionalProperties: true
+        banner:
+          type: object
+          additionalProperties: true
+        header:
+          type: object
+          additionalProperties: true
+        general:
+          type: object
+          additionalProperties: true
+        sidebar:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        main:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        form_display:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/LandingPageFormDisplayRequest"
+          description:
+            HTML Checkout configuration. Omit or send null for HTML Sales pages.
+        fb_pixel_ids:
+          type: array
+          items:
+            type: integer
+        tiktok_pixel_ids:
+          type: array
+          items:
+            type: integer
+        kwai_client_pixel_ids:
+          type: array
+          items:
+            type: integer
+        kwai_server_pixel_ids:
+          type: array
+          items:
+            type: integer
+        onload_fb_events:
+          type: array
+          items:
+            type: string
+        onload_tiktok_events:
+          type: array
+          items:
+            type: string
+        onload_kwai_client_events:
+          type: array
+          items:
+            type: string
+        onload_kwai_server_events:
+          type: array
+          items:
+            type: string
+        fb_events_onload_parameters:
+          type: object
+          additionalProperties: true
+        tiktok_events_onload_parameters:
+          type: object
+          additionalProperties: true
+        kwai_client_events_onload_parameters:
+          type: object
+          additionalProperties: true
+        kwai_server_events_onload_parameters:
+          type: object
+          additionalProperties: true
+    LandingPageFormDisplayRequest:
+      type: object
+      additionalProperties: true
+      properties:
+        store_id:
+          type: integer
+          description: Required for HTML Checkout pages.
+        variant_ids:
+          type: array
+          items:
+            type: integer
+          description:
+            Selected product variants. HTML Checkout requires at least one
+            `variant_id` or `bundle_price_option_id`.
+        bundle_price_option_ids:
+          type: array
+          items:
+            type: integer
+          description:
+            Selected bundle price options. HTML Checkout requires at least one
+            `variant_id` or `bundle_price_option_id`.
+        after_submit_event:
+          type: string
+          enum:
+            - success_page
+            - direct_to_whatsapp
+            - direct_to_custom_whatsapp
+            - other_page
+            - custom_url
+            - is_sending_email_invoice
+            - order_page
+        handler_assignment:
+          type: string
+          enum:
+            - rotator
+            - fixed
+          description:
+            Required for `direct_to_whatsapp`. When fixed, send
+            `store_sales_person_id`.
+        store_sales_person_id:
+          type: integer
+          nullable: true
+        custom_phone:
+          type: string
+          description: Required for `direct_to_custom_whatsapp`.
+        other_page_id:
+          type: integer
+          nullable: true
+          description: Required for `other_page`.
+        custom_url:
+          type: string
+          description: Required for `custom_url`.
+        onsubmit_fb_events:
+          type: array
+          items:
+            type: string
+        onsubmit_tiktok_events:
+          type: array
+          items:
+            type: string
+        onsubmit_kwai_client_events:
+          type: array
+          items:
+            type: string
+        onsubmit_kwai_server_events:
+          type: array
+          items:
+            type: string
+        fb_events_onsubmit_parameters:
+          type: object
+          additionalProperties: true
+        tiktok_events_onsubmit_parameters:
+          type: object
+          additionalProperties: true
+        kwai_client_events_onsubmit_parameters:
+          type: object
+          additionalProperties: true
+        kwai_server_events_onsubmit_parameters:
+          type: object
+          additionalProperties: true
+    LandingPageCollectionResponseBody:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/LandingPageSummary"
+        is_paginated:
+          type: boolean
+          enum:
+            - true
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+        next_cursor:
+          nullable: true
+          type: string
+        previous_cursor:
+          nullable: true
+          type: string
+        page_size:
+          type: integer
+      additionalProperties: false
+    LandingPageSimplifiedCollectionResponseBody:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/LandingPageSimpleSummary"
+        is_paginated:
+          type: boolean
+          enum:
+            - true
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+        next_cursor:
+          nullable: true
+          type: string
+        previous_cursor:
+          nullable: true
+          type: string
+        page_size:
+          type: integer
+      additionalProperties: false
+    LandingPageTagCollectionResponseBody:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            type: string
+        is_paginated:
+          type: boolean
+          enum:
+            - false
+      additionalProperties: false
+    LandingPageDisplayCollectionResponseBody:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/LandingPageDisplaySummary"
+        is_paginated:
+          type: boolean
+          enum:
+            - true
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+        next_cursor:
+          nullable: true
+          type: string
+        previous_cursor:
+          nullable: true
+          type: string
+        page_size:
+          type: integer
+      additionalProperties: false
+    LandingPageTagUpdateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - tags
+      properties:
+        tags:
+          type: array
+          items:
+            type: string
+          example:
+            - Promo
+            - Checkout
+    LandingPageSimpleSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+        unique_id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        is_published:
+          type: boolean
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        store_id:
+          type: integer
+          nullable: true
+    LandingPageDisplaySummary:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+        version:
+          type: integer
+        schema_version:
+          type: integer
+        render_mode:
+          type: string
+          enum:
+            - html_mode
+            - builder
+        created_at:
+          type: string
+          format: date-time
+        created_by:
+          type: object
+          nullable: true
+          additionalProperties: true
+        is_published:
+          type: boolean
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+    LandingPageSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+        unique_id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        render_mode:
+          type: string
+          enum:
+            - builder
+            - html_mode
+        is_published:
+          type: boolean
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        store_id:
+          type: integer
+          nullable: true
+        store:
+          type: object
+          nullable: true
+          additionalProperties: true
+        tags:
+          type: array
+          items:
+            type: string
+        is_pinned:
+          type: boolean
+        created_by:
+          type: object
+          nullable: true
+          additionalProperties: true
+        last_updated_by:
+          type: object
+          nullable: true
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        last_updated_at:
+          type: string
+          format: date-time
+    LandingPage:
+      allOf:
+        - $ref: "#/components/schemas/LandingPageSummary"
+        - type: object
+          additionalProperties: false
+          properties:
+            uuid:
+              type: string
+            business:
+              type: object
+              nullable: true
+              additionalProperties: true
+            is_sending_email_invoice:
+              type: boolean
+            is_disable_custom_font:
+              type: boolean
+            is_disable_client_tagging:
+              type: boolean
+            client_analytics_config:
+              type: object
+              additionalProperties: true
+            custom_domains:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+            homepage_custom_domains:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+            current_page_display_id:
+              type: integer
+              nullable: true
+            page_display:
+              type: object
+              nullable: true
+              allOf:
+                - $ref: "#/components/schemas/LandingPageDisplay"
+    LandingPagePublic:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+        unique_id:
+          type: string
+        is_published:
+          type: boolean
+        is_sending_email_invoice:
+          type: boolean
+        is_disable_custom_font:
+          type: boolean
+        is_disable_client_tagging:
+          type: boolean
+        client_analytics_config:
+          type: object
+          additionalProperties: true
+        business:
+          type: object
+          nullable: true
+          additionalProperties: true
+        domain_business_id:
+          type: integer
+        is_product_page:
+          type: boolean
+        is_checkout_page:
+          type: boolean
+        use_custom_html:
+          type: boolean
+        window_object:
+          type: object
+          nullable: true
+          additionalProperties: true
+        current_page_display:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/LandingPageDisplay"
+    LandingPageDisplay:
+      type: object
+      additionalProperties: true
+      properties:
+        id:
+          type: integer
+        version:
+          type: integer
+        schema_version:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        created_by_id:
+          type: integer
+          nullable: true
+        is_published:
+          type: boolean
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        render_mode:
+          type: string
+          enum:
+            - html_mode
+            - builder
+        html_code:
+          type: string
+          nullable: true
+        css_code:
+          type: string
+          nullable: true
+        js_code:
+          type: string
+          nullable: true
+        csp_policy:
+          $ref: "#/components/schemas/ChatGPTHtmlModeCspPolicy"
+        form_display:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/LandingPageFormDisplay"
+        fb_pixels:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        tiktok_pixels:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        kwai_client_pixels:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        kwai_server_pixels:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    LandingPageFormDisplay:
+      type: object
+      additionalProperties: true
+      properties:
+        id:
+          type: integer
+        store:
+          type: object
+          nullable: true
+          additionalProperties: true
+        variants:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        bundle_price_options:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        after_submit_event:
+          type: string
+        handler_assignment:
+          type: string
+        store_sales_person:
+          type: object
+          nullable: true
+          additionalProperties: true
+        custom_phone:
+          type: string
+        other_page:
+          type: object
+          nullable: true
+          additionalProperties: true
+        custom_url:
+          type: string
+        onsubmit_fb_events:
+          type: array
+          items:
+            type: string
+        onsubmit_tiktok_events:
+          type: array
+          items:
+            type: string
+        onsubmit_kwai_client_events:
+          type: array
+          items:
+            type: string
+        onsubmit_kwai_server_events:
+          type: array
+          items:
+            type: string
     ChatGPTValidationIssue:
       type: object
       required:
