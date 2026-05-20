@@ -9016,19 +9016,12 @@ components:
                 slug: api-html-page
                 is_published: true
                 page_display:
-                  schema_version: 2
                   render_mode: html_mode
                   html_code: "<main>Hello</main>"
                   css_code: "main { color: #111827; }"
                   js_code: "console.log('ready')"
                   meta:
                     lang: id
-                  banner:
-                    type: no_banner
-                  header: {}
-                  general: {}
-                  sidebar: []
-                  main: []
                   onload_fb_events: []
                   onload_tiktok_events: []
                   onload_kwai_client_events: []
@@ -9044,17 +9037,10 @@ components:
                 slug: api-html-checkout-page
                 is_published: true
                 page_display:
-                  schema_version: 2
                   render_mode: html_mode
                   html_code: "<main>Checkout</main>"
                   meta:
                     lang: id
-                  banner:
-                    type: no_banner
-                  header: {}
-                  general: {}
-                  sidebar: []
-                  main: []
                   onload_fb_events: []
                   onload_tiktok_events: []
                   onload_kwai_client_events: []
@@ -9087,19 +9073,12 @@ components:
             html_sales_display:
               summary: HTML Mode display
               value:
-                schema_version: 2
                 render_mode: html_mode
                 html_code: "<main>Hello</main>"
                 css_code: "main { color: #111827; }"
                 js_code: "console.log('ready')"
                 meta:
                   lang: id
-                banner:
-                  type: no_banner
-                header: {}
-                general: {}
-                sidebar: []
-                main: []
                 onload_fb_events: []
                 onload_tiktok_events: []
                 onload_kwai_client_events: []
@@ -10189,14 +10168,8 @@ components:
     LandingPageDisplayRequest:
       type: object
       required:
-        - schema_version
         - render_mode
         - meta
-        - banner
-        - header
-        - general
-        - sidebar
-        - main
         - onload_fb_events
         - onload_tiktok_events
         - onload_kwai_client_events
@@ -10207,17 +10180,15 @@ components:
         - kwai_server_events_onload_parameters
       additionalProperties: true
       properties:
-        schema_version:
-          type: integer
-          example: 2
         render_mode:
           type: string
           enum:
             - html_mode
             - builder
           description:
-            HTML Mode requests use `html_mode`. Builder payload details are not
-            documented here.
+            HTML Mode requests use `html_mode`. Builder payload details are
+            intentionally not documented here and remain unsupported for public
+            integration guidance; use HTML Mode for API-created pages.
         html_code:
           type: string
           description: Body-only HTML for HTML Mode.
@@ -10233,25 +10204,6 @@ components:
         meta:
           type: object
           additionalProperties: true
-        banner:
-          type: object
-          additionalProperties: true
-        header:
-          type: object
-          additionalProperties: true
-        general:
-          type: object
-          additionalProperties: true
-        sidebar:
-          type: array
-          items:
-            type: object
-            additionalProperties: true
-        main:
-          type: array
-          items:
-            type: object
-            additionalProperties: true
         form_display:
           type: object
           nullable: true
