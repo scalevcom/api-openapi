@@ -1024,10 +1024,15 @@ paths:
         - Landing Pages
       operationId: createLandingPage
       summary: Create a landing page
-      description:
+      description: >-
         Creates a business-scoped landing page using the same page creation
         behavior as Landing Page Studio. The request body below documents the
-        HTML Mode payload.
+        HTML Mode payload. To create and publish an HTML Mode page in one call,
+        include `is_published: true` with `page_display`. If `is_published` is
+        omitted or false, the nested `page_display` is saved as an unpublished
+        draft and is not returned as the page's current display; create or pick
+        a page display, then call `PATCH /v3/pages/{id}` with
+        `is_published: true` and `current_page_display_id` to publish it.
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -9697,7 +9702,11 @@ components:
           schema:
             $ref: "#/components/schemas/GtmContainerRequest"
     LandingPageCreateRequestBody:
-      description: Landing page data to create. HTML Mode payload is documented here.
+      description: >-
+        Landing page data to create. HTML Mode payload is documented here. For
+        a one-call create-and-publish flow, set `is_published: true` and include
+        `page_display`. Without `is_published: true`, the display is only a
+        draft and must be published later.
       required: true
       content:
         application/json:
@@ -10984,7 +10993,12 @@ components:
           example: api-html-page
         is_published:
           type: boolean
-          description: When true, publishes the created page display.
+          description: >-
+            When true, publishes the created nested `page_display` and makes it
+            the current display. When omitted or false, the nested display is
+            saved as an unpublished draft; the page response will have
+            `current_page_display_id: null`, `page_display: null`, and a
+            page-level `render_mode` fallback until a display is published.
         store_id:
           type: integer
           nullable: true
