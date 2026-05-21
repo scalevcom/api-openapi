@@ -36,7 +36,10 @@ tags:
       All store-derived public storefront routes require
       `X-Scalev-Storefront-Api-Key`.
   - name: OAuth
-    description: Public and machine OAuth token-management endpoints.
+    description:
+      Public and machine OAuth token-management endpoints. The authorization
+      code flow accepts the standard `scope` parameter; public OAuth clients
+      may use PKCE with `token_endpoint_auth_method=none`.
   - name: Identity
     description: Authenticated business identity context.
   - name: Landing Pages
@@ -848,10 +851,13 @@ paths:
         - OAuth
       operationId: getOAuthAuthorizationServerMetadata
       summary: Get OAuth authorization server metadata
-      description: "Public OAuth metadata endpoint. Advertises only `/v3` OAuth endpoints."
+      description:
+        Public OAuth metadata endpoint. Advertises only `/v3` OAuth endpoints,
+        dynamic client registration, Client ID Metadata Documents, PKCE, and
+        supported global machine scopes.
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          $ref: "#/components/responses/OAuthAuthorizationServerMetadataResponse"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
   /v3/oauth/application:
@@ -875,20 +881,51 @@ paths:
           schema:
             format: uri
             type: string
+        - description:
+            Optional resource audience. MCP clients use
+            `https://mcp.scalev.com/mcp`.
+          in: query
+          name: resource
+          required: false
+          schema:
+            format: uri
+            type: string
       responses:
         "200":
           $ref: "#/components/responses/SuccessResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
+  /v3/oauth/register:
+    post:
+      tags:
+        - OAuth
+      operationId: registerOAuthClient
+      summary: Register an OAuth client
+      description:
+        Dynamic Client Registration endpoint for platform clients. Registrations
+        are attached to Scalev's official OAuth application for supported
+        resource audiences. Public clients should use
+        `token_endpoint_auth_method=none` and PKCE.
+      requestBody:
+        $ref: "#/components/requestBodies/OAuthClientRegistrationRequestBody"
+      responses:
+        "201":
+          $ref: "#/components/responses/OAuthClientRegistrationResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
   /v3/oauth/token:
     post:
       tags:
         - OAuth
       operationId: exchangeOAuthToken
       summary: Exchange or refresh OAuth tokens
-      description: "No OAuth installation scope. OAuth flow endpoint."
+      description:
+        No OAuth installation scope. OAuth flow endpoint. Confidential clients
+        authenticate with `client_secret_post` or HTTP Basic auth. Public client
+        registrations with `token_endpoint_auth_method=none` omit
+        `client_secret` and must use PKCE.
       requestBody:
-        $ref: "#/components/requestBodies/GenericJsonRequestBody"
+        $ref: "#/components/requestBodies/OAuthTokenRequestBody"
       responses:
         "200":
           $ref: "#/components/responses/SuccessResponse"
@@ -8800,38 +8837,69 @@ components:
           authorizationUrl: https://api.scalev.com/v3/oauth/authorize
           tokenUrl: https://api.scalev.com/v3/oauth/token
           scopes:
-            page:list: List landing pages.
-            page:read: Read landing pages and HTML Mode page context.
-            page:create: Create landing pages.
-            page:update: Update landing pages.
-            page:delete: Delete landing pages.
-            store:list: List stores.
-            store:read: Read store setup data.
-            product:list: List products.
-            product:read: Read product variants.
-            bundle:list: List bundles.
-            bundle:read: Read bundle price options.
-            payment_account:list: List payment accounts.
-            fb_pixel:list: List Facebook pixels and standard events.
-            fb_pixel:read: Read Facebook pixels.
-            fb_pixel:create: Create Facebook pixels.
-            fb_pixel:update: Update Facebook pixels.
-            fb_pixel:delete: Delete Facebook pixels.
-            tiktok_pixel:list: List TikTok pixels and standard events.
-            tiktok_pixel:read: Read TikTok pixels.
-            tiktok_pixel:create: Create TikTok pixels.
-            tiktok_pixel:update: Update TikTok pixels.
-            tiktok_pixel:delete: Delete TikTok pixels.
-            kwai_pixel:list: List SnackVideo pixels and standard events.
-            kwai_pixel:read: Read SnackVideo pixels.
-            kwai_pixel:create: Create SnackVideo pixels.
-            kwai_pixel:update: Update SnackVideo pixels.
-            kwai_pixel:delete: Delete SnackVideo pixels.
-            gtm:list: List Google Tag Manager containers.
-            gtm:read: Read Google Tag Manager containers.
-            gtm:create: Create Google Tag Manager containers.
-            gtm:update: Update Google Tag Manager containers.
-            gtm:delete: Delete Google Tag Manager containers.
+            order:list: List Orders.
+            order:read: View Orders.
+            order:statistics:list: List Order Statistics.
+            order:create: Create New Orders.
+            order:update: Update Orders.
+            order:delete: Delete Orders.
+            order:change_status: Change Order Status.
+            order:create_awb: Request for Order Pickup.
+            product:list: List Products.
+            product:read: View Products.
+            product:create: Create New Products.
+            product:update: Update Products.
+            product:delete: Delete Products.
+            store:list: List Stores.
+            store:read: View Stores.
+            store:update: Update Stores.
+            fb_pixel:list: List Facebook Pixels.
+            fb_pixel:read: View Facebook Pixels.
+            fb_pixel:create: Create Facebook Pixels.
+            fb_pixel:update: Update Facebook Pixels.
+            fb_pixel:delete: Delete Facebook Pixels.
+            tiktok_pixel:list: List TikTok Pixels.
+            tiktok_pixel:read: View TikTok Pixels.
+            tiktok_pixel:create: Create TikTok Pixels.
+            tiktok_pixel:update: Update TikTok Pixels.
+            tiktok_pixel:delete: Delete TikTok Pixels.
+            kwai_pixel:list: List Kwai Pixels.
+            kwai_pixel:read: View Kwai Pixels.
+            kwai_pixel:create: Create Kwai Pixels.
+            kwai_pixel:update: Update Kwai Pixels.
+            kwai_pixel:delete: Delete Kwai Pixels.
+            gtm:list: List GTM Containers.
+            gtm:read: View GTM Containers.
+            gtm:create: Create GTM Containers.
+            gtm:update: Update GTM Containers.
+            gtm:delete: Delete GTM Containers.
+            page:list: List Pages.
+            page:read: View Pages.
+            page:create: Create Pages.
+            page:update: Update Pages.
+            page:delete: Delete Pages.
+            payment_account:list: List Payment Accounts.
+            bundle:list: List Bundles.
+            bundle:read: View Bundles.
+            bundle:create: Create New Bundles.
+            bundle:update: Update Bundles.
+            bundle:delete: Delete Bundles.
+            customer:list: List Customers.
+            customer:read: View Customers.
+            customer:create: Create New Customers.
+            customer:update: Update Customers.
+            waba_account:list: List WhatsApp Business Accounts.
+            waba_account:read: View WhatsApp Business Accounts.
+            waba_account:create: Create and Connect WhatsApp Business Accounts.
+            waba_account:update: Update WhatsApp Business Accounts.
+            waba_account:delete: Delete WhatsApp Business Accounts.
+            waba_account:operate: Operate WhatsApp conversations and send messages.
+            waba_template_message:send: Send WhatsApp Template Messages.
+            whats_app_integration:list: List WhatsApp Integrations.
+            whats_app_integration:read: View WhatsApp Integrations.
+            whats_app_integration:create: Create WhatsApp Integrations.
+            whats_app_integration:update: Update WhatsApp Integrations.
+            whats_app_integration:delete: Delete WhatsApp Integrations.
   parameters:
     StoreId:
       name: store_id
@@ -9206,6 +9274,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/OAuthInstallationLaunchTokenExchangeRequest"
+    OAuthClientRegistrationRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/OAuthClientRegistrationRequest"
+    OAuthTokenRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/OAuthTokenRequest"
     GenericUploadRequestBody:
       required: true
       content:
@@ -9739,6 +9819,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/AuthenticatedBusinessIdentity"
+    OAuthAuthorizationServerMetadataResponse:
+      description: OAuth authorization server metadata
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/OAuthAuthorizationServerMetadata"
+    OAuthClientRegistrationResponse:
+      description: Registered OAuth client
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/OAuthClientRegistration"
     CustomerAuthTokenResponse:
       description: Customer JWT tokens for a successful storefront customer login, OTP verification, or refresh.
       content:
@@ -12793,6 +12885,216 @@ components:
           type: string
           nullable: true
       additionalProperties: false
+    OAuthAuthorizationServerMetadata:
+      type: object
+      additionalProperties: true
+      required:
+        - issuer
+        - authorization_endpoint
+        - token_endpoint
+        - registration_endpoint
+        - response_types_supported
+        - grant_types_supported
+        - token_endpoint_auth_methods_supported
+        - code_challenge_methods_supported
+        - client_id_metadata_document_supported
+        - scopes_supported
+      properties:
+        issuer:
+          type: string
+          format: uri
+          example: https://api.scalev.com/v3/oauth
+        authorization_endpoint:
+          type: string
+          format: uri
+          example: https://app.scalev.com/oauth/authorize
+        token_endpoint:
+          type: string
+          format: uri
+          example: https://api.scalev.com/v3/oauth/token
+        registration_endpoint:
+          type: string
+          format: uri
+          example: https://api.scalev.com/v3/oauth/register
+        introspection_endpoint:
+          type: string
+          format: uri
+          example: https://api.scalev.com/v3/oauth/introspect
+        revocation_endpoint:
+          type: string
+          format: uri
+          example: https://api.scalev.com/v3/oauth/revoke
+        response_types_supported:
+          type: array
+          items:
+            type: string
+          example:
+            - code
+        grant_types_supported:
+          type: array
+          items:
+            type: string
+          example:
+            - authorization_code
+            - refresh_token
+        token_endpoint_auth_methods_supported:
+          type: array
+          items:
+            type: string
+            enum:
+              - client_secret_post
+              - client_secret_basic
+              - none
+        code_challenge_methods_supported:
+          type: array
+          items:
+            type: string
+          example:
+            - S256
+        client_id_metadata_document_supported:
+          type: boolean
+          example: true
+        scopes_supported:
+          type: array
+          items:
+            type: string
+    OAuthClientRegistrationRequest:
+      type: object
+      additionalProperties: true
+      required:
+        - redirect_uris
+      properties:
+        client_name:
+          type: string
+          example: MCP Client
+        client_uri:
+          type: string
+          format: uri
+        logo_uri:
+          type: string
+          format: uri
+        redirect_uris:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            format: uri
+        grant_types:
+          type: array
+          items:
+            type: string
+          default:
+            - authorization_code
+        response_types:
+          type: array
+          items:
+            type: string
+          default:
+            - code
+        token_endpoint_auth_method:
+          type: string
+          enum:
+            - client_secret_post
+            - client_secret_basic
+            - none
+          default: none
+    OAuthClientRegistration:
+      type: object
+      additionalProperties: true
+      required:
+        - client_id
+        - client_name
+        - redirect_uris
+        - grant_types
+        - response_types
+        - token_endpoint_auth_method
+        - client_id_issued_at
+      properties:
+        client_id:
+          type: string
+        client_id_issued_at:
+          type: integer
+          format: int64
+          description: Unix timestamp, in seconds, when this client ID was issued.
+        client_secret:
+          type: string
+          nullable: true
+          description:
+            Present only for confidential client registrations. Public clients
+            using `token_endpoint_auth_method=none` do not receive a secret.
+        client_name:
+          type: string
+        client_uri:
+          type: string
+          format: uri
+          nullable: true
+        logo_uri:
+          type: string
+          format: uri
+          nullable: true
+        redirect_uris:
+          type: array
+          items:
+            type: string
+            format: uri
+        grant_types:
+          type: array
+          items:
+            type: string
+        response_types:
+          type: array
+          items:
+            type: string
+        token_endpoint_auth_method:
+          type: string
+          enum:
+            - client_secret_post
+            - client_secret_basic
+            - none
+    OAuthTokenRequest:
+      type: object
+      additionalProperties: true
+      required:
+        - grant_type
+        - client_id
+      properties:
+        grant_type:
+          type: string
+          enum:
+            - authorization_code
+            - refresh_token
+        client_id:
+          type: string
+          description:
+            OAuth application client ID, registered client ID, or HTTPS Client
+            ID Metadata Document URL.
+        client_secret:
+          type: string
+          description:
+            Required for confidential clients when HTTP Basic auth is not used.
+            Omit for public client registrations using
+            `token_endpoint_auth_method=none`.
+        code:
+          type: string
+          description: Authorization code, required for `authorization_code`.
+        redirect_uri:
+          type: string
+          format: uri
+          description: Redirect URI used on the authorization request.
+        code_verifier:
+          type: string
+          description:
+            PKCE code verifier. Required for public clients and recommended for
+            all authorization-code exchanges.
+        refresh_token:
+          type: string
+          description: Refresh token, required for `refresh_token`.
+        resource:
+          type: string
+          format: uri
+          description:
+            Optional resource audience. Must match the resource requested during
+            authorization when present.
     OAuthInstallationStatusResponseBody:
       type: object
       required:
