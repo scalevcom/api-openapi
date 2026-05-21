@@ -10,6 +10,7 @@ const distSpecDir = path.join(distDir, "specs/v3");
 const distYamlPath = path.join(distSpecDir, "openapi.yaml");
 const distJsonPath = path.join(distSpecDir, "openapi.json");
 const noJekyllPath = path.join(distDir, ".nojekyll");
+const redoclyBinPath = path.join(rootDir, "node_modules/.bin/redocly");
 
 const yamlSource = fs.readFileSync(yamlPath, "utf8");
 const spec = parse(yamlSource);
@@ -22,9 +23,8 @@ fs.writeFileSync(distJsonPath, `${JSON.stringify(spec, null, 2)}\n`);
 fs.writeFileSync(noJekyllPath, "");
 
 execFileSync(
-  "npx",
+  redoclyBinPath,
   [
-    "redocly",
     "build-docs",
     "specs/v3/openapi.yaml",
     "--output",
@@ -32,6 +32,11 @@ execFileSync(
   ],
   {
     cwd: rootDir,
+    env: {
+      ...process.env,
+      REDOCLY_TELEMETRY: "off",
+      REDOCLY_SUPPRESS_UPDATE_NOTICE: "true",
+    },
     stdio: "inherit",
   },
 );

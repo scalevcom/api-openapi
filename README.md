@@ -12,14 +12,14 @@ Standalone OpenAPI repository for the Nexus public commerce API contract.
 ## Usage
 
 ```bash
-npm install
-npm run lint
-npm run build
-npm run build:site
+pnpm install
+pnpm lint
+pnpm build
+pnpm build:site
 ```
 
-`npm run build` generates `specs/v3/openapi.json` from the YAML source for local tooling or publishing workflows.
-`npm run build:site` creates a publishable `dist/` directory with:
+`pnpm build` generates `specs/v3/openapi.json` from the YAML source for local tooling or publishing workflows.
+`pnpm build:site` creates a publishable `dist/` directory with:
 
 - `dist/index.html` for human-readable API docs
 - `dist/specs/v3/openapi.yaml`
