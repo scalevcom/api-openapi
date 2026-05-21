@@ -39,7 +39,8 @@ tags:
     description:
       Public and machine OAuth token-management endpoints. The authorization
       code flow accepts the standard `scope` parameter; public OAuth clients
-      may use PKCE with `token_endpoint_auth_method=none`.
+      may use PKCE with `token_endpoint_auth_method=none`, and metadata
+      document clients may use `private_key_jwt`.
   - name: Identity
     description: Authenticated business identity context.
   - name: Landing Pages
@@ -12945,6 +12946,7 @@ components:
               - client_secret_post
               - client_secret_basic
               - none
+              - private_key_jwt
         code_challenge_methods_supported:
           type: array
           items:
@@ -12997,7 +12999,20 @@ components:
             - client_secret_post
             - client_secret_basic
             - none
+            - private_key_jwt
           default: none
+        jwks_uri:
+          type: string
+          format: uri
+          description:
+            HTTPS JWKS URL required when registering a
+            `private_key_jwt` client.
+        token_endpoint_auth_signing_alg:
+          type: string
+          enum:
+            - RS256
+          description:
+            JWT assertion signing algorithm for `private_key_jwt` clients.
     OAuthClientRegistration:
       type: object
       additionalProperties: true
@@ -13051,6 +13066,14 @@ components:
             - client_secret_post
             - client_secret_basic
             - none
+            - private_key_jwt
+        jwks_uri:
+          type: string
+          format: uri
+          nullable: true
+        token_endpoint_auth_signing_alg:
+          type: string
+          nullable: true
     OAuthTokenRequest:
       type: object
       additionalProperties: true
@@ -13073,7 +13096,17 @@ components:
           description:
             Required for confidential clients when HTTP Basic auth is not used.
             Omit for public client registrations using
-            `token_endpoint_auth_method=none`.
+            `token_endpoint_auth_method=none` and for clients using
+            `private_key_jwt`.
+        client_assertion_type:
+          type: string
+          description:
+            Required for `private_key_jwt`; must be
+            `urn:ietf:params:oauth:client-assertion-type:jwt-bearer`.
+        client_assertion:
+          type: string
+          description:
+            Signed JWT client assertion required for `private_key_jwt`.
         code:
           type: string
           description: Authorization code, required for `authorization_code`.
