@@ -23833,6 +23833,7 @@ components:
           type: integer
       required:
         - name
+        - public_name
       title: BundleCreateRequest
       type: object
     Bundle:
