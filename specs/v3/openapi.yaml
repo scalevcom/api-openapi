@@ -37,6 +37,8 @@ tags:
       `X-Scalev-Storefront-Api-Key`.
   - name: OAuth
     description: Public and machine OAuth token-management endpoints.
+  - name: Identity
+    description: Authenticated business identity context.
   - name: Landing Pages
     description:
       Authenticated business landing page endpoints. The documented payloads
@@ -90,6 +92,27 @@ tags:
   - name: WhatsApp Integrations
     description: Authenticated WhatsApp integration management endpoints.
 paths:
+  /v3/me:
+    get:
+      tags:
+        - Identity
+      operationId: getAuthenticatedBusinessIdentity
+      summary: Get authenticated business identity
+      description:
+        Returns the authenticated business context resolved by Nexus for the
+        bearer token. OAuth tokens may use either the normal Nexus API audience
+        or a configured MCP resource audience accepted by Nexus.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/AuthenticatedBusinessIdentityResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
   /v3/stores/{store_id}/public/items:
     parameters:
       - $ref: "#/components/parameters/StoreId"
@@ -1213,6 +1236,33 @@ paths:
           $ref: "#/components/responses/NotFoundResponse"
         "422":
           $ref: "#/components/responses/ValidationFailedResponse"
+  /v3/pages/{page_id}/page-displays/validate:
+    parameters:
+      - $ref: "#/components/parameters/LandingPagePageId"
+    post:
+      tags:
+        - Landing Pages
+      operationId: validateLandingPageDisplay
+      summary: Validate a landing page display
+      description:
+        Validates the same landing page display payload accepted by create
+        without persisting a page-display record.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - page:update
+      requestBody:
+        $ref: "#/components/requestBodies/LandingPageDisplayRequestBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/LandingPageDisplayValidationResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
   /v3/pages/{page_id}/page-displays/{display_id}:
     parameters:
       - $ref: "#/components/parameters/LandingPagePageId"
@@ -9683,6 +9733,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/RawObjectResponseBody"
+    AuthenticatedBusinessIdentityResponse:
+      description: Authenticated business identity context
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AuthenticatedBusinessIdentity"
     CustomerAuthTokenResponse:
       description: Customer JWT tokens for a successful storefront customer login, OTP verification, or refresh.
       content:
@@ -9763,6 +9819,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/LandingPageDisplay"
+    LandingPageDisplayValidationResponse:
+      description: Landing page display validation result
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LandingPageDisplayValidationResult"
     LandingPageDisplayCollectionResponse:
       description: Paginated landing page display list
       content:
@@ -10674,6 +10736,120 @@ components:
         - type: string
         - type: number
         - type: boolean
+    AuthenticatedBusinessIdentity:
+      type: object
+      additionalProperties: false
+      required:
+        - auth_method
+        - business
+        - scopes
+      properties:
+        auth_method:
+          type: string
+          nullable: true
+          enum:
+            - oauth
+            - api_key
+            - app_login
+        business:
+          $ref: "#/components/schemas/AuthenticatedBusinessSummary"
+        user:
+          type: object
+          nullable: true
+          additionalProperties: false
+          properties:
+            id:
+              type: integer
+            email:
+              type: string
+              nullable: true
+            phone:
+              type: string
+              nullable: true
+            fullname:
+              type: string
+              nullable: true
+            avatar:
+              type: string
+              nullable: true
+        oauth_application:
+          type: object
+          nullable: true
+          additionalProperties: false
+          properties:
+            id:
+              type: integer
+            client_id:
+              type: string
+            name:
+              type: string
+              nullable: true
+            homepage_url:
+              type: string
+              nullable: true
+        authorized_business:
+          type: object
+          nullable: true
+          additionalProperties: false
+          properties:
+            id:
+              type: integer
+            authorized_business_id:
+              type: integer
+            authorized_by:
+              type: object
+              nullable: true
+              additionalProperties: true
+            is_active:
+              type: boolean
+            is_enabled:
+              type: boolean
+            scopes:
+              type: array
+              items:
+                type: string
+            inserted_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+        scopes:
+          type: array
+          nullable: true
+          items:
+            type: string
+    AuthenticatedBusinessSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+        is_banned:
+          type: boolean
+        unique_id:
+          type: string
+          nullable: true
+        account_holder:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        contact_phone:
+          type: string
+          nullable: true
+        contact_email:
+          type: string
+          nullable: true
+        logo:
+          type: string
+          nullable: true
+        username:
+          type: string
+          nullable: true
+        is_manual_reseller_transfer_allowed:
+          type: boolean
     HtmlModeCspPolicy:
       type: object
       additionalProperties: false
@@ -11062,6 +11238,44 @@ components:
         page_size:
           type: integer
       additionalProperties: false
+    LandingPageDisplayValidationResult:
+      type: object
+      additionalProperties: false
+      required:
+        - valid
+        - validation_warnings
+        - validation_errors
+      properties:
+        valid:
+          type: boolean
+        validation_warnings:
+          type: array
+          items:
+            $ref: "#/components/schemas/LandingPageDisplayValidationIssue"
+        validation_errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/LandingPageDisplayValidationIssue"
+    LandingPageDisplayValidationIssue:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - field
+        - message
+        - severity
+      properties:
+        code:
+          type: string
+        field:
+          type: string
+        message:
+          type: string
+        severity:
+          type: string
+          enum:
+            - error
+            - warning
     AnalyticsStandardEvent:
       type: object
       additionalProperties: false
