@@ -40,6 +40,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Checkout Nexus route policy
+        uses: actions/checkout@v4
+        with:
+          repository: scalevcom/nexus
+          path: nexus-source
+          token: ${{ secrets.SCALEV_REPO_READ_TOKEN || github.token }}
+          fetch-depth: 1
+
+      - name: Check dashboard-only route leakage
+        run: pnpm check:dash-only-leakage
+        env:
+          NEXUS_REPO_DIR: nexus-source
+
       - name: Lint OpenAPI spec
         run: pnpm lint
 

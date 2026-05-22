@@ -121,6 +121,28 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
+  /v3/me/connected_businesses:
+    get:
+      tags:
+        - Identity
+      operationId: listAuthenticatedConnectedBusinesses
+      summary: List authenticated connected businesses
+      description:
+        Returns only the token-level connected business collection from
+        `GET /v3/me`. OAuth clients use each business `unique_id` as `b_uid`
+        on direct Nexus business-scoped routes or as `business_unique_id` in
+        MCP tools when the token covers multiple businesses.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ConnectedBusinessesResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
   /v3/stores/{store_id}/public/items:
     parameters:
       - $ref: "#/components/parameters/StoreId"
@@ -900,6 +922,39 @@ paths:
           $ref: "#/components/responses/SuccessResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
+  /v3/oauth/scopes:
+    get:
+      tags:
+        - OAuth
+      operationId: listOAuthScopes
+      summary: List OAuth scopes
+      description:
+        Public OAuth helper endpoint. Returns the MCP-compatible `/v3` machine
+        scope catalog as a map from scope name to plain-English description.
+      responses:
+        "200":
+          $ref: "#/components/responses/OAuthScopeCatalogResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+  /v3/oauth/applications/me:
+    get:
+      tags:
+        - OAuth
+      operationId: getCurrentOAuthApplication
+      summary: Get current OAuth application
+      description:
+        OAuth token identity helper endpoint. Returns the OAuth application
+        represented by the presented access token and never includes the client
+        secret.
+      security:
+        - scalevOAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/CurrentOAuthApplicationResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
   /v3/oauth/register:
     post:
       tags:
@@ -9833,12 +9888,30 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/AuthenticatedIdentity"
+    ConnectedBusinessesResponse:
+      description: Authenticated connected businesses
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ConnectedBusinessesResponseBody"
     OAuthAuthorizationServerMetadataResponse:
       description: OAuth authorization server metadata
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/OAuthAuthorizationServerMetadata"
+    OAuthScopeCatalogResponse:
+      description: OAuth scope catalog
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/OAuthScopeCatalog"
+    CurrentOAuthApplicationResponse:
+      description: Current OAuth application
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CurrentOAuthApplication"
     OAuthClientRegistrationResponse:
       description: Registered OAuth client
       content:
@@ -10925,6 +10998,70 @@ components:
         is_enabled:
           type: boolean
         scopes:
+          type: array
+          items:
+            type: string
+    ConnectedBusinessesResponseBody:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuthenticatedConnectedBusiness"
+        is_paginated:
+          type: boolean
+          enum:
+            - false
+    OAuthScopeCatalog:
+      type: object
+      additionalProperties:
+        type: string
+      description:
+        Map of MCP-compatible `/v3` OAuth scope names to plain-English
+        descriptions.
+    CurrentOAuthApplication:
+      type: object
+      additionalProperties: false
+      required:
+        - client_id
+        - name
+        - description
+        - logo_url
+        - homepage_url
+        - redirect_uri
+        - available_scopes
+        - webhook_status
+        - webhook_events
+      properties:
+        client_id:
+          type: string
+        name:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        logo_url:
+          type: string
+          nullable: true
+        homepage_url:
+          type: string
+          nullable: true
+        redirect_uri:
+          type: string
+          nullable: true
+        available_scopes:
+          type: array
+          items:
+            type: string
+        webhook_status:
+          type: string
+          nullable: true
+        webhook_events:
           type: array
           items:
             type: string
