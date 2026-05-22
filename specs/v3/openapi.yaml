@@ -47,6 +47,9 @@ tags:
     description:
       Authenticated business landing page endpoints. The documented payloads
       focus on HTML Mode pages.
+    externalDocs:
+      description: Read the Landing Pages API guide before creating or publishing HTML Mode pages.
+      url: https://docs.scalev.com/en/landing-pages-api
   - name: Analytics Setup
     description:
       Authenticated business analytics provider catalogs and pixel/container
