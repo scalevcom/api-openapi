@@ -100,19 +100,20 @@ paths:
     get:
       tags:
         - Identity
-      operationId: getAuthenticatedBusinessIdentity
-      summary: Get authenticated business identity
+      operationId: getAuthenticatedIdentity
+      summary: Get authenticated identity
       description:
-        Returns the authenticated business context resolved by Nexus for the
-        bearer token. OAuth tokens may use either the normal Nexus API audience
-        or a configured MCP resource audience accepted by Nexus.
+        Returns token-level identity for the bearer token. OAuth responses
+        include the user, OAuth application, and every connected business
+        installation for the token. Business-scoped API requests still resolve
+        one selected business installation per request.
       security:
         - bearerAuth: []
         - apiKeyAuth: []
         - scalevOAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/AuthenticatedBusinessIdentityResponse"
+          $ref: "#/components/responses/AuthenticatedIdentityResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
@@ -9823,12 +9824,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/RawObjectResponseBody"
-    AuthenticatedBusinessIdentityResponse:
-      description: Authenticated business identity context
+    AuthenticatedIdentityResponse:
+      description: Authenticated token identity context
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/AuthenticatedBusinessIdentity"
+            $ref: "#/components/schemas/AuthenticatedIdentity"
     OAuthAuthorizationServerMetadataResponse:
       description: OAuth authorization server metadata
       content:
@@ -10838,13 +10839,14 @@ components:
         - type: string
         - type: number
         - type: boolean
-    AuthenticatedBusinessIdentity:
+    AuthenticatedIdentity:
       type: object
       additionalProperties: false
       required:
         - auth_method
-        - business
-        - scopes
+        - user
+        - oauth_application
+        - connected_businesses
       properties:
         auth_method:
           type: string
@@ -10853,8 +10855,6 @@ components:
             - oauth
             - api_key
             - app_login
-        business:
-          $ref: "#/components/schemas/AuthenticatedBusinessSummary"
         user:
           type: object
           nullable: true
@@ -10862,6 +10862,9 @@ components:
           properties:
             id:
               type: integer
+            unique_id:
+              type: string
+              nullable: true
             email:
               type: string
               nullable: true
@@ -10889,36 +10892,37 @@ components:
             homepage_url:
               type: string
               nullable: true
-        authorized_business:
-          type: object
+        connected_businesses:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuthenticatedConnectedBusiness"
+    AuthenticatedConnectedBusiness:
+      type: object
+      additionalProperties: false
+      required:
+        - unique_id
+        - username
+        - name
+        - is_active
+        - is_enabled
+        - scopes
+      properties:
+        unique_id:
+          type: string
           nullable: true
-          additionalProperties: false
-          properties:
-            id:
-              type: integer
-            authorized_business_id:
-              type: integer
-            authorized_by:
-              type: object
-              nullable: true
-              additionalProperties: true
-            is_active:
-              type: boolean
-            is_enabled:
-              type: boolean
-            scopes:
-              type: array
-              items:
-                type: string
-            inserted_at:
-              type: string
-              format: date-time
-            updated_at:
-              type: string
-              format: date-time
+          description: Business unique id to pass as `business_unique_id` in MCP tools, or as `b_uid` to Nexus HTTP business-scoped routes when selection is required.
+        username:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        is_enabled:
+          type: boolean
         scopes:
           type: array
-          nullable: true
           items:
             type: string
     AuthenticatedBusinessSummary:
