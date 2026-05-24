@@ -3210,6 +3210,165 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
+  /v3/stores:
+    get:
+      tags:
+        - Business Stores
+      operationId: listBusinessStores
+      summary: List business stores
+      description: "Requires the `store:list` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - store:list
+      parameters:
+        - description: Number of items per page.
+          in: query
+          name: page_size
+          required: false
+          schema:
+            type: integer
+        - description: Opaque cursor for the next page.
+          in: query
+          name: next_cursor
+          required: false
+          schema:
+            type: string
+        - description: Opaque cursor for the previous page.
+          in: query
+          name: previous_cursor
+          required: false
+          schema:
+            type: string
+        - description: Filter by store name.
+          in: query
+          name: search
+          required: false
+          schema:
+            type: string
+        - description: Filter stores attached to a product ID.
+          in: query
+          name: product_id
+          required: false
+          schema:
+            type: integer
+        - description: Filter by custom domain URL.
+          in: query
+          name: domain
+          required: false
+          schema:
+            type: string
+        - description: Filter stores that have or do not have a custom domain.
+          in: query
+          name: has_domain
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          $ref: "#/components/responses/BusinessStoreCollectionResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+    post:
+      tags:
+        - Business Stores
+      operationId: createBusinessStore
+      summary: Create a business store
+      description: "Requires the `store:create` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - store:create
+      requestBody:
+        $ref: "#/components/requestBodies/BusinessStoreCreateRequestBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/BusinessStoreResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+  /v3/stores/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          example: 3288
+        description: Numeric Scalev store database ID.
+    get:
+      tags:
+        - Business Stores
+      operationId: getBusinessStore
+      summary: Get a business store
+      description: "Requires the `store:read` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - store:read
+      responses:
+        "200":
+          $ref: "#/components/responses/BusinessStoreResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+    patch:
+      tags:
+        - Business Stores
+      operationId: updateBusinessStore
+      summary: Update a business store
+      description: "Requires the `store:update` scope. Use `is_public` instead of legacy `visibility`."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - store:update
+      requestBody:
+        $ref: "#/components/requestBodies/BusinessStoreUpdateRequestBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/BusinessStoreResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+    delete:
+      tags:
+        - Business Stores
+      operationId: deleteBusinessStore
+      summary: Delete a business store
+      description: "Requires the `store:delete` scope."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - store:delete
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContentResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
   /v3/stores/simplified:
     get:
       tags:
@@ -9282,6 +9441,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/GenericJsonObject"
+    BusinessStoreCreateRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BusinessStoreCreateRequest"
+    BusinessStoreUpdateRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BusinessStoreUpdateRequest"
     PublicCheckoutRequestBody:
       required: true
       content:
@@ -10067,6 +10238,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/GtmContainerCollectionResponseBody"
+    BusinessStoreResponse:
+      description: Business store
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BusinessStore"
+    BusinessStoreCollectionResponse:
+      description: Paginated business store list
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BusinessStoreCollectionResponseBody"
     BusinessStoreProductCollectionResponse:
       description: Paginated products attached to the store
       content:
@@ -11816,6 +11999,289 @@ components:
         page_size:
           type: integer
       additionalProperties: false
+    BusinessStore:
+      type: object
+      additionalProperties: true
+      required:
+        - id
+        - unique_id
+        - name
+      properties:
+        id:
+          type: integer
+          description: Numeric Scalev store database ID.
+        unique_id:
+          type: string
+          description: Public store unique ID used by storefront routes.
+        uuid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        business_id:
+          type: integer
+        is_active:
+          type: boolean
+        is_public:
+          type: boolean
+        logo:
+          nullable: true
+          type: string
+          description: Public URL for the store logo when configured.
+        custom_domain:
+          nullable: true
+          type: object
+          additionalProperties: true
+        payment_methods:
+          type: array
+          items:
+            type: string
+        sub_payment_methods:
+          type: array
+          items:
+            type: string
+        xendit_va_bank_codes:
+          type: array
+          items:
+            type: string
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusinessStoreProduct"
+        bundle_price_options:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusinessStoreBundlePriceOption"
+        bundles:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusinessStoreBundle"
+        created_at:
+          type: string
+          format: date-time
+        last_updated_at:
+          type: string
+          format: date-time
+    BusinessStoreCollectionResponseBody:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusinessStore"
+        is_paginated:
+          type: boolean
+          enum:
+            - true
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+        next_cursor:
+          nullable: true
+          type: string
+        previous_cursor:
+          nullable: true
+          type: string
+        page_size:
+          type: integer
+      additionalProperties: false
+    BusinessStoreCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        custom_domain_id:
+          nullable: true
+          type: integer
+      additionalProperties: false
+    BusinessStoreUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        is_public:
+          type: boolean
+        custom_domain_id:
+          nullable: true
+          type: integer
+        warehouse_id:
+          nullable: true
+          type: integer
+        logo:
+          nullable: true
+          type: string
+          description: Logo upload value or empty value to clear the logo.
+        is_auto_expire:
+          type: boolean
+        auto_expire_days:
+          type: integer
+        is_discount_editable:
+          type: boolean
+        is_unique_code:
+          type: boolean
+        max_unique_code_amount:
+          type: number
+        is_postal_code:
+          type: boolean
+        postal_code_requirement:
+          type: string
+          enum:
+            - autofill
+            - manual
+        is_customer_otp_required:
+          type: boolean
+        is_manual_shipping_cost:
+          type: boolean
+        is_courier_required:
+          type: boolean
+        is_transferproof_required:
+          type: boolean
+        is_dropshipping_allowed:
+          type: boolean
+        is_moota_enabled:
+          type: boolean
+        email_notification_statuses:
+          type: array
+          items:
+            type: string
+        email_reply_to_id:
+          nullable: true
+          type: integer
+        email_reply_to_assignment:
+          type: string
+          enum:
+            - fixed
+            - rotator
+        is_email_new_order:
+          type: boolean
+        is_email_notifications:
+          type: boolean
+        whatsapp_notification_statuses:
+          type: array
+          items:
+            type: string
+        is_whatsapp_new_order:
+          type: boolean
+        is_whatsapp_payment_d1_fu:
+          type: boolean
+        is_whatsapp_payment_d2_fu:
+          type: boolean
+        is_whatsapp_payment_last_fu:
+          type: boolean
+        is_whatsapp_link_download:
+          type: boolean
+        non_cod_purchase_triggers:
+          type: array
+          items:
+            type: string
+        cod_purchase_triggers:
+          type: array
+          items:
+            type: string
+        capi_purchase_value_type:
+          type: string
+          enum:
+            - gross_revenue
+            - net_revenue
+            - adj_gross_revenue
+        days_of_payment_processing:
+          type: integer
+        is_show_download_invoice:
+          type: boolean
+        is_show_whatsapp:
+          type: boolean
+        is_fuc_product_enabled:
+          type: boolean
+        is_fuc_bundle_enabled:
+          type: boolean
+        is_advanced_validation:
+          type: boolean
+        min_name_length:
+          type: integer
+        min_address_length:
+          type: integer
+        max_per_phone:
+          type: integer
+        max_per_ip:
+          type: integer
+        blocked_message:
+          type: string
+        is_order_hard_filter:
+          type: boolean
+        is_customer_spam_filter:
+          type: boolean
+        is_ip_spam_filter:
+          type: boolean
+        is_spam_filter:
+          type: boolean
+        is_use_waba:
+          type: boolean
+        waba_account_id:
+          nullable: true
+          type: integer
+        greeting_message:
+          type: string
+        inactivity_period:
+          type: integer
+        is_greeting_message_enabled:
+          type: boolean
+        digital_only_complete_type:
+          type: string
+          enum:
+            - auto
+            - when_settled
+            - manual
+        auto_other_income:
+          type: string
+        fixed_auto_other_income:
+          type: number
+        other_income_name:
+          type: string
+        dynamic_other_income_cod_type:
+          type: string
+          enum:
+            - fixed
+            - percentage
+        dynamic_other_income_cod_default_amount:
+          type: number
+        dynamic_other_income_cod_default_percentage:
+          type: number
+        dynamic_other_income_epayment_type:
+          type: string
+          enum:
+            - fixed
+            - percentage
+        dynamic_other_income_epayment_default_amount:
+          type: number
+        dynamic_other_income_epayment_default_percentage:
+          type: number
+        store_courier_other_incomes:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        store_method_other_incomes:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        store_sales_people:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        store_custom_audiences:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
     BusinessStoreVariantSummary:
       type: object
       additionalProperties: true
