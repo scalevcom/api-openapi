@@ -107,9 +107,10 @@ paths:
       summary: Get authenticated identity
       description:
         Returns token-level identity for the bearer token. OAuth responses
-        include the user, OAuth application, and every connected business
-        installation for the token. Business-scoped API requests still resolve
-        one selected business installation per request.
+        include the user, OAuth application, and active connected business
+        installations for the token. If no active connected business remains,
+        the endpoint returns `403` without identity data. Business-scoped API
+        requests still resolve one selected business installation per request.
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -129,9 +130,11 @@ paths:
       summary: List authenticated connected businesses
       description:
         Returns only the token-level connected business collection from
-        `GET /v3/me`. OAuth clients use each business `unique_id` as `b_uid`
-        on direct Nexus business-scoped routes or as `business_unique_id` in
-        MCP tools when the token covers multiple businesses.
+        `GET /v3/me`. Revoked or inactive OAuth installations are omitted. If
+        no active connected business remains, the endpoint returns `403`.
+        OAuth clients use each business `unique_id` as `b_uid` on direct Nexus
+        business-scoped routes or as `business_unique_id` in MCP tools when the
+        token covers multiple businesses.
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -10979,7 +10982,6 @@ components:
         - unique_id
         - username
         - name
-        - is_active
         - is_enabled
         - scopes
       properties:
@@ -10993,8 +10995,6 @@ components:
         name:
           type: string
           nullable: true
-        is_active:
-          type: boolean
         is_enabled:
           type: boolean
         scopes:
