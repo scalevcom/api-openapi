@@ -913,7 +913,8 @@ paths:
             type: string
         - description:
             Optional resource audience. MCP clients use
-            `https://mcp.scalev.com/mcp`.
+            `https://mcp.scalev.com/mcp`. Official Scalev MCP DCR/CIMD
+            clients default to this resource when omitted.
           in: query
           name: resource
           required: false
@@ -13751,7 +13752,8 @@ components:
           format: uri
           description:
             Optional resource audience. Must match the resource requested during
-            authorization when present.
+            authorization when present. Official Scalev MCP DCR/CIMD clients
+            may omit it when the authorization session is already MCP-bound.
     OAuthInstallationStatusResponseBody:
       type: object
       required:
