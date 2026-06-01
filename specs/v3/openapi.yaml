@@ -11404,6 +11404,14 @@ components:
         js_code:
           type: string
           maxLength: 102400
+        additional_head_code:
+          type: string
+          description: >
+            Additional HTML Mode document head code. Supports title, meta, link,
+            style, script, and noscript tags. User-authored entries override
+            managed SEO, crawler, and favicon convenience tags with the same
+            identity, but do not override Scalev runtime tags or the document
+            language.
         csp_policy:
           $ref: "#/components/schemas/HtmlModeCspPolicy"
         meta:
@@ -12720,6 +12728,9 @@ components:
           type: string
           nullable: true
         js_code:
+          type: string
+          nullable: true
+        additional_head_code:
           type: string
           nullable: true
         csp_policy:
