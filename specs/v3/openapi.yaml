@@ -9230,6 +9230,7 @@ components:
       required: true
       schema:
         type: string
+      description: Canonical UUIDv7 order primary key. For migrated orders, legacy numeric `core_order.id` values remain accepted for compatibility.
     SubscriptionId:
       name: id
       in: path
@@ -13346,6 +13347,19 @@ components:
     GenericJsonObject:
       type: object
       additionalProperties: true
+    OrderPrimaryKey:
+      description: Canonical UUIDv7 order primary key returned by the partitioned orders table.
+      type: string
+      format: uuid
+    OrderLinePrimaryKey:
+      description: Canonical UUIDv7 order line primary key returned by the partitioned orderlines table.
+      type: string
+      format: uuid
+    OrderPrimaryKeyInput:
+      description: Canonical UUIDv7 order primary key. For migrated orders, legacy numeric `core_order.id` values are still accepted as numbers or decimal strings.
+      oneOf:
+        - type: string
+        - type: integer
     WabaAccountCollectionResponseBody:
       type: object
       required:
@@ -15543,7 +15557,7 @@ components:
         - orderlines
       properties:
         id:
-          type: integer
+          $ref: "#/components/schemas/OrderPrimaryKey"
         business:
           type: object
           nullable: true
@@ -15857,7 +15871,7 @@ components:
         - orderlines
       properties:
         id:
-          type: integer
+          $ref: "#/components/schemas/OrderPrimaryKey"
         secret_slug:
           type: string
         public_order_url:
@@ -16210,7 +16224,7 @@ components:
       type: object
       properties:
         id:
-          type: integer
+          $ref: "#/components/schemas/OrderLinePrimaryKey"
         quantity:
           type: integer
         variant:
@@ -17231,8 +17245,9 @@ components:
               type: string
             order_id:
               description: The order ID associated with this renewal invoice.
+              format: uuid
               nullable: true
-              type: integer
+              type: string
             paid_at:
               description: The date and time when the renewal invoice was paid.
               format: date-time
@@ -17255,8 +17270,9 @@ components:
           description:
             The order ID associated with the subscription creation. Null for
             free trial subscriptions.
+          format: uuid
           nullable: true
-          type: integer
+          type: string
         status:
           description: The status of the subscription.
           enum:
@@ -17344,8 +17360,9 @@ components:
                 type: string
               orderline_id:
                 description: Identifier for the associated order line.
+                format: uuid
                 nullable: true
-                type: integer
+                type: string
               pending_action:
                 description: The pending subscription action for this item, if any.
                 nullable: true
@@ -17405,8 +17422,9 @@ components:
                         type: object
                       order_id:
                         description: Identifier for the order associated with this action.
+                        format: uuid
                         nullable: true
-                        type: integer
+                        type: string
                       status:
                         description: The current status of the action.
                         enum:
@@ -17966,8 +17984,7 @@ components:
           description: ID of the destination location
           type: integer
         order_id:
-          description: ID of the order (for update order)
-          type: integer
+          $ref: "#/components/schemas/OrderPrimaryKeyInput"
         store_id:
           description: ID of the store
           type: integer
@@ -18482,8 +18499,7 @@ components:
             type: string
           type: array
         id:
-          description: Order primary key
-          type: integer
+          $ref: "#/components/schemas/OrderPrimaryKey"
         is_purchase_tiktok:
           description: Is the order a TikTok purchase
           type: boolean
@@ -19330,8 +19346,7 @@ components:
                 description: Message ID of the email
                 type: string
               order_id:
-                description: Associated order primary key
-                type: integer
+                $ref: "#/components/schemas/OrderPrimaryKey"
               status:
                 description: Email status
                 type: string
@@ -19607,8 +19622,7 @@ components:
             type: string
           type: array
         id:
-          description: Order primary key
-          type: integer
+          $ref: "#/components/schemas/OrderPrimaryKey"
         unpaid_time:
           format: date-time
           nullable: true
@@ -19689,8 +19703,7 @@ components:
                 description: Value of option 1 for the variant
                 type: string
               id:
-                description: Order Line ID
-                type: integer
+                $ref: "#/components/schemas/OrderLinePrimaryKey"
               cogs_bt:
                 description: COGS for this order line minus tax
                 format: float
@@ -20229,8 +20242,7 @@ components:
                 format: date-time
                 type: string
               order_id:
-                description: Order ID associated with the analytics purchase
-                type: integer
+                $ref: "#/components/schemas/OrderPrimaryKey"
               payload:
                 additionalProperties: true
                 description: Payload data of the analytics purchase
@@ -20557,8 +20569,7 @@ components:
           type: integer
         ids:
           items:
-            description: Order primary key IDs
-            type: integer
+            $ref: "#/components/schemas/OrderPrimaryKeyInput"
           type: array
         payment_account_holder:
           description: Payment account holder name
@@ -20627,8 +20638,7 @@ components:
     OrderChangeStatus:
       properties:
         id:
-          description: Order primary key
-          type: integer
+          $ref: "#/components/schemas/OrderPrimaryKey"
         order_id:
           description: Order ID in string format
           type: string
@@ -20689,15 +20699,15 @@ components:
       properties:
         ids:
           items:
-            description: Order primary keys to delete
-            type: integer
+            $ref: "#/components/schemas/OrderPrimaryKeyInput"
           type: array
       required:
         - ids
       type: object
     CollectionItem2:
       description: Deleted order ID
-      type: integer
+      type: string
+      format: uuid
     DeleteOrdersResponseBody:
       type: object
       required:
@@ -20719,8 +20729,7 @@ components:
       properties:
         ids:
           items:
-            description: Order primary keys to mark as not spam
-            type: integer
+            $ref: "#/components/schemas/OrderPrimaryKeyInput"
           type: array
       required:
         - ids
@@ -20728,8 +20737,7 @@ components:
     OrderMarkNotSpam:
       properties:
         id:
-          description: Order primary key
-          type: integer
+          $ref: "#/components/schemas/OrderPrimaryKey"
         is_probably_spam:
           description: Is probably spam
           type: boolean
@@ -20816,8 +20824,7 @@ components:
     UploadReceipt:
       properties:
         id:
-          description: Order primary key
-          type: integer
+          $ref: "#/components/schemas/OrderPrimaryKey"
         order_id:
           description: Order ID in string format
           type: string
@@ -20891,8 +20898,7 @@ components:
                 nullable: true
                 type: string
               id:
-                description: Order primary key
-                type: integer
+                $ref: "#/components/schemas/OrderPrimaryKey"
               order_id:
                 description: Order ID in string format
                 type: string
@@ -20940,7 +20946,7 @@ components:
         ids:
           description: Order primary keys to generate AWB
           items:
-            type: integer
+            $ref: "#/components/schemas/OrderPrimaryKeyInput"
           type: array
       required:
         - ids
@@ -20968,7 +20974,7 @@ components:
         ids:
           description: Order primary keys to cancel AWB
           items:
-            type: integer
+            $ref: "#/components/schemas/OrderPrimaryKeyInput"
           type: array
       required:
         - ids
@@ -21057,7 +21063,7 @@ components:
     PGReferenceID:
       properties:
         id:
-          type: integer
+          $ref: "#/components/schemas/OrderPrimaryKey"
       title: PGReferenceID
       type: object
     PGReferenceIDs:
@@ -21065,8 +21071,7 @@ components:
         PG_REFERENCE_ID:
           properties:
             id:
-              example: 1
-              type: integer
+              $ref: "#/components/schemas/OrderPrimaryKey"
             order_id:
               example: 250101ABCDEFG
               type: string
@@ -21224,7 +21229,7 @@ components:
     OrderAvailableActions:
       properties:
         id:
-          type: integer
+          $ref: "#/components/schemas/OrderPrimaryKey"
         is_digital_product_present:
           type: boolean
         is_lms_product_present:
@@ -21297,8 +21302,7 @@ components:
             type: object
           type: array
         id:
-          description: Order primary key
-          type: integer
+          $ref: "#/components/schemas/OrderPrimaryKey"
         is_probably_spam:
           description: Is probably spam
           type: boolean
@@ -21402,8 +21406,7 @@ components:
           description: Message ID of the email
           type: string
         order_id:
-          description: Associated order primary key
-          type: integer
+          $ref: "#/components/schemas/OrderPrimaryKey"
         status:
           description: Email status
           type: string
@@ -21454,8 +21457,7 @@ components:
     OrderMessageHistory:
       properties:
         id:
-          description: Order primary key
-          type: integer
+          $ref: "#/components/schemas/OrderPrimaryKey"
         public_order_url:
           description:
             Public order URL built from metadata.custom_domain_full_url and
