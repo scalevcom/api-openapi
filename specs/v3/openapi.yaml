@@ -15999,7 +15999,6 @@ components:
           oneOf:
             - type: integer
             - type: string
-          nullable: true
         recaptcha_token:
           type: string
           nullable: true
