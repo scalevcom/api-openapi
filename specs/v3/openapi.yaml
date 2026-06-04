@@ -12,15 +12,20 @@ info:
     This specification intentionally documents only the `/v3` namespace.
 
     Store-derived public storefront routes under
-    `/v3/stores/{store_id}/public/*`
+    `/v3/stores/{store_id}/public/*` require
+    `X-Scalev-Storefront-Api-Key`.
 
-    require the `X-Scalev-Storefront-Api-Key` header.
+    HTML Mode public page runtime routes under `/v3/pages/{page_unique_id}/*`
+    require `X-Scalev-Page-Api-Key` and do not accept storefront public API
+    keys.
 
-    Storefront API requests made with `X-Scalev-Storefront-Api-Key` or
-    `X-Scalev-Guest-Token` are browser client requests and use the direct
-    client/IP rate limiter. Machine-authenticated business requests are
-    rate-limited per API key or OAuth installation. Rate-limit metadata is
-    returned in `X-Ratelimit-*` headers, and `429` responses may be plain text.
+    Storefront API requests made with `X-Scalev-Storefront-Api-Key`,
+    page runtime requests made with `X-Scalev-Page-Api-Key`, and guest-cart
+    requests made with `X-Scalev-Guest-Token` are browser client requests and
+    use the direct client/IP rate limiter. Machine-authenticated business
+    requests are rate-limited per API key or OAuth installation. Rate-limit
+    metadata is returned in `X-Ratelimit-*` headers, and `429` responses may be
+    plain text.
   license:
     name: Proprietary
 servers:
@@ -35,6 +40,11 @@ tags:
       Public storefront catalog, guest cart, and guest checkout flows.
       All store-derived public storefront routes require
       `X-Scalev-Storefront-Api-Key`.
+  - name: HTML Mode Pages
+    description:
+      Public HTML Mode runtime endpoints. These routes require
+      `X-Scalev-Page-Api-Key` for the path page and reject storefront public
+      API keys.
   - name: OAuth
     description:
       Public and machine OAuth token-management endpoints. The authorization
@@ -315,6 +325,13 @@ paths:
         - Storefront
       operationId: listStorefrontLocationProvinces
       summary: List storefront delivery provinces
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional province name search.
       responses:
         "200":
           description: Province list
@@ -341,16 +358,13 @@ paths:
             oneOf:
               - type: integer
               - type: string
-          description: Province ID from `/public/locations/provinces`. Required unless `ro_province_id` is provided.
-        - name: ro_province_id
+          description: Province ID from `/public/locations/provinces`.
+        - name: search
           in: query
           required: false
-          deprecated: true
           schema:
-            oneOf:
-              - type: integer
-              - type: string
-          description: Legacy alias for `province_id`.
+            type: string
+          description: Optional city name search within the selected province.
       responses:
         "200":
           description: City list
@@ -377,16 +391,13 @@ paths:
             oneOf:
               - type: integer
               - type: string
-          description: City ID from `/public/locations/cities`. Required unless `ro_city_id` is provided.
-        - name: ro_city_id
+          description: City ID from `/public/locations/cities`.
+        - name: search
           in: query
           required: false
-          deprecated: true
           schema:
-            oneOf:
-              - type: integer
-              - type: string
-          description: Legacy alias for `city_id`.
+            type: string
+          description: Optional subdistrict name search within the selected city.
       responses:
         "200":
           description: Subdistrict list
@@ -406,6 +417,13 @@ paths:
         - Storefront
       operationId: listStorefrontLocationPostalCodes
       summary: List storefront delivery postal codes
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional postal code search within the selected location.
       responses:
         "200":
           description: Postal code list
@@ -624,6 +642,348 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StorefrontPublicOrder"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/pages/{page_unique_id}/locations:
+    parameters:
+      - $ref: "#/components/parameters/PageUniqueId"
+      - $ref: "#/components/parameters/PagePublicApiKey"
+    get:
+      tags:
+        - HTML Mode Pages
+      operationId: searchPagePublicLocations
+      summary: Search HTML Mode delivery locations
+      description: >
+        Page-scoped public endpoint for HTML Mode location lookup. Requires the
+        page public API key for the `page_unique_id` path page and validates
+        the browser origin against domains attached to the page, or the
+        business domains when the page has no attached domains.
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - name: next_cursor
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Cursor returned by the previous response. Use only one of `next_cursor` or `previous_cursor`.
+        - name: previous_cursor
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Cursor returned by the previous response. Use only one of `next_cursor` or `previous_cursor`.
+      responses:
+        "200":
+          description: Location search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontLocationListResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/pages/{page_unique_id}/locations/provinces:
+    parameters:
+      - $ref: "#/components/parameters/PageUniqueId"
+      - $ref: "#/components/parameters/PagePublicApiKey"
+    get:
+      tags:
+        - HTML Mode Pages
+      operationId: listPagePublicLocationProvinces
+      summary: List HTML Mode delivery provinces
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional province name search.
+      responses:
+        "200":
+          description: Province list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontProvinceListResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/pages/{page_unique_id}/locations/cities:
+    parameters:
+      - $ref: "#/components/parameters/PageUniqueId"
+      - $ref: "#/components/parameters/PagePublicApiKey"
+    get:
+      tags:
+        - HTML Mode Pages
+      operationId: listPagePublicLocationCities
+      summary: List HTML Mode delivery cities
+      parameters:
+        - name: province_id
+          in: query
+          required: false
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+          description: Province ID from `/locations/provinces`.
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional city name search within the selected province.
+      responses:
+        "200":
+          description: City list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontCityListResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/pages/{page_unique_id}/locations/subdistricts:
+    parameters:
+      - $ref: "#/components/parameters/PageUniqueId"
+      - $ref: "#/components/parameters/PagePublicApiKey"
+    get:
+      tags:
+        - HTML Mode Pages
+      operationId: listPagePublicLocationSubdistricts
+      summary: List HTML Mode delivery subdistricts
+      parameters:
+        - name: city_id
+          in: query
+          required: false
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+          description: City ID from `/locations/cities`.
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional subdistrict name search within the selected city.
+      responses:
+        "200":
+          description: Subdistrict list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontLocationListResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/pages/{page_unique_id}/locations/{location_id}/postal-codes:
+    parameters:
+      - $ref: "#/components/parameters/PageUniqueId"
+      - $ref: "#/components/parameters/PagePublicApiKey"
+      - $ref: "#/components/parameters/LocationId"
+    get:
+      tags:
+        - HTML Mode Pages
+      operationId: listPagePublicLocationPostalCodes
+      summary: List HTML Mode delivery postal codes
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional postal code search within the selected location.
+      responses:
+        "200":
+          description: Postal code list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontPostalCodeListResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/pages/{page_unique_id}/discount-codes/check:
+    parameters:
+      - $ref: "#/components/parameters/PageUniqueId"
+      - $ref: "#/components/parameters/PagePublicApiKey"
+    post:
+      tags:
+        - HTML Mode Pages
+      operationId: checkPagePublicDiscountCode
+      summary: Check an HTML Mode discount code
+      description: >
+        Page-scoped public endpoint for HTML Mode discount validation. The
+        discount context is evaluated against the authenticated path page.
+      requestBody:
+        $ref: "#/components/requestBodies/PagePublicDiscountCodeCheckRequestBody"
+      responses:
+        "200":
+          description: Discount code validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontDiscountCodeCheckResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/pages/{page_unique_id}/checkout/shipping-options:
+    parameters:
+      - $ref: "#/components/parameters/PageUniqueId"
+      - $ref: "#/components/parameters/PagePublicApiKey"
+    post:
+      tags:
+        - HTML Mode Pages
+      operationId: listPagePublicCheckoutShippingOptions
+      summary: List HTML Mode checkout shipping options
+      description: >
+        Page-scoped public endpoint used by
+        `Scalev.checkout.shippingOptions(payload)`. It accepts HTML Mode
+        `items`, `destination`, and `payment_method`, then resolves the store
+        from the authenticated page.
+      requestBody:
+        $ref: "#/components/requestBodies/PagePublicCheckoutShippingOptionsRequestBody"
+      responses:
+        "200":
+          description: HTML Mode checkout shipping options
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontCheckoutShippingOptionsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/pages/{page_unique_id}/checkout/summary:
+    parameters:
+      - $ref: "#/components/parameters/PageUniqueId"
+      - $ref: "#/components/parameters/PagePublicApiKey"
+    post:
+      tags:
+        - HTML Mode Pages
+      operationId: getPagePublicCheckoutSummary
+      summary: Compute an HTML Mode checkout summary
+      description: >
+        Page-scoped public endpoint used by
+        `Scalev.checkout.estimateSummary(payload)`. It accepts HTML Mode
+        `items`, `destination`, `payment_method`, and `shipping_option`,
+        recomputes shipping, and applies store-configured extra fees for
+        display.
+      requestBody:
+        $ref: "#/components/requestBodies/PagePublicCheckoutSummaryRequestBody"
+      responses:
+        "200":
+          description: HTML Mode checkout summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontCheckoutSummaryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/pages/{page_unique_id}/orders:
+    parameters:
+      - $ref: "#/components/parameters/PageUniqueId"
+      - $ref: "#/components/parameters/PagePublicApiKey"
+    post:
+      tags:
+        - HTML Mode Pages
+      operationId: createPagePublicOrder
+      summary: Create an HTML Mode public order
+      description: >
+        Page-scoped public endpoint for HTML Mode `Scalev.checkout.createOrder`.
+        This route accepts HTML Mode order payloads with `customer`,
+        `destination`, `items`, and `shipping_option`, requires
+        `X-Scalev-Page-Api-Key`, and does not accept storefront public API
+        keys. The page and store are resolved from the path and page API key;
+        any `page_unique_id` or `store_unique_id` values supplied in the JSON
+        body are ignored.
+      requestBody:
+        $ref: "#/components/requestBodies/PagePublicOrderCreateRequestBody"
+      responses:
+        "201":
+          description: Flat HTML Mode public order object.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorefrontPublicOrder"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/pages/{page_unique_id}/analytics/meta/events:
+    parameters:
+      - $ref: "#/components/parameters/PageUniqueId"
+      - $ref: "#/components/parameters/PagePublicApiKey"
+    post:
+      tags:
+        - HTML Mode Pages
+      operationId: sendPagePublicMetaConversionEvent
+      summary: Send an HTML Mode Meta Conversion API event
+      description: >
+        Page-scoped public endpoint used by `Scalev.analytics.track("meta",
+        payload)` and `Scalev.analytics.track("facebook", payload)`. The page
+        path and API key select the page analytics configuration.
+      requestBody:
+        $ref: "#/components/requestBodies/StorefrontMetaConversionEventRequestBody"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContentResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/pages/{page_unique_id}/analytics/tiktok/events:
+    parameters:
+      - $ref: "#/components/parameters/PageUniqueId"
+      - $ref: "#/components/parameters/PagePublicApiKey"
+    post:
+      tags:
+        - HTML Mode Pages
+      operationId: sendPagePublicTiktokConversionEvent
+      summary: Send an HTML Mode TikTok Events API event
+      description: >
+        Page-scoped public endpoint used by
+        `Scalev.analytics.track("tiktok", payload)`. The page path and API key
+        select the page analytics configuration.
+      requestBody:
+        $ref: "#/components/requestBodies/StorefrontTiktokConversionEventRequestBody"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContentResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/pages/{page_unique_id}/analytics/snackvideo/events:
+    parameters:
+      - $ref: "#/components/parameters/PageUniqueId"
+      - $ref: "#/components/parameters/PagePublicApiKey"
+    post:
+      tags:
+        - HTML Mode Pages
+      operationId: sendPagePublicSnackVideoConversionEvent
+      summary: Send an HTML Mode SnackVideo event
+      description: >
+        Page-scoped public endpoint used by
+        `Scalev.analytics.track("snackvideo", payload)` and
+        `Scalev.analytics.track("kwai", payload)`. The page path and API key
+        select the page analytics configuration.
+      requestBody:
+        $ref: "#/components/requestBodies/StorefrontSnackVideoConversionEventRequestBody"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContentResponse"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
         "404":
@@ -3863,7 +4223,7 @@ paths:
             type: integer
       responses:
         "200":
-          $ref: "#/components/responses/CollectionResponse"
+          $ref: "#/components/responses/ListLocationPostalCodesResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
@@ -9151,6 +9511,14 @@ components:
       schema:
         type: integer
       description: Numeric Scalev page ID.
+    PageUniqueId:
+      name: page_unique_id
+      in: path
+      required: true
+      schema:
+        type: string
+        example: page_540f48019f525f41
+      description: Public page unique ID.
     LandingPageId:
       name: id
       in: path
@@ -9185,7 +9553,14 @@ components:
       required: true
       schema:
         type: string
-      description: Publishable storefront public API key for the target store.
+      description: Publishable storefront public API key for the target store. Page public API keys are not accepted on Storefront public routes.
+    PagePublicApiKey:
+      name: X-Scalev-Page-Api-Key
+      in: header
+      required: true
+      schema:
+        type: string
+      description: Publishable page public API key for the `page_unique_id` path page. Storefront public API keys are not accepted on page-scoped public routes.
     StorefrontScalevGuestToken:
       name: X-Scalev-Guest-Token
       in: header
@@ -9461,6 +9836,30 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/PublicCheckoutRequest"
+    PagePublicOrderCreateRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PagePublicOrderCreateRequest"
+    PagePublicCheckoutShippingOptionsRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PagePublicCheckoutShippingOptionsRequest"
+    PagePublicCheckoutSummaryRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PagePublicCheckoutSummaryRequest"
+    PagePublicDiscountCodeCheckRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PagePublicDiscountCodeCheckRequest"
     StorefrontCheckoutShippingOptionsRequestBody:
       required: false
       content:
@@ -10486,6 +10885,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ListLocationsResponseBody"
+    ListLocationPostalCodesResponse:
+      description: Postal code list
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LocationPostalCodeListResponse"
     SearchShippingCostsResponse:
       description: Products list
       content:
@@ -10742,6 +11147,39 @@ components:
                 payment_url: https://demo.scalev.shop/o/order-secret/success
                 payment_method: invoice
                 sub_payment_method: null
+            singapayVirtualAccount:
+              summary: SingaPay virtual account
+              value:
+                pg_payment_info:
+                  payment_gateway: singapay
+                  account_id: 01K5G4FZZ18DMK0M5QTR8Y9QY9
+                  provider_transaction_id: va_txn_1
+                  reference_id: ORD-123
+                  va_number: "9090777158248126"
+                  va_name: Customer Name
+                  bank_code: BRI
+                  raw: {}
+                public_order_url: https://demo.scalev.shop/o/order-secret
+                payment_url: https://demo.scalev.shop/o/order-secret/success
+                payment_method: va
+                sub_payment_method: BRI
+                epayment_provider: singapay
+            singapayEwallet:
+              summary: SingaPay e-wallet checkout
+              value:
+                pg_payment_info:
+                  payment_gateway: singapay
+                  account_id: 01K5G4FZZ18DMK0M5QTR8Y9QY9
+                  provider_transaction_id: "42"
+                  reference_id: ORD-123
+                  payment_url: https://wallet.example/checkout
+                  deeplink_url: dana://checkout/token
+                  raw: {}
+                public_order_url: https://demo.scalev.shop/o/order-secret
+                payment_url: https://demo.scalev.shop/o/order-secret/success
+                payment_method: dana
+                sub_payment_method: null
+                epayment_provider: singapay
             retailOutlet:
               summary: Alfamart or Indomaret payment code
               value:
@@ -15054,25 +15492,16 @@ components:
       properties:
         id:
           type: integer
-        ro_subdistrict_id:
-          type: integer
-          nullable: true
         subdistrict_name:
           type: string
-        ro_city_id:
-          type: integer
-          nullable: true
         city_name:
           type: string
-        ro_province_id:
-          type: integer
-          nullable: true
         province_name:
           type: string
         display:
           type: string
           example: Cempaka Putih, Kota Jakarta Pusat, DKI Jakarta
-      additionalProperties: true
+      additionalProperties: false
     StorefrontLocationListResponse:
       type: object
       required:
@@ -15097,7 +15526,7 @@ components:
           nullable: true
         page_size:
           type: integer
-      additionalProperties: true
+      additionalProperties: false
     StorefrontProvince:
       type: object
       required:
@@ -15105,8 +15534,6 @@ components:
         - province_name
       properties:
         province_id:
-          type: integer
-        ro_province_id:
           type: integer
         province_name:
           type: string
@@ -15134,8 +15561,6 @@ components:
       properties:
         city_id:
           type: integer
-        ro_city_id:
-          type: integer
         city_name:
           type: string
       additionalProperties: false
@@ -15157,11 +15582,8 @@ components:
     StorefrontPostalCode:
       type: object
       required:
-        - id
         - postal_code
       properties:
-        id:
-          type: integer
         postal_code:
           type: string
           example: "10510"
@@ -15176,6 +15598,30 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/StorefrontPostalCode"
+        is_paginated:
+          type: boolean
+          enum:
+            - false
+      additionalProperties: false
+    LocationPostalCode:
+      type: object
+      required:
+        - postal_code
+      properties:
+        postal_code:
+          type: string
+          example: "10510"
+      additionalProperties: false
+    LocationPostalCodeListResponse:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/LocationPostalCode"
         is_paginated:
           type: boolean
           enum:
@@ -15403,6 +15849,265 @@ components:
           type: string
           nullable: true
       additionalProperties: false
+    PagePublicOrderVariantItem:
+      type: object
+      required:
+        - variant_unique_id
+        - quantity
+      properties:
+        variant_unique_id:
+          type: string
+          description: Variant unique ID from `Scalev.data.get().store.products`.
+          example: variant_x7f2a9
+        quantity:
+          type: integer
+          minimum: 1
+          example: 1
+        orderline_discount:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+      additionalProperties: true
+    PagePublicOrderBundleItem:
+      type: object
+      required:
+        - bundle_price_option_unique_id
+        - quantity
+      properties:
+        bundle_price_option_unique_id:
+          type: string
+          description: Bundle price option unique ID from `Scalev.data.get().store.bundle_price_options`.
+          example: bundle_price_option_p4k8q2
+        quantity:
+          type: integer
+          minimum: 1
+          example: 1
+      additionalProperties: true
+    PagePublicCheckoutCustomer:
+      type: object
+      description: Buyer contact details submitted by an HTML Mode page.
+      required:
+        - name
+        - phone
+      properties:
+        name:
+          type: string
+          maxLength: 200
+          example: Raka Tester
+        phone:
+          type: string
+          maxLength: 20
+          example: "08123456789"
+        email:
+          type: string
+          format: email
+          nullable: true
+          example: raka@example.com
+      additionalProperties: true
+    PagePublicCheckoutDestination:
+      type: object
+      description: Buyer destination submitted by an HTML Mode page.
+      properties:
+        address:
+          type: string
+          nullable: true
+          example: Jl. Kopi No. 1
+        subdistrict_id:
+          oneOf:
+            - type: integer
+            - type: string
+          description: Destination subdistrict ID.
+          example: 3171010
+        postal_code:
+          type: string
+          nullable: true
+          example: "10510"
+      additionalProperties: true
+    PagePublicCheckoutItem:
+      type: object
+      description: Product or bundle item selected by an HTML Mode page.
+      required:
+        - type
+        - quantity
+      properties:
+        type:
+          type: string
+          enum:
+            - product
+            - bundle
+          example: product
+        variant_unique_id:
+          type: string
+          description: Required when `type` is `product`.
+          example: variant_x7f2a9
+        bundle_price_option_unique_id:
+          type: string
+          description: Required when `type` is `bundle`.
+          example: bundle_price_option_p4k8q2
+        quantity:
+          type: integer
+          minimum: 1
+          example: 1
+      additionalProperties: true
+    PagePublicOrderCreateRequest:
+      type: object
+      description: >
+        HTML Mode public order payload. Use `customer`, `destination`, and
+        one combined `items` list for checkout details. Pass the chosen option returned by
+        `shippingOptions` as `shipping_option`. The API ignores any supplied
+        `page_unique_id` or `store_unique_id` and uses the path page plus the
+        authenticated page API key instead.
+      properties:
+        form:
+          type: object
+          nullable: true
+          additionalProperties: true
+        customer:
+          $ref: "#/components/schemas/PagePublicCheckoutCustomer"
+        destination:
+          $ref: "#/components/schemas/PagePublicCheckoutDestination"
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/PagePublicCheckoutItem"
+        payment_method:
+          type: string
+          description: Public order payment method code.
+          example: bank_transfer
+        sub_payment_method:
+          type: string
+          nullable: true
+          example: BCA
+        payment_account_unique_id:
+          type: string
+          nullable: true
+        shipping_option:
+          $ref: "#/components/schemas/StorefrontShippingOption"
+        product_discount:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        shipping_discount:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        discount_code_code:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        transferproof_url:
+          type: string
+          nullable: true
+        cart_id:
+          oneOf:
+            - type: integer
+            - type: string
+          nullable: true
+        recaptcha_token:
+          type: string
+          nullable: true
+          description: Runtime-generated form reCAPTCHA token.
+        event_source_url:
+          type: string
+          format: uri
+          nullable: true
+        fbc:
+          type: string
+          nullable: true
+        fbp:
+          type: string
+          nullable: true
+        ttclid:
+          type: string
+          nullable: true
+        gclid:
+          type: string
+          nullable: true
+        ttp:
+          type: string
+          nullable: true
+        kwai_clickid:
+          type: string
+          nullable: true
+        utm_source:
+          type: string
+          nullable: true
+        utm_medium:
+          type: string
+          nullable: true
+        utm_campaign:
+          type: string
+          nullable: true
+        utm_content:
+          type: string
+          nullable: true
+        utm_term:
+          type: string
+          nullable: true
+        affiliate_code:
+          type: string
+          nullable: true
+        channel_unique_id:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+      additionalProperties: true
+    PagePublicCheckoutShippingOptionsRequest:
+      type: object
+      description: >
+        HTML Mode checkout payload used by
+        `Scalev.checkout.shippingOptions(payload)`. Use one combined `items`
+        list for item selection; the path page and page API key
+        determine the store context.
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/PagePublicCheckoutItem"
+        destination:
+          $ref: "#/components/schemas/PagePublicCheckoutDestination"
+        payment_method:
+          type: string
+          example: bank_transfer
+      additionalProperties: true
+    PagePublicCheckoutSummaryRequest:
+      allOf:
+        - $ref: "#/components/schemas/PagePublicCheckoutShippingOptionsRequest"
+        - type: object
+          description: >
+            HTML Mode checkout summary payload. Pass the option returned by
+            `shippingOptions` as `shipping_option` when the checkout contains
+            physical items.
+          properties:
+            shipping_option:
+              $ref: "#/components/schemas/StorefrontShippingOption"
+          additionalProperties: true
+    PagePublicDiscountCodeCheckRequest:
+      type: object
+      required:
+        - code
+      description: >
+        HTML Mode discount check payload used by
+        `Scalev.checkout.validateDiscount(payload)`.
+      properties:
+        code:
+          type: string
+          example: SAVE10
+        gross_revenue:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        net_product_price:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        shipping_cost:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        payment_method:
+          type: string
+          example: bank_transfer
+        domain:
+          type: string
+          nullable: true
+          description: Browser hostname supplied by the runtime.
+      additionalProperties: true
     StorefrontCheckoutDestination:
       type: object
       required:
@@ -15471,6 +16176,10 @@ components:
           type: string
         courier_aggregator_code:
           type: string
+          nullable: true
+        logo_url:
+          type: string
+          format: uri
           nullable: true
       additionalProperties: false
     StorefrontCheckoutShippingOptionsResponse:
@@ -15669,7 +16378,9 @@ components:
             account methods expose provider reference and account details under
             the provider's `payment_method` object. QRIS responses expose QR
             data or a QR image payload. E-wallet, card, and invoice methods may
-            expose provider actions or hosted provider URLs.
+            expose provider actions or hosted provider URLs. SingaPay payments
+            use normalized keys such as `payment_url`, `deeplink_url`,
+            `qr_string`, `qr_image_url`, `va_number`, and `va_name`.
         status_history:
           type: array
           items:
@@ -15684,6 +16395,7 @@ components:
         epayment_provider:
           type: string
           nullable: true
+          description: E-payment provider. Possible values include `xendit`, `duitku`, `midtrans`, `ipaymu`, and `singapay`.
         payment_account_holder:
           type: string
           nullable: true
@@ -17622,57 +18334,32 @@ components:
         - variant_id
       type: object
     Location:
+      required:
+        - id
+        - subdistrict_name
+        - city_name
+        - province_name
+        - display
       properties:
-        city_name:
-          description: City Name
-          type: string
-        display:
-          description: Display Name
-          type: string
         id:
           description: Location ID
           type: integer
-        jne_destination_id:
-          description: JNE Destination ID
-          type: integer
-        jne_origin_id:
-          description: JNE Origin ID
-          type: integer
-        ka_district_id:
-          description: Kargo Aman District ID
-          type: integer
-        lincah_code:
-          description: Lincah Code
+        subdistrict_name:
+          description: Subdistrict name
           type: string
-        lion_code:
-          description: Lion Code
-          type: string
-        mengantar_code:
-          description: Mengantar Code
-          type: string
-        ninja_l1:
-          description: Ninja L1 Code
-          type: string
-        ninja_l2:
-          description: Ninja L2 Code
+        city_name:
+          description: City name
           type: string
         province_name:
-          description: Province Name
+          description: Province name
           type: string
-        ro_city_id:
-          description: RajaOngkir City ID
-          type: integer
-        ro_province_id:
-          description: RajaOngkir Province ID
-          type: integer
-        ro_subdistrict_id:
-          description: RajaOngkir Subdistrict ID
-          type: integer
-        subdistrict_name:
-          description: Subdistrict Name
+        display:
+          description: Display name
           type: string
+          example: Cempaka Putih, Kota Jakarta Pusat, DKI Jakarta
       title: Location
       type: object
+      additionalProperties: false
     ListLocationsResponseBody:
       type: object
       required:
@@ -18023,57 +18710,7 @@ components:
     SearchWarehouseResult:
       properties:
         destination:
-          properties:
-            city_name:
-              description: City Name
-              type: string
-            display:
-              description: Display Name
-              type: string
-            id:
-              description: Location ID
-              type: integer
-            jne_destination_id:
-              description: JNE Destination ID
-              type: integer
-            jne_origin_id:
-              description: JNE Origin ID
-              type: integer
-            ka_district_id:
-              description: Kargo Aman District ID
-              type: integer
-            lincah_code:
-              description: Lincah Code
-              type: string
-            lion_code:
-              description: Lion Code
-              type: string
-            mengantar_code:
-              description: Mengantar Code
-              type: string
-            ninja_l1:
-              description: Ninja L1 Code
-              type: string
-            ninja_l2:
-              description: Ninja L2 Code
-              type: string
-            province_name:
-              description: Province Name
-              type: string
-            ro_city_id:
-              description: RajaOngkir City ID
-              type: integer
-            ro_province_id:
-              description: RajaOngkir Province ID
-              type: integer
-            ro_subdistrict_id:
-              description: RajaOngkir Subdistrict ID
-              type: integer
-            subdistrict_name:
-              description: Subdistrict Name
-              type: string
-          title: Location
-          type: object
+          $ref: "#/components/schemas/Location"
         distance_km:
           description: Distance in kilometers
           format: float
@@ -18394,7 +19031,7 @@ components:
           title: WarehouseAddress
           type: object
         epayment_provider:
-          description: E-payment provider
+          description: E-payment provider. Possible values include `xendit`, `duitku`, `midtrans`, `ipaymu`, and `singapay`.
           nullable: true
           type: string
         pg_reference_id:
@@ -18632,7 +19269,7 @@ components:
           type: object
         pg_payment_info:
           additionalProperties: true
-          description: Payment gateway payment info
+          description: Payment gateway payment info. SingaPay payments use normalized keys such as `payment_url`, `deeplink_url`, `qr_string`, `qr_image_url`, `va_number`, and `va_name`.
           nullable: true
           type: object
         courier_service:
@@ -19503,7 +20140,7 @@ components:
           title: WarehouseAddress
           type: object
         epayment_provider:
-          description: E-payment provider
+          description: E-payment provider. Possible values include `xendit`, `duitku`, `midtrans`, `ipaymu`, and `singapay`.
           nullable: true
           type: string
         in_process_time:
@@ -20157,7 +20794,7 @@ components:
           type: object
         pg_payment_info:
           additionalProperties: true
-          description: Payment gateway payment info
+          description: Payment gateway payment info. SingaPay payments use normalized keys such as `payment_url`, `deeplink_url`, `qr_string`, `qr_image_url`, `va_number`, and `va_name`.
           nullable: true
           type: object
         other_income_bt:
@@ -21544,7 +22181,9 @@ components:
             payload. E-wallet, card, and invoice methods may expose provider
             actions or hosted provider URLs. Storefronts should render their
             own payment page from these fields and use `payment_url` only as a
-            hosted fallback.
+            hosted fallback. SingaPay payments use normalized keys such as
+            `payment_url`, `deeplink_url`, `qr_string`, `qr_image_url`,
+            `va_number`, and `va_name`.
         public_order_url:
           type: string
           format: uri
