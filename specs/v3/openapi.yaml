@@ -53,6 +53,8 @@ tags:
       document clients may use `private_key_jwt`.
   - name: Identity
     description: Authenticated business identity context.
+  - name: Business Users
+    description: Authenticated business-user membership self-service endpoints.
   - name: Landing Pages
     description:
       Authenticated business landing page endpoints. The documented payloads
@@ -132,26 +134,135 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
-  /v3/me/connected_businesses:
+  /v3/me/business-users:
     get:
       tags:
-        - Identity
-      operationId: listAuthenticatedConnectedBusinesses
-      summary: List authenticated connected businesses
+        - Business Users
+      operationId: listBusinessUsers
+      summary: List authenticated user's business-user memberships
       description:
-        Returns only the token-level connected business collection from
-        `GET /v3/me`. Revoked or inactive OAuth installations are omitted. If
-        no active connected business remains, the endpoint returns `403`.
-        OAuth clients use each business `unique_id` as `b_uid` on direct Nexus
-        business-scoped routes or as `business_unique_id` in MCP tools when the
-        token covers multiple businesses.
+        Returns the authenticated caller's business-user memberships. This is a
+        user-scoped endpoint and does not use `b_uid` or selected-business
+        context. Results use regular v3 cursor pagination ordered by membership
+        ID descending.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/NextCursor"
+        - $ref: "#/components/parameters/PreviousCursor"
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description:
+            Filter memberships by business username or account holder.
+        - name: business_name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter memberships by business account holder.
+      responses:
+        "200":
+          $ref: "#/components/responses/BusinessUserCollectionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+  /v3/business-users/me:
+    get:
+      tags:
+        - Business Users
+      operationId: getCurrentBusinessUser
+      summary: Get current business user
+      description:
+        Returns the selected business membership for the authenticated caller.
+        Requires a business-authenticated credential and selected business
+        context.
       security:
         - bearerAuth: []
         - apiKeyAuth: []
         - scalevOAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/ConnectedBusinessesResponse"
+          $ref: "#/components/responses/CurrentBusinessUserResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+  /v3/business-users/me/leave:
+    post:
+      tags:
+        - Business Users
+      operationId: leaveBusiness
+      summary: Leave current business
+      description:
+        Removes the authenticated caller's verified membership from the
+        selected business. Owners and the final remaining business member
+        cannot leave through this endpoint.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/PasswordRequestBody"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContentResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+  /v3/business-users/me/accept-invitation:
+    post:
+      tags:
+        - Business Users
+      operationId: acceptBusinessInvitation
+      summary: Accept current business invitation
+      description:
+        Accepts the selected pending business membership for the authenticated
+        caller and returns the verified business-user record.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/AcceptBusinessInvitationRequestBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/CurrentBusinessUserResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+  /v3/business-users/me/deny-invitation:
+    post:
+      tags:
+        - Business Users
+      operationId: denyBusinessInvitation
+      summary: Deny current business invitation
+      description:
+        Deletes the authenticated caller's selected pending business
+        membership. Already accepted memberships cannot be denied.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth: []
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContentResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
@@ -9957,6 +10068,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/PasswordRequest"
+    AcceptBusinessInvitationRequestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AcceptBusinessInvitationRequest"
     ForgetPasswordRequestBody:
       required: true
       content:
@@ -10469,6 +10586,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ConnectedBusinessesResponseBody"
+    CurrentBusinessUserResponse:
+      description: Current business-user membership
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CurrentBusinessUser"
+    BusinessUserCollectionResponse:
+      description: Paginated business-user membership list
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BusinessUserCollectionResponseBody"
     OAuthAuthorizationServerMetadataResponse:
       description: OAuth authorization server metadata
       content:
@@ -11639,6 +11768,107 @@ components:
           type: boolean
           enum:
             - false
+    CurrentBusinessUserBusiness:
+      type: object
+      nullable: true
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+        account_holder:
+          type: string
+          nullable: true
+        username:
+          type: string
+          nullable: true
+        unique_id:
+          type: string
+          nullable: true
+        logo:
+          type: string
+          nullable: true
+          description: Public URL for the business logo when configured.
+    CurrentBusinessUserRole:
+      type: object
+      nullable: true
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          nullable: true
+        store_filter_type:
+          type: string
+          nullable: true
+        permissions_list:
+          type: array
+          nullable: true
+          items:
+            type: string
+    CurrentBusinessUser:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - business
+        - user_id
+        - business_phone
+        - is_verified
+        - is_locked
+        - role
+        - metadata
+      properties:
+        id:
+          type: integer
+        business:
+          $ref: "#/components/schemas/CurrentBusinessUserBusiness"
+        user_id:
+          type: integer
+        business_phone:
+          type: string
+          nullable: true
+        is_verified:
+          type: boolean
+        is_locked:
+          type: boolean
+        role:
+          $ref: "#/components/schemas/CurrentBusinessUserRole"
+        metadata:
+          type: object
+          additionalProperties: true
+    BusinessUserCollectionResponseBody:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/CurrentBusinessUser"
+        is_paginated:
+          type: boolean
+          enum:
+            - true
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+        next_cursor:
+          nullable: true
+          type: string
+        previous_cursor:
+          nullable: true
+          type: string
+        page_size:
+          type: integer
+    AcceptBusinessInvitationRequest:
+      type: object
+      additionalProperties: true
+      properties:
+        business_phone:
+          type: string
+          nullable: true
     OAuthScopeCatalog:
       type: object
       additionalProperties:
