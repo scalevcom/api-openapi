@@ -144,7 +144,8 @@ paths:
         Returns the authenticated caller's business-user memberships. This is a
         user-scoped endpoint and does not use `b_uid` or selected-business
         context. Results use regular v3 cursor pagination ordered by membership
-        ID descending.
+        ID descending by default. Use `sort_direction=asc` to list the earliest
+        business membership first.
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -153,6 +154,7 @@ paths:
         - $ref: "#/components/parameters/PageSize"
         - $ref: "#/components/parameters/NextCursor"
         - $ref: "#/components/parameters/PreviousCursor"
+        - $ref: "#/components/parameters/SortDirection"
         - name: search
           in: query
           required: false
@@ -5072,12 +5074,12 @@ paths:
         aggregated data. Can be filtered using the same parameters as the orders
         list endpoint."
       parameters:
-        - description: Type of datetime for statistics (defaults to 'created_at')
+        - description: Type of datetime for statistics (defaults to 'draft_time')
           in: query
           name: datetime_type
           required: false
           schema:
-            default: created_at
+            default: draft_time
             enum:
               - draft_time
               - pending_time
@@ -9787,6 +9789,20 @@ components:
       schema:
         type: string
       description: Opaque cursor for the previous page.
+    SortDirection:
+      name: sort_direction
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - asc
+          - desc
+        default: desc
+      description:
+        Optional sort direction for endpoints that explicitly document support
+        for directional sorting. Cursor requests must keep the same
+        sort_direction used to create the cursor.
     OAuthApplicationIdQuery:
       name: oauth_application_id
       in: query
@@ -11702,11 +11718,36 @@ components:
             phone:
               type: string
               nullable: true
+            temp_email:
+              type: string
+              nullable: true
             fullname:
               type: string
               nullable: true
+            is_verified:
+              type: boolean
+            google_connected:
+              type: boolean
             avatar:
               type: string
+              nullable: true
+            telegram_chat_id:
+              type: string
+              nullable: true
+            telegram_token:
+              type: string
+              nullable: true
+            date_joined:
+              type: string
+              format: date-time
+              nullable: true
+            last_updated_at:
+              type: string
+              format: date-time
+              nullable: true
+            email_change_verified_at:
+              type: string
+              format: date-time
               nullable: true
         oauth_application:
           type: object
