@@ -83,7 +83,7 @@ tags:
   - name: Customer Courses
     description: Authenticated customer digital course access and progress endpoints.
   - name: Discounts
-    description: Discount-code validation endpoints.
+    description: Discount-code validation and authenticated management endpoints.
   - name: Locations
     description: Authenticated business location lookup endpoints.
   - name: Business Stores
@@ -1530,6 +1530,159 @@ paths:
           $ref: "#/components/responses/OAuthInstallationStatusResponse"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
+  /v3/discount-codes:
+    get:
+      tags:
+        - Discounts
+      operationId: listDiscountCodes
+      summary: List discount codes
+      description:
+        Business-scoped discount-code list ordered by discount-code ID
+        descending. Supports code search plus `applied_to` and enabled-status
+        filters. Results use v3 cursor pagination.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - discount_code:list
+      parameters:
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/NextCursor"
+        - $ref: "#/components/parameters/PreviousCursor"
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Case-insensitive partial match against the discount code.
+        - name: applied_to
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - product_price
+              - shipping_cost
+          description: Filter by the value the discount applies to.
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - enabled
+              - disabled
+          description: Filter by whether customers can use the discount code.
+      responses:
+        "200":
+          $ref: "#/components/responses/DiscountCodeCollectionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+    post:
+      tags:
+        - Discounts
+      operationId: createDiscountCode
+      summary: Create a discount code
+      description:
+        Creates a business-scoped discount code. The code is normalized to an
+        uppercase, space-free value before saving.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - discount_code:create
+      requestBody:
+        $ref: "#/components/requestBodies/DiscountCodeCreateRequestBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/DiscountCodeResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "422":
+          $ref: "#/components/responses/ValidationFailedResponse"
+  /v3/discount-codes/{id}:
+    parameters:
+      - $ref: "#/components/parameters/GenericId"
+    get:
+      tags:
+        - Discounts
+      operationId: getDiscountCode
+      summary: Get a discount code
+      description: Returns one business-scoped discount code.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - discount_code:read
+      responses:
+        "200":
+          $ref: "#/components/responses/DiscountCodeResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+    patch:
+      tags:
+        - Discounts
+      operationId: updateDiscountCode
+      summary: Update a discount code
+      description:
+        Updates discount-code availability, usage, expiry, page, payment-method,
+        and minimum-revenue settings. Code, discount type, and discount amount
+        are immutable after creation.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - discount_code:update
+      requestBody:
+        $ref: "#/components/requestBodies/DiscountCodeUpdateRequestBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/DiscountCodeResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "422":
+          $ref: "#/components/responses/ValidationFailedResponse"
+    delete:
+      tags:
+        - Discounts
+      operationId: deleteDiscountCode
+      summary: Delete a discount code
+      description:
+        Deletes a business-scoped discount code when it has no recorded usage.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - discount_code:delete
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContentResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
   /v3/pages:
     get:
       tags:
@@ -10156,6 +10309,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/StorefrontDiscountCodeCheckRequest"
+    DiscountCodeCreateRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/DiscountCodeCreateRequest"
+    DiscountCodeUpdateRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/DiscountCodeUpdateRequest"
     JwtRefreshRequestBody:
       required: true
       content:
@@ -10682,6 +10847,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/PaginatedCollectionResponseBody"
+    DiscountCodeResponse:
+      description: Discount code
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/DiscountCode"
+    DiscountCodeCollectionResponse:
+      description: Paginated discount-code list
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/DiscountCodeCollectionResponseBody"
     LandingPageResponse:
       description: Landing page
       content:
@@ -17416,6 +17593,146 @@ components:
           format: date-time
           nullable: true
       additionalProperties: true
+    DiscountCode:
+      allOf:
+        - $ref: "#/components/schemas/StorefrontDiscountCode"
+      description: Business-scoped discount code.
+    DiscountCodeCollectionResponseBody:
+      type: object
+      required:
+        - data
+        - is_paginated
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscountCode"
+        is_paginated:
+          type: boolean
+          enum:
+            - true
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+        next_cursor:
+          nullable: true
+          type: string
+        previous_cursor:
+          nullable: true
+          type: string
+        page_size:
+          type: integer
+      additionalProperties: false
+    DiscountCodeCreateRequest:
+      type: object
+      required:
+        - code
+        - applied_to
+        - amount_type
+      properties:
+        code:
+          type: string
+          description: Discount code. Saved uppercase with spaces removed.
+          example: SAVE10
+        applied_to:
+          type: string
+          enum:
+            - product_price
+            - shipping_cost
+        amount_type:
+          type: string
+          enum:
+            - fixed
+            - percentage
+        amount:
+          type: number
+          nullable: true
+          description: Required when `amount_type` is `fixed`.
+        percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+          nullable: true
+          description: Required when `amount_type` is `percentage`.
+        is_max_amount:
+          type: boolean
+          nullable: true
+          description: Required when `amount_type` is `percentage`.
+        max_amount:
+          type: number
+          nullable: true
+        is_enabled:
+          type: boolean
+          default: true
+        is_usage_limit:
+          type: boolean
+          default: false
+        usage_limit:
+          type: integer
+          nullable: true
+        is_expiry:
+          type: boolean
+          default: false
+        expiry_time:
+          type: string
+          format: date-time
+          nullable: true
+        is_limited_to_pages:
+          type: boolean
+          default: false
+        page_ids:
+          type: array
+          items:
+            type: integer
+        is_limited_to_payment_methods:
+          type: boolean
+          default: false
+        payment_methods:
+          type: array
+          items:
+            type: string
+        is_minimum_revenue:
+          type: boolean
+          default: false
+        minimum_revenue:
+          type: number
+          nullable: true
+      additionalProperties: false
+    DiscountCodeUpdateRequest:
+      type: object
+      properties:
+        is_enabled:
+          type: boolean
+        is_usage_limit:
+          type: boolean
+        usage_limit:
+          type: integer
+          nullable: true
+        is_expiry:
+          type: boolean
+        expiry_time:
+          type: string
+          format: date-time
+          nullable: true
+        is_limited_to_pages:
+          type: boolean
+        page_ids:
+          type: array
+          items:
+            type: integer
+        is_limited_to_payment_methods:
+          type: boolean
+        payment_methods:
+          type: array
+          items:
+            type: string
+        is_minimum_revenue:
+          type: boolean
+        minimum_revenue:
+          type: number
+          nullable: true
+      additionalProperties: false
     StorefrontDiscountCodeCheckResponse:
       type: object
       required:
