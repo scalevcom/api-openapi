@@ -12260,11 +12260,26 @@ components:
         store_filter_type:
           type: string
           nullable: true
-        permissions_list:
+        warehouse_filter_type:
+          type: string
+          nullable: true
+        customer_filter_type:
+          type: string
+          nullable: true
+        bundle_filter_type:
+          type: string
+          nullable: true
+        ad_view_filter_type:
+          type: string
+          nullable: true
+        order_statuses:
           type: array
           nullable: true
           items:
             type: string
+        authorized_permissions:
+          type: object
+          additionalProperties: true
     CurrentBusinessUser:
       type: object
       additionalProperties: false
