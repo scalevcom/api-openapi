@@ -3800,7 +3800,7 @@ paths:
         - Customer Courses
       operationId: getCustomerCourseContent
       summary: Get a course content item
-      description: "Customer-authenticated storefront endpoint."
+      description: "Customer-authenticated storefront endpoint. Course discussion flags are effective booleans: course-level override first, then variant-level default."
       security:
         - bearerAuth: []
       responses:
@@ -5222,7 +5222,7 @@ paths:
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
       description:
-        "Requires the `order:statistics:list` scope. Retrieves descriptive
+        "Requires the `order:statistics:read` scope. Retrieves descriptive
         statistics about orders, such as total orders, total revenue, and other
         aggregated data. Can be filtered using the same parameters as the orders
         list endpoint."
@@ -6695,7 +6695,16 @@ paths:
           $ref: "#/components/responses/NotFoundResponse"
       description:
         "Requires the `product:update` scope. Updates the details of a
-        product, including its variants."
+        product. Variant creation, updates, and deletion must use the dedicated
+        variant endpoints. Product update may change `is_multiple` only through
+        guarded single-active-variant transitions: true to false clears product
+        option names and active variant option values; false to true requires
+        `option1_name` and `option1_value`. Product update may also change
+        option names through `option1_name`, `option2_name`, and
+        `option3_name`; setting an option name to null removes that slot only
+        when active variants have at most one unique value for that option, then
+        moves any higher option names and variant values left to keep option
+        slots contiguous."
     delete:
       tags:
         - Business Products
@@ -6742,6 +6751,152 @@ paths:
         courses), labels, follow-up chats, and email automation settings. The
         new product name will be suffixed with '(Copy)'. Partnership settings
         and store associations are NOT copied."
+  /v3/products/{product_id}/variants:
+    parameters:
+      - $ref: "#/components/parameters/ProductId"
+    post:
+      tags:
+        - Business Products
+      operationId: createProductVariant
+      summary: Create one product variant
+      description:
+        "Requires the `product:update` scope. Creates a single variant for an
+        existing product. The request must provide values for all configured
+        product option dimensions."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/CreateProductVariantRequestBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/GetVariantResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/products/{product_id}/variants/bulk:
+    parameters:
+      - $ref: "#/components/parameters/ProductId"
+    patch:
+      tags:
+        - Business Products
+      operationId: bulkUpdateProductVariantPrices
+      summary: Bulk update active variant prices or physical weights
+      description:
+        "Requires the `product:update` scope. Updates the price of every active
+        variant on the product, or the weight of every active variant when the
+        product is physical. This endpoint only accepts the `price` field for all
+        product types and the `weight` field for physical products. It does not
+        create, delete, hide, or update option values on variants."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/BulkUpdateProductVariantPricesRequestBody"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContentResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/products/{product_id}/add-option:
+    parameters:
+      - $ref: "#/components/parameters/ProductId"
+    post:
+      tags:
+        - Business Products
+      operationId: addProductOption
+      summary: Add one product option with an initial value
+      description:
+        "Requires the `product:update` scope. Sets the next empty product option
+        name and applies one initial option value to every active variant in one
+        transaction. This does not create, delete, or clone variants."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/AddProductOptionRequestBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/UpdateProductResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/products/{product_id}/remove-option-value:
+    parameters:
+      - $ref: "#/components/parameters/ProductId"
+    patch:
+      tags:
+        - Business Products
+      operationId: removeProductOptionValue
+      summary: Remove a single-value product option
+      description:
+        "Requires the `product:update` scope. Removes an option dimension by
+        position only when that position has exactly one active option value.
+        The product option slot and matching variant option values are cleared
+        and higher option slots are shifted left in one transaction. This does
+        not delete variants."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/RemoveProductOptionValueRequestBody"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContentResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/products/{product_id}/reorder-option-values:
+    parameters:
+      - $ref: "#/components/parameters/ProductId"
+    patch:
+      tags:
+        - Business Products
+      operationId: reorderProductOptionValues
+      summary: Reorder product option values
+      description:
+        "Requires the `product:update` scope. Updates display order for values
+        in one product option position. The submitted values must exactly match
+        the active values for that position. This updates only
+        `option_value_order`; it does not create, delete, hide, or mutate
+        variants."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/ReorderProductOptionValuesRequestBody"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContentResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
   /v3/products/{product_id}/partnership:
     parameters:
       - $ref: "#/components/parameters/ProductId"
@@ -7213,6 +7368,52 @@ paths:
       description:
         "Requires the `product:read` scope. Shows a single product variant
         by ID."
+    patch:
+      tags:
+        - Business Products
+      operationId: updateProductVariant
+      summary: Update one product variant
+      description:
+        "Requires the `product:update` scope. Updates a single variant. Product
+        update does not accept bulk variant changes."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateProductVariantRequestBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/GetVariantResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+    delete:
+      tags:
+        - Business Products
+      operationId: deleteProductVariant
+      summary: Delete one product variant
+      description:
+        "Requires the `product:update` scope. Deletes one active variant and
+        cannot delete the last active variant of a product."
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContentResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
   /v3/variants/{variant_id}/knowledge-items:
     parameters:
       - $ref: "#/components/parameters/VariantId"
@@ -7760,7 +7961,7 @@ paths:
         - Business Products
       operationId: getCourseContent
       summary: Get a course content item
-      description: "Requires the `product:read` scope."
+      description: "Requires the `product:read` scope. Course discussion flags are effective booleans: course-level override first, then variant-level default."
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -7778,7 +7979,7 @@ paths:
         - Business Products
       operationId: updateCourseContent
       summary: Update a course content item
-      description: "Requires the `product:update` scope."
+      description: "Requires the `product:update` scope. Send `is_discussion_active` or `is_email_notification_active` as `true`, `false`, or `null`; `null` resets the module to the variant-level default."
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -9693,7 +9894,7 @@ components:
           scopes:
             order:list: List Orders.
             order:read: View Orders.
-            order:statistics:list: List Order Statistics.
+            order:statistics:read: View Order Statistics.
             order:create: Create New Orders.
             order:update: Update Orders.
             order:delete: Delete Orders.
@@ -10507,6 +10708,48 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/UpdateRequestProduct"
+    CreateProductVariantRequestBody:
+      description: Single product variant data to create
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ProductVariantCreateRequest"
+    UpdateProductVariantRequestBody:
+      description: Single product variant data to update
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ProductVariantUpdateRequest"
+    BulkUpdateProductVariantPricesRequestBody:
+      description: Bulk price or physical weight update for every active product variant
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BulkUpdateProductVariantPricesRequest"
+    AddProductOptionRequestBody:
+      description: Product option name and one initial value
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AddProductOptionRequest"
+    RemoveProductOptionValueRequestBody:
+      description: Product option position and the single active value to remove
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RemoveProductOptionValueRequest"
+    ReorderProductOptionValuesRequestBody:
+      description: Product option position and desired active value order
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ReorderProductOptionValuesRequest"
     CreateProductPartnerRequestBody:
       description: Partner data
       required: false
@@ -15392,8 +15635,11 @@ components:
           type: boolean
           nullable: true
         is_discussion_active:
+          description: Effective discussion setting. Uses the course-level override when present, otherwise the variant-level default.
           type: boolean
-          nullable: true
+        is_email_notification_active:
+          description: Effective discussion email notification setting. Uses the course-level override when present, otherwise the variant-level default.
+          type: boolean
         section_uuid:
           type: string
           nullable: true
@@ -16842,7 +17088,7 @@ components:
         epayment_provider:
           type: string
           nullable: true
-          description: E-payment provider. Possible values include `xendit`, `duitku`, `midtrans`, `ipaymu`, and `singapay`.
+          description: E-payment provider. `xendit` is the current/managed Xendit provider; `xendit_legacy` is the owned legacy Xendit provider. Other possible values include `duitku`, `midtrans`, `ipaymu`, and `singapay`.
         payment_account_holder:
           type: string
           nullable: true
@@ -17407,10 +17653,13 @@ components:
           type: string
           nullable: true
         is_file_enabled:
+          description: Variant-derived file access flag for this order line.
           type: boolean
         is_lms_enabled:
+          description: Variant-derived LMS access flag for this order line.
           type: boolean
         is_license_enabled:
+          description: Variant-derived license access flag for this order line.
           type: boolean
         currency:
           type: string
@@ -19618,7 +19867,7 @@ components:
           title: WarehouseAddress
           type: object
         epayment_provider:
-          description: E-payment provider. Possible values include `xendit`, `duitku`, `midtrans`, `ipaymu`, and `singapay`.
+          description: E-payment provider. `xendit` is the current/managed Xendit provider; `xendit_legacy` is the owned legacy Xendit provider. Other possible values include `duitku`, `midtrans`, `ipaymu`, and `singapay`.
           nullable: true
           type: string
         pg_reference_id:
@@ -20727,7 +20976,7 @@ components:
           title: WarehouseAddress
           type: object
         epayment_provider:
-          description: E-payment provider. Possible values include `xendit`, `duitku`, `midtrans`, `ipaymu`, and `singapay`.
+          description: E-payment provider. `xendit` is the current/managed Xendit provider; `xendit_legacy` is the owned legacy Xendit provider. Other possible values include `duitku`, `midtrans`, `ipaymu`, and `singapay`.
           nullable: true
           type: string
         in_process_time:
@@ -23300,6 +23549,21 @@ components:
               is_checked:
                 description: Mark variant as sellable
                 type: boolean
+              is_discussion_active:
+                description: Variant discussion capability flag
+                type: boolean
+              is_email_notification_active:
+                description: Variant email notification capability flag
+                type: boolean
+              is_file_enabled:
+                description: Variant file delivery capability flag
+                type: boolean
+              is_license_enabled:
+                description: Variant license capability flag
+                type: boolean
+              is_lms_enabled:
+                description: Variant LMS capability flag
+                type: boolean
               is_editable:
                 description: Indicates if the variant is editable
                 type: boolean
@@ -23405,11 +23669,16 @@ components:
         is_inventory:
           description: Is Inventory
           type: boolean
-        is_multiple:
-          description: Is Multiple
-          type: boolean
         is_product_sharing:
           description: Is Product Sharing
+          type: boolean
+        is_multiple:
+          description:
+            Guarded product variant-mode transition. Set to false only when the
+            product has exactly one active variant; this clears all product
+            option names and active variant option values. Set to true only when
+            the product has exactly one active variant and the same request
+            provides option1_name and option1_value.
           type: boolean
         item_type:
           description: Type of the product item
@@ -23427,15 +23696,6 @@ components:
           type: string
         name:
           description: Product Name
-          type: string
-        option1_name:
-          description: Option 1 Name
-          type: string
-        option2_name:
-          description: Option 2 Name
-          type: string
-        option3_name:
-          description: Option 3 Name
           type: string
         partnership_sales_letter:
           description: Partnership sales letter for affiliate/reseller promotion
@@ -23470,6 +23730,21 @@ components:
                 type: array
               is_checked:
                 description: Mark variant as sellable
+                type: boolean
+              is_discussion_active:
+                description: Variant discussion capability flag
+                type: boolean
+              is_email_notification_active:
+                description: Variant email notification capability flag
+                type: boolean
+              is_file_enabled:
+                description: Variant file delivery capability flag
+                type: boolean
+              is_license_enabled:
+                description: Variant license capability flag
+                type: boolean
+              is_lms_enabled:
+                description: Variant LMS capability flag
                 type: boolean
               metadata:
                 additionalProperties: true
@@ -23685,6 +23960,21 @@ components:
                 type: array
               is_checked:
                 description: Mark variant as sellable
+                type: boolean
+              is_discussion_active:
+                description: Variant discussion capability flag
+                type: boolean
+              is_email_notification_active:
+                description: Variant email notification capability flag
+                type: boolean
+              is_file_enabled:
+                description: Variant file delivery capability flag
+                type: boolean
+              is_license_enabled:
+                description: Variant license capability flag
+                type: boolean
+              is_lms_enabled:
+                description: Variant LMS capability flag
                 type: boolean
               interval_count:
                 description: Interval count for recurring variants
@@ -24140,6 +24430,21 @@ components:
               is_checked:
                 description: Mark variant as sellable
                 type: boolean
+              is_discussion_active:
+                description: Variant discussion capability flag
+                type: boolean
+              is_email_notification_active:
+                description: Variant email notification capability flag
+                type: boolean
+              is_file_enabled:
+                description: Variant file delivery capability flag
+                type: boolean
+              is_license_enabled:
+                description: Variant license capability flag
+                type: boolean
+              is_lms_enabled:
+                description: Variant LMS capability flag
+                type: boolean
               is_editable:
                 description: Indicates if the variant is editable
                 type: boolean
@@ -24251,9 +24556,6 @@ components:
         is_inventory:
           description: Is Inventory
           type: boolean
-        is_multiple:
-          description: Is Multiple
-          type: boolean
         is_product_sharing:
           description: Is Product Sharing
           type: boolean
@@ -24275,13 +24577,33 @@ components:
           description: Product Name
           type: string
         option1_name:
-          description: Option 1 Name
+          description:
+            Product option 1 name. Set to null to remove this option. Removal
+            is allowed only when active variants have at most one unique
+            option1_value, then higher option names and variant values move left.
+            Required with option1_value when setting is_multiple from false to
+            true.
+          nullable: true
+          type: string
+        option1_value:
+          description:
+            Initial option 1 value applied to the only active variant when
+            setting is_multiple from false to true.
+          nullable: true
           type: string
         option2_name:
-          description: Option 2 Name
+          description:
+            Product option 2 name. Set to null to remove this option. Removal
+            is allowed only when active variants have at most one unique
+            option2_value, then option3_name and option3_value move into option2.
+          nullable: true
           type: string
         option3_name:
-          description: Option 3 Name
+          description:
+            Product option 3 name. Set to null to remove this option. Removal
+            clears option3_value on all variants only when active variants have
+            at most one unique option3_value.
+          nullable: true
           type: string
         partnership_sales_letter:
           description: Partnership sales letter for affiliate/reseller promotion
@@ -24298,75 +24620,218 @@ components:
         taxonomy_id:
           description: Taxonomy ID
           type: integer
-        variants:
-          description: List of variants associated with the product
-          items:
-            properties:
-              cogs:
-                description: Cost of Goods Sold
-                type: number
-              description:
-                description: Variant Description
-                type: string
-              images:
-                description: List of image URLs
-                items:
-                  format: uri
-                  type: string
-                type: array
-              is_checked:
-                description: Mark variant as sellable
-                type: boolean
-              is_deleted:
-                description: Mark variant as deleted
-                type: boolean
-              metadata:
-                additionalProperties: true
-                description: Additional metadata
-                type: object
-              option1_value:
-                description: Option 1 Value
-                type: string
-              option2_value:
-                description: Option 2 Value
-                type: string
-              option3_value:
-                description: Option 3 Value
-                type: string
-              price:
-                description: Price
-                type: number
-              reseller_price:
-                description: Reseller Price
-                type: number
-              rich_description:
-                description: Variant Rich Description
-                type: string
-              self_file_urls:
-                description: List of self file URLs
-                items:
-                  format: uri
-                  type: string
-                type: array
-              sku:
-                description: SKU
-                type: string
-              variant_id:
-                description: Variant ID for update; leave empty for create
-                type: integer
-              weight:
-                description: Weight in grams
-                type: integer
-            required:
-              - price
-              - weight
-            title: RequestVariant
-            type: object
-          type: array
       required:
         - name
         - item_type
       title: UpdateRequestProduct
+      type: object
+    ProductVariantMutationFields:
+      properties:
+        cogs:
+          description: Cost of Goods Sold
+          type: number
+        currency:
+          description: The currency code for the item price.
+          enum:
+            - IDR
+          title: Currency
+          type: string
+        description:
+          description: Variant Description
+          type: string
+        images:
+          description: List of image URLs
+          items:
+            format: uri
+            type: string
+          type: array
+        image_configs:
+          additionalProperties: true
+          description: Per-image variant configuration
+          type: object
+        interval:
+          description: Unit of the recurring billing period
+          enum:
+            - day
+            - week
+            - month
+            - year
+          title: PeriodUnit
+          type: string
+        interval_count:
+          description: Interval count for recurring variants
+          type: integer
+        is_checked:
+          description: Mark variant as sellable
+          type: boolean
+        is_discussion_active:
+          description: Variant discussion capability flag
+          type: boolean
+        is_email_notification_active:
+          description: Variant email notification capability flag
+          type: boolean
+        is_file_enabled:
+          description: Variant file delivery capability flag
+          type: boolean
+        is_license_enabled:
+          description: Variant license capability flag
+          type: boolean
+        is_lms_enabled:
+          description: Variant LMS capability flag
+          type: boolean
+        item_type:
+          description: Type of the product item
+          enum:
+            - physical
+            - digital
+            - course
+            - license
+            - subscription
+          title: ItemType
+          type: string
+        metadata:
+          additionalProperties: true
+          description: Additional metadata
+          type: object
+        option1_value:
+          description:
+            Option 1 value for this variant. May be set only when the product
+            has option1_name configured.
+          type: string
+        option2_value:
+          description:
+            Option 2 value for this variant. May be set only when the product
+            has option2_name configured.
+          type: string
+        option3_value:
+          description:
+            Option 3 value for this variant. May be set only when the product
+            has option3_name configured.
+          type: string
+        price:
+          description: Price
+          type: number
+        pricing_type:
+          description: Type of the product pricing
+          enum:
+            - one_time
+            - recurring
+          title: PricingType
+          type: string
+        reseller_price:
+          description: Reseller Price
+          type: number
+        rich_description:
+          description: Variant Rich Description
+          type: string
+        self_file_urls:
+          description: List of self file URLs
+          items:
+            format: uri
+            type: string
+          type: array
+        sku:
+          description: SKU
+          type: string
+        validity_period:
+          description: Validity period for one-time variants
+          type: integer
+        validity_period_unit:
+          description: Unit of the one-time validity period
+          enum:
+            - day
+            - week
+            - month
+            - year
+          title: PeriodUnit
+          type: string
+        weight:
+          description: Weight in grams
+          type: integer
+      title: ProductVariantMutationFields
+      type: object
+    ProductVariantCreateRequest:
+      allOf:
+        - $ref: "#/components/schemas/ProductVariantMutationFields"
+        - required:
+            - price
+            - weight
+          type: object
+      title: ProductVariantCreateRequest
+    ProductVariantUpdateRequest:
+      allOf:
+        - $ref: "#/components/schemas/ProductVariantMutationFields"
+      title: ProductVariantUpdateRequest
+    BulkUpdateProductVariantPricesRequest:
+      properties:
+        field:
+          description: Must be `price` or `weight`. The `weight` field is accepted only for physical products.
+          enum:
+            - price
+            - weight
+          type: string
+        value:
+          description: New price amount or weight in grams applied to every active variant on the product.
+          type: number
+      required:
+        - field
+        - value
+      title: BulkUpdateProductVariantPricesRequest
+      type: object
+    AddProductOptionRequest:
+      properties:
+        name:
+          description: Product option name to place in the next empty option slot.
+          type: string
+        value:
+          description: Initial option value applied to every active variant.
+          type: string
+      required:
+        - name
+        - value
+      title: AddProductOptionRequest
+      type: object
+    RemoveProductOptionValueRequest:
+      properties:
+        position:
+          description: Product option position to remove after validation.
+          enum:
+            - 1
+            - 2
+            - 3
+          type: integer
+        value:
+          description:
+            The only active value currently present for the target option
+            position.
+          type: string
+      required:
+        - position
+        - value
+      title: RemoveProductOptionValueRequest
+      type: object
+    ReorderProductOptionValuesRequest:
+      properties:
+        position:
+          description: Product option position whose values should be reordered.
+          enum:
+            - 1
+            - 2
+            - 3
+          type: integer
+        values:
+          description:
+            Desired display order. Values must exactly match the active values
+            for the target option position.
+          items:
+            type: string
+          minItems: 1
+          type: array
+          uniqueItems: true
+      required:
+        - position
+        - values
+      title: ReorderProductOptionValuesRequest
       type: object
     ProductRelations:
       properties:
@@ -25252,6 +25717,21 @@ components:
           type: integer
         is_checked:
           description: Mark variant as sellable
+          type: boolean
+        is_discussion_active:
+          description: Variant discussion capability flag
+          type: boolean
+        is_email_notification_active:
+          description: Variant email notification capability flag
+          type: boolean
+        is_file_enabled:
+          description: Variant file delivery capability flag
+          type: boolean
+        is_license_enabled:
+          description: Variant license capability flag
+          type: boolean
+        is_lms_enabled:
+          description: Variant LMS capability flag
           type: boolean
         interval_count:
           description: Interval count for recurring variants
