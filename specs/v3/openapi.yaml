@@ -5049,10 +5049,27 @@ paths:
           required: false
           schema:
             enum:
-              - va
+              - va_bca
+              - va_bni
+              - va_bri
+              - va_mandiri
+              - va_permata
+              - va_cimb
+              - va_bsi
+              - va_maybank
+              - va_bnc
+              - va_danamon
+              - va_artha_graha
+              - va_muamalat
+              - va_btn
+              - va_ocbc
+              - va_bjb
+              - va_sahabat_sampoerna
+              - va_artajasa
               - qris
               - card
               - invoice
+              - payment_link
               - alfamart
               - indomaret
               - ovo
@@ -5174,7 +5191,7 @@ paths:
             fb_pixel_ids, tiktok_pixel_ids, kwai_pixel_ids, pending_time,
             confirmed_time, shipped_time, completed_time, rts_time,
             canceled_time, closed_time, warehouse, page, channel_name, handler,
-            advertiser, pg_payment_info, sub_payment_method, epayment_provider,
+            advertiser, pg_payment_info, epayment_provider,
             invoice_url, pg_reference_id, net_revenue, payment_fee, scalev_fee,
             net_payment_revenue, discount_code_discount, discount_code_code,
             discount_code_applied_to, utm_source"
@@ -11650,7 +11667,6 @@ components:
                 public_order_url: https://demo.scalev.shop/o/order-secret
                 payment_url: https://demo.scalev.shop/o/order-secret/success
                 payment_method: bank_transfer
-                sub_payment_method: null
             cod:
               summary: Cash on delivery
               value:
@@ -11658,7 +11674,6 @@ components:
                 public_order_url: https://demo.scalev.shop/o/order-secret
                 payment_url: https://demo.scalev.shop/o/order-secret/success
                 payment_method: cod
-                sub_payment_method: null
             virtualAccount:
               summary: Virtual account
               value:
@@ -11670,8 +11685,7 @@ components:
                         customer_name: Customer Name
                 public_order_url: https://demo.scalev.shop/o/order-secret
                 payment_url: https://demo.scalev.shop/o/order-secret/success
-                payment_method: va
-                sub_payment_method: BCA
+                payment_method: va_bca
             qris:
               summary: QRIS
               value:
@@ -11680,7 +11694,6 @@ components:
                 public_order_url: https://demo.scalev.shop/o/order-secret
                 payment_url: https://demo.scalev.shop/o/order-secret/success
                 payment_method: qris
-                sub_payment_method: null
             ewallet:
               summary: E-wallet action URL
               value:
@@ -11693,7 +11706,6 @@ components:
                 public_order_url: https://demo.scalev.shop/o/order-secret
                 payment_url: https://demo.scalev.shop/o/order-secret/success
                 payment_method: dana
-                sub_payment_method: null
             card:
               summary: Card redirect
               value:
@@ -11702,7 +11714,6 @@ components:
                 public_order_url: https://demo.scalev.shop/o/order-secret
                 payment_url: https://demo.scalev.shop/o/order-secret/success
                 payment_method: card
-                sub_payment_method: null
             invoice:
               summary: Hosted invoice
               value:
@@ -11711,7 +11722,6 @@ components:
                 public_order_url: https://demo.scalev.shop/o/order-secret
                 payment_url: https://demo.scalev.shop/o/order-secret/success
                 payment_method: invoice
-                sub_payment_method: null
             singapayVirtualAccount:
               summary: SingaPay virtual account
               value:
@@ -11726,8 +11736,7 @@ components:
                   raw: {}
                 public_order_url: https://demo.scalev.shop/o/order-secret
                 payment_url: https://demo.scalev.shop/o/order-secret/success
-                payment_method: va
-                sub_payment_method: BRI
+                payment_method: va_bri
                 epayment_provider: singapay
             singapayEwallet:
               summary: SingaPay e-wallet checkout
@@ -11743,7 +11752,6 @@ components:
                 public_order_url: https://demo.scalev.shop/o/order-secret
                 payment_url: https://demo.scalev.shop/o/order-secret/success
                 payment_method: dana
-                sub_payment_method: null
                 epayment_provider: singapay
             retailOutlet:
               summary: Alfamart or Indomaret payment code
@@ -11757,7 +11765,6 @@ components:
                 public_order_url: https://demo.scalev.shop/o/order-secret
                 payment_url: https://demo.scalev.shop/o/order-secret/success
                 payment_method: alfamart
-                sub_payment_method: null
     UpdateOrderCustomerResponse:
       description: Customer updated successfully
       content:
@@ -13187,10 +13194,6 @@ components:
           type: object
           additionalProperties: true
         payment_methods:
-          type: array
-          items:
-            type: string
-        sub_payment_methods:
           type: array
           items:
             type: string
@@ -15416,16 +15419,15 @@ components:
       type: object
       required:
         - payment_methods
-        - xendit_va_bank_codes
         - payment_accounts
       properties:
         payment_methods:
           type: array
+          description: >
+            Store-enabled payment method codes. Virtual Accounts are returned as
+            flat method codes such as `va_bca`, `va_bni`, and `va_mandiri`.
           items:
             type: string
-        xendit_va_bank_codes:
-          type: object
-          additionalProperties: true
         payment_accounts:
           type: array
           items:
@@ -15504,13 +15506,13 @@ components:
           $ref: "#/components/schemas/StorefrontSelectedShippingOption"
         payment_method:
           type: string
-          description: Storefront payment method code selected by the buyer.
-          example: bank_transfer
+          description: >
+            Storefront payment method code selected by the buyer. Virtual
+            Accounts use flat method codes such as `va_bca`.
+          example: va_bca
       additionalProperties: true
     CustomerCheckoutRequest:
       type: object
-      required:
-        - payment_method
       properties:
         items:
           type: array
@@ -15544,11 +15546,13 @@ components:
           type: string
         payment_method:
           type: string
-          description: Customer checkout payment method code selected by the buyer.
-          example: bank_transfer
-        sub_payment_method:
-          type: string
-          nullable: true
+          description: >
+            Customer checkout payment method code selected by the buyer.
+            Required for normal checkout. May be omitted when the store uses
+            strict two-step Payment Link checkout; Nexus resolves it to
+            `payment_link`. Virtual Accounts use flat method codes such as
+            `va_bca`.
+          example: va_bca
         courier_service_id:
           oneOf:
             - type: integer
@@ -16476,7 +16480,6 @@ components:
       required:
         - customer_name
         - customer_email
-        - payment_method
       properties:
         items:
           type: array
@@ -16537,11 +16540,12 @@ components:
           deprecated: true
         payment_method:
           type: string
-          description: Storefront payment method code selected by the buyer.
-          example: bank_transfer
-        sub_payment_method:
-          type: string
-          nullable: true
+          description: >
+            Storefront payment method code selected by the buyer. Required for
+            normal checkout. May be omitted when the store uses strict
+            two-step Payment Link checkout; Nexus resolves it to `payment_link`.
+            Virtual Accounts use flat method codes such as `va_bca`.
+          example: va_bca
         courier_service_id:
           type: integer
           nullable: true
@@ -16680,12 +16684,12 @@ components:
             $ref: "#/components/schemas/PagePublicCheckoutItem"
         payment_method:
           type: string
-          description: Public order payment method code.
-          example: bank_transfer
-        sub_payment_method:
-          type: string
-          nullable: true
-          example: BCA
+          description: >
+            Public order payment method code. Required for normal checkout. May
+            be omitted when the store uses strict two-step Payment Link checkout;
+            Nexus resolves it to `payment_link`. Virtual Accounts use flat method
+            codes such as `va_bca`.
+          example: va_bca
         payment_account_unique_id:
           type: string
           nullable: true
@@ -17070,6 +17074,9 @@ components:
           $ref: "#/components/schemas/StorefrontMoneyValue"
         other_income:
           $ref: "#/components/schemas/StorefrontMoneyValue"
+        payment_link_income:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+          description: Additional E-Payment Link amount paid by the customer.
         other_income_name:
           type: string
           nullable: true
@@ -17097,9 +17104,6 @@ components:
         payment_method:
           type: string
           example: bank_transfer
-        sub_payment_method:
-          type: string
-          nullable: true
         epayment_provider:
           type: string
           nullable: true
@@ -17393,9 +17397,6 @@ components:
         payment_method:
           type: string
           example: bank_transfer
-        sub_payment_method:
-          type: string
-          nullable: true
         payment_account_holder:
           type: string
           nullable: true
@@ -17430,6 +17431,9 @@ components:
           nullable: true
         other_income:
           $ref: "#/components/schemas/StorefrontMoneyValue"
+        payment_link_income:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+          description: Additional E-Payment Link amount paid by the customer.
         gross_revenue:
           $ref: "#/components/schemas/StorefrontMoneyValue"
         gross_revenue_for_dropshipper:
@@ -19381,10 +19385,27 @@ components:
         payment_method:
           description: Order payment method
           enum:
-            - va
+            - va_bca
+            - va_bni
+            - va_bri
+            - va_mandiri
+            - va_permata
+            - va_cimb
+            - va_bsi
+            - va_maybank
+            - va_bnc
+            - va_danamon
+            - va_artha_graha
+            - va_muamalat
+            - va_btn
+            - va_ocbc
+            - va_bjb
+            - va_sahabat_sampoerna
+            - va_artajasa
             - qris
             - card
             - invoice
+            - payment_link
             - alfamart
             - indomaret
             - ovo
@@ -19834,10 +19855,27 @@ components:
         payment_method:
           description: Order payment method
           enum:
-            - va
+            - va_bca
+            - va_bni
+            - va_bri
+            - va_mandiri
+            - va_permata
+            - va_cimb
+            - va_bsi
+            - va_maybank
+            - va_bnc
+            - va_danamon
+            - va_artha_graha
+            - va_muamalat
+            - va_btn
+            - va_ocbc
+            - va_bjb
+            - va_sahabat_sampoerna
+            - va_artajasa
             - qris
             - card
             - invoice
+            - payment_link
             - alfamart
             - indomaret
             - ovo
@@ -20011,20 +20049,6 @@ components:
             description: Kwai Pixel ID
             type: string
           type: array
-        sub_payment_method:
-          description: Xendit VA bank code
-          enum:
-            - BCA
-            - BNI
-            - BRI
-            - MANDIRI
-            - PERMATA
-            - BSI
-            - BJB
-            - CIMB
-            - SAHABAT_SAMPOERNA
-            - ARTAJASA
-          type: string
         payment_fee:
           description: Payment fee associated with the order
           type: number
@@ -20060,6 +20084,9 @@ components:
           type: array
         other_income:
           description: Other income associated with the order
+          type: number
+        payment_link_income:
+          description: Additional E-Payment Link amount paid by the customer
           type: number
         total_weight:
           description: Total weight of the order
@@ -20466,10 +20493,27 @@ components:
         payment_method:
           description: Order payment method
           enum:
-            - va
+            - va_bca
+            - va_bni
+            - va_bri
+            - va_mandiri
+            - va_permata
+            - va_cimb
+            - va_bsi
+            - va_maybank
+            - va_bnc
+            - va_danamon
+            - va_artha_graha
+            - va_muamalat
+            - va_btn
+            - va_ocbc
+            - va_bjb
+            - va_sahabat_sampoerna
+            - va_artajasa
             - qris
             - card
             - invoice
+            - payment_link
             - alfamart
             - indomaret
             - ovo
@@ -20509,20 +20553,6 @@ components:
         is_dropshipping:
           description: Is dropshipping order
           type: boolean
-        sub_payment_method:
-          description: Xendit VA bank code
-          enum:
-            - BCA
-            - BNI
-            - BRI
-            - MANDIRI
-            - PERMATA
-            - BSI
-            - BJB
-            - CIMB
-            - SAHABAT_SAMPOERNA
-            - ARTAJASA
-          type: string
         warehouse_unique_id:
           description: Warehouse unique ID
           type: string
@@ -20939,10 +20969,27 @@ components:
         payment_method:
           description: Order payment method
           enum:
-            - va
+            - va_bca
+            - va_bni
+            - va_bri
+            - va_mandiri
+            - va_permata
+            - va_cimb
+            - va_bsi
+            - va_maybank
+            - va_bnc
+            - va_danamon
+            - va_artha_graha
+            - va_muamalat
+            - va_btn
+            - va_ocbc
+            - va_bjb
+            - va_sahabat_sampoerna
+            - va_artajasa
             - qris
             - card
             - invoice
+            - payment_link
             - alfamart
             - indomaret
             - ovo
@@ -21293,20 +21340,6 @@ components:
           description: Cost of goods sold for the order minus tax
           format: decimal
           type: string
-        sub_payment_method:
-          description: Xendit VA bank code
-          enum:
-            - BCA
-            - BNI
-            - BRI
-            - MANDIRI
-            - PERMATA
-            - BSI
-            - BJB
-            - CIMB
-            - SAHABAT_SAMPOERNA
-            - ARTAJASA
-          type: string
         payment_fee:
           description: Payment fee for the order
           format: decimal
@@ -21343,6 +21376,10 @@ components:
           type: integer
         other_income:
           description: Other income amount
+          format: decimal
+          type: string
+        payment_link_income:
+          description: Additional E-Payment Link amount paid by the customer
           format: decimal
           type: string
         status_history:
@@ -21442,9 +21479,6 @@ components:
                     description: Percentage of other income
                     format: float
                     type: number
-                  sub_payment_method:
-                    description: Sub Payment Method
-                    type: string
                   type:
                     description: Type of amount (fixed or percentage)
                     enum:
@@ -21576,23 +21610,6 @@ components:
             is_moota_enabled:
               description: Is Moota integration enabled for this store?
               type: boolean
-            sub_payment_methods:
-              description: VA bank sub-payment method codes
-              items:
-                description: VA bank sub-payment method code
-                enum:
-                  - BCA
-                  - BNI
-                  - BRI
-                  - MANDIRI
-                  - PERMATA
-                  - BSI
-                  - BJB
-                  - CIMB
-                  - SAHABAT_SAMPOERNA
-                  - ARTAJASA
-                type: string
-              type: array
             unique_id:
               description: Unique identifier for the store
               type: string
@@ -21650,6 +21667,10 @@ components:
           type: object
         other_income_bt:
           description: Other income amount minus tax
+          format: decimal
+          type: string
+        payment_link_income_bt:
+          description: Additional E-Payment Link amount before tax
           format: decimal
           type: string
         courier_service:
@@ -22081,10 +22102,27 @@ components:
         payment_method:
           description: Order payment method
           enum:
-            - va
+            - va_bca
+            - va_bni
+            - va_bri
+            - va_mandiri
+            - va_permata
+            - va_cimb
+            - va_bsi
+            - va_maybank
+            - va_bnc
+            - va_danamon
+            - va_artha_graha
+            - va_muamalat
+            - va_btn
+            - va_ocbc
+            - va_bjb
+            - va_sahabat_sampoerna
+            - va_artajasa
             - qris
             - card
             - invoice
+            - payment_link
             - alfamart
             - indomaret
             - ovo
@@ -22667,10 +22705,27 @@ components:
         payment_method:
           description: Order payment method
           enum:
-            - va
+            - va_bca
+            - va_bni
+            - va_bri
+            - va_mandiri
+            - va_permata
+            - va_cimb
+            - va_bsi
+            - va_maybank
+            - va_bnc
+            - va_danamon
+            - va_artha_graha
+            - va_muamalat
+            - va_btn
+            - va_ocbc
+            - va_bjb
+            - va_sahabat_sampoerna
+            - va_artajasa
             - qris
             - card
             - invoice
+            - payment_link
             - alfamart
             - indomaret
             - ovo
@@ -22703,20 +22758,6 @@ components:
         shipping_discount:
           description: Shipping discount amount
           type: number
-        sub_payment_method:
-          description: Xendit VA bank code
-          enum:
-            - BCA
-            - BNI
-            - BRI
-            - MANDIRI
-            - PERMATA
-            - BSI
-            - BJB
-            - CIMB
-            - SAHABAT_SAMPOERNA
-            - ARTAJASA
-          type: string
         transferproof_url:
           description: Transfer proof URL
           type: string
@@ -23048,10 +23089,6 @@ components:
         payment_method:
           type: string
           example: bank_transfer
-        sub_payment_method:
-          type: string
-          nullable: true
-          description: Provider channel such as a virtual-account bank code when applicable.
       additionalProperties: true
     UpdateOrderCustomerRequest:
       properties:
@@ -23174,10 +23211,27 @@ components:
         payment_method:
           description: Order payment method
           enum:
-            - va
+            - va_bca
+            - va_bni
+            - va_bri
+            - va_mandiri
+            - va_permata
+            - va_cimb
+            - va_bsi
+            - va_maybank
+            - va_bnc
+            - va_danamon
+            - va_artha_graha
+            - va_muamalat
+            - va_btn
+            - va_ocbc
+            - va_bjb
+            - va_sahabat_sampoerna
+            - va_artajasa
             - qris
             - card
             - invoice
+            - payment_link
             - alfamart
             - indomaret
             - ovo
@@ -23189,20 +23243,6 @@ components:
             - bank_transfer
             - marketplace
             - cod
-          type: string
-        sub_payment_method:
-          description: Xendit VA bank code
-          enum:
-            - BCA
-            - BNI
-            - BRI
-            - MANDIRI
-            - PERMATA
-            - BSI
-            - BJB
-            - CIMB
-            - SAHABAT_SAMPOERNA
-            - ARTAJASA
           type: string
       title: OrderDuplicateBody
       type: object
