@@ -5776,7 +5776,7 @@ paths:
         payment gateway reference IDs. Values are trimmed and deduplicated before
         lookup. Supply between 1 and 25 nonblank IDs."
       parameters:
-        - description: Comma-separated payment gateway reference IDs. Blank values are rejected; surrounding whitespace is trimmed and duplicate IDs are ignored. A maximum of 25 IDs is accepted.
+        - description: Comma-separated payment gateway reference IDs. Blank entries are ignored; surrounding whitespace is trimmed and duplicate IDs are ignored. The normalized list must contain between 1 and 25 nonblank IDs.
           in: query
           name: pg_reference_ids
           required: true
@@ -10163,7 +10163,7 @@ components:
       schema:
         type: string
         minLength: 1
-        pattern: '^(?:[1-9][0-9]*|variant_[A-Za-z0-9]+|[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[1-8][0-9A-Fa-f]{3}-[89ABab][0-9A-Fa-f]{3}-[0-9A-Fa-f]{12})$'
+        pattern: '^(?:[1-9][0-9]*|variant_[A-Za-z0-9_-]+|[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12})$'
       description: Positive numeric variant ID, `variant_...` unique reference, or canonical UUID, resolved within the authenticated business.
     BusinessVariantReference:
       name: variant_id
@@ -10172,7 +10172,7 @@ components:
       schema:
         type: string
         minLength: 1
-        pattern: '^(?:[1-9][0-9]*|variant_[A-Za-z0-9]+|[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[1-8][0-9A-Fa-f]{3}-[89ABab][0-9A-Fa-f]{3}-[0-9A-Fa-f]{12})$'
+        pattern: '^(?:[1-9][0-9]*|variant_[A-Za-z0-9_-]+|[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12})$'
       description: Positive numeric variant ID, `variant_...` unique reference, or canonical UUID, resolved within the authenticated business.
     PageSize:
       name: page_size
