@@ -4204,7 +4204,7 @@ paths:
           $ref: "#/components/responses/NotFoundResponse"
   /v3/stores/{store_id}/products:
     parameters:
-      - $ref: "#/components/parameters/BusinessStoreId"
+      - $ref: "#/components/parameters/ProductListBusinessStoreId"
     get:
       tags:
         - Business Stores
@@ -5765,20 +5765,25 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ListOrdersByPgReferenceIdsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
       description:
         "Requires the `order:list` scope. Retrieve orders using multiple
-        payment gateway reference IDs."
+        payment gateway reference IDs. Values are trimmed and deduplicated before
+        lookup. Supply between 1 and 25 nonblank IDs."
       parameters:
-        - description: Comma-separated payment gateway reference IDs
+        - description: Comma-separated payment gateway reference IDs. Blank entries are ignored; surrounding whitespace is trimmed and duplicate IDs are ignored. The normalized list must contain between 1 and 25 nonblank IDs.
           in: query
           name: pg_reference_ids
           required: true
           schema:
             type: string
+            minLength: 1
+            pattern: ".*\\S.*"
   /v3/orders/{id}:
     parameters:
       - $ref: "#/components/parameters/OrderId"
@@ -6331,12 +6336,7 @@ paths:
             enum:
               - available_qty
             type: string
-        - description: Filter products associated with a specific store ID
-          in: query
-          name: store_id
-          required: false
-          schema:
-            type: integer
+        - $ref: "#/components/parameters/ProductListStoreIds"
         - description: Show variants in products where is_checked is true or false
           in: query
           name: is_checked
@@ -7364,7 +7364,7 @@ paths:
       description: "Requires the `product:update` scope. Deletes a follow up chat template."
   /v3/variants/{id}:
     parameters:
-      - $ref: "#/components/parameters/GenericId"
+      - $ref: "#/components/parameters/BusinessVariantId"
     get:
       tags:
         - Business Products
@@ -7433,7 +7433,7 @@ paths:
           $ref: "#/components/responses/NotFoundResponse"
   /v3/variants/{variant_id}/knowledge-items:
     parameters:
-      - $ref: "#/components/parameters/VariantId"
+      - $ref: "#/components/parameters/BusinessVariantReference"
     get:
       tags:
         - Business Products
@@ -7502,7 +7502,7 @@ paths:
         knowledge item."
   /v3/variants/{variant_id}/knowledge-items/{id}:
     parameters:
-      - $ref: "#/components/parameters/VariantId"
+      - $ref: "#/components/parameters/BusinessVariantReference"
       - $ref: "#/components/parameters/GenericId"
     get:
       tags:
@@ -7567,7 +7567,7 @@ paths:
         knowledge item."
   /v3/variants/{variant_id}/digital-product-files:
     parameters:
-      - $ref: "#/components/parameters/VariantId"
+      - $ref: "#/components/parameters/BusinessVariantReference"
     get:
       tags:
         - Business Products
@@ -7633,7 +7633,7 @@ paths:
           $ref: "#/components/responses/NotFoundResponse"
   /v3/variants/{variant_id}/digital-product-files/{id}:
     parameters:
-      - $ref: "#/components/parameters/VariantId"
+      - $ref: "#/components/parameters/BusinessVariantReference"
       - $ref: "#/components/parameters/GenericId"
     get:
       tags:
@@ -7747,7 +7747,7 @@ paths:
         by ID."
   /v3/variants/{id}/course:
     parameters:
-      - $ref: "#/components/parameters/GenericId"
+      - $ref: "#/components/parameters/BusinessVariantId"
     get:
       tags:
         - Business Products
@@ -7790,7 +7790,7 @@ paths:
           $ref: "#/components/responses/NotFoundResponse"
   /v3/variants/{variant_id}/course-sections:
     parameters:
-      - $ref: "#/components/parameters/VariantId"
+      - $ref: "#/components/parameters/BusinessVariantReference"
     post:
       tags:
         - Business Products
@@ -7815,7 +7815,7 @@ paths:
           $ref: "#/components/responses/NotFoundResponse"
   /v3/variants/{variant_id}/course-section-orders:
     parameters:
-      - $ref: "#/components/parameters/VariantId"
+      - $ref: "#/components/parameters/BusinessVariantReference"
     patch:
       tags:
         - Business Products
@@ -7840,7 +7840,7 @@ paths:
           $ref: "#/components/responses/NotFoundResponse"
   /v3/variants/{id}/customers:
     parameters:
-      - $ref: "#/components/parameters/GenericId"
+      - $ref: "#/components/parameters/BusinessVariantId"
     get:
       tags:
         - Business Products
@@ -9988,6 +9988,24 @@ components:
         type: integer
         example: 3288
       description: Numeric Scalev store database ID for authenticated business routes.
+    ProductListBusinessStoreId:
+      name: store_id
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        pattern: '^(?:[1-9][0-9]*|store_[A-Za-z0-9]+)$'
+      description: Positive numeric store ID or `store_...` unique reference, resolved within the authenticated business for this product-list route.
+    ProductListStoreIds:
+      name: store_id
+      in: query
+      required: false
+      schema:
+        type: string
+        minLength: 1
+        pattern: '^(?:[1-9][0-9]*|store_[A-Za-z0-9]+)(?:\s*,\s*(?:[1-9][0-9]*|store_[A-Za-z0-9]+))*$'
+      description: One or more comma-separated positive numeric store IDs or `store_...` unique references. Every value is resolved within the authenticated business, then deduplicated before filtering products.
     PageId:
       name: page_id
       in: path
@@ -10138,6 +10156,24 @@ components:
       required: true
       schema:
         type: string
+    BusinessVariantId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        pattern: '^(?:[1-9][0-9]*|variant_[A-Za-z0-9_-]+|[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12})$'
+      description: Positive numeric variant ID, `variant_...` unique reference, or canonical UUID, resolved within the authenticated business.
+    BusinessVariantReference:
+      name: variant_id
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        pattern: '^(?:[1-9][0-9]*|variant_[A-Za-z0-9_-]+|[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12})$'
+      description: Positive numeric variant ID, `variant_...` unique reference, or canonical UUID, resolved within the authenticated business.
     PageSize:
       name: page_size
       in: query
@@ -13256,6 +13292,7 @@ components:
         custom_domain_id:
           nullable: true
           type: integer
+          minimum: 1
       additionalProperties: false
     BusinessStoreUpdateRequest:
       type: object
@@ -13268,6 +13305,7 @@ components:
         custom_domain_id:
           nullable: true
           type: integer
+          minimum: 1
         warehouse_id:
           nullable: true
           type: integer
