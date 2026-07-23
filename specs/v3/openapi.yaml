@@ -5071,7 +5071,6 @@ paths:
               - invoice
               - payment_link
               - alfamart
-              - indomaret
               - ovo
               - dana
               - shopeepay
@@ -11754,7 +11753,7 @@ components:
                 payment_method: dana
                 epayment_provider: singapay
             retailOutlet:
-              summary: Alfamart or Indomaret payment code
+              summary: Alfamart payment code
               value:
                 pg_payment_info:
                   payment_method:
@@ -17107,7 +17106,7 @@ components:
         epayment_provider:
           type: string
           nullable: true
-          description: E-payment provider. `xendit` is the current/managed Xendit provider; `xendit_legacy` is the owned legacy Xendit provider. Other possible values include `duitku`, `midtrans`, `ipaymu`, and `singapay`.
+          description: E-payment provider. `xendit` is the current/managed Xendit provider; `xendit_legacy` is the owned legacy Xendit provider. Other possible values include `duitku`, `midtrans`, `durianpay`, and `singapay`.
         payment_account_holder:
           type: string
           nullable: true
@@ -19407,7 +19406,6 @@ components:
             - invoice
             - payment_link
             - alfamart
-            - indomaret
             - ovo
             - dana
             - shopeepay
@@ -19877,7 +19875,6 @@ components:
             - invoice
             - payment_link
             - alfamart
-            - indomaret
             - ovo
             - dana
             - shopeepay
@@ -19920,7 +19917,7 @@ components:
           title: WarehouseAddress
           type: object
         epayment_provider:
-          description: E-payment provider. `xendit` is the current/managed Xendit provider; `xendit_legacy` is the owned legacy Xendit provider. Other possible values include `duitku`, `midtrans`, `ipaymu`, and `singapay`.
+          description: E-payment provider. `xendit` is the current/managed Xendit provider; `xendit_legacy` is the owned legacy Xendit provider. Other possible values include `duitku`, `midtrans`, `durianpay`, and `singapay`.
           nullable: true
           type: string
         pg_reference_id:
@@ -20515,7 +20512,6 @@ components:
             - invoice
             - payment_link
             - alfamart
-            - indomaret
             - ovo
             - dana
             - shopeepay
@@ -20991,7 +20987,6 @@ components:
             - invoice
             - payment_link
             - alfamart
-            - indomaret
             - ovo
             - dana
             - shopeepay
@@ -21038,7 +21033,7 @@ components:
           title: WarehouseAddress
           type: object
         epayment_provider:
-          description: E-payment provider. `xendit` is the current/managed Xendit provider; `xendit_legacy` is the owned legacy Xendit provider. Other possible values include `duitku`, `midtrans`, `ipaymu`, and `singapay`.
+          description: E-payment provider. `xendit` is the current/managed Xendit provider; `xendit_legacy` is the owned legacy Xendit provider. Other possible values include `duitku`, `midtrans`, `durianpay`, and `singapay`.
           nullable: true
           type: string
         in_process_time:
@@ -22124,7 +22119,6 @@ components:
             - invoice
             - payment_link
             - alfamart
-            - indomaret
             - ovo
             - dana
             - shopeepay
@@ -22727,7 +22721,6 @@ components:
             - invoice
             - payment_link
             - alfamart
-            - indomaret
             - ovo
             - dana
             - shopeepay
@@ -23233,7 +23226,6 @@ components:
             - invoice
             - payment_link
             - alfamart
-            - indomaret
             - ovo
             - dana
             - shopeepay
