@@ -16701,6 +16701,27 @@ components:
         discount_code_code:
           type: string
           nullable: true
+        is_post_payment_redirect_enabled:
+          type: boolean
+          description: >
+            Optional creation-only override for the page post-payment redirect.
+            This field accepts only the native JSON booleans `true` and `false`;
+            `null`, strings, numbers, arrays, and objects are rejected. Omit it
+            to inherit the page setting. Set it to `false` to force Scalev's
+            hosted success flow for this order and clear the redirect snapshot.
+            Set it to `true` together with `post_payment_redirect_url` to replace
+            the page setting for this order.
+        post_payment_redirect_url:
+          type: string
+          format: uri
+          maxLength: 200
+          description: >
+            Absolute HTTPS destination required when
+            `is_post_payment_redirect_enabled` is `true`. HTTP is accepted only
+            for loopback development hosts outside production. Supplying this
+            field without `is_post_payment_redirect_enabled` does not enable an
+            order override; the page setting is inherited. The canonical value
+            is snapshotted at creation and cannot be changed by order updates.
         notes:
           type: string
           nullable: true
@@ -17023,6 +17044,12 @@ components:
         payment_status:
           type: string
           nullable: true
+          description: Buyer-facing payment status. A settled payment is exposed as `paid`; this field never returns `settled`.
+        post_payment_redirect_url:
+          type: string
+          format: uri
+          maxLength: 200
+          description: Canonical post-payment destination exposed only after a buyer-paid outcome (internal payment status `paid` or `settled`) when a valid redirect snapshot exists. Omitted before payment and when Scalev's hosted success flow applies.
         is_probably_spam:
           type: boolean
           nullable: true
@@ -17393,6 +17420,7 @@ components:
         payment_status:
           type: string
           nullable: true
+          description: Buyer-facing payment status. A settled payment is exposed as `paid`; this field never returns `settled`.
         payment_method:
           type: string
           example: bank_transfer
