@@ -2,7 +2,7 @@
   "name": "api-openapi",
   "private": true,
   "version": "1.0.0",
-  "description": "Standalone OpenAPI spec for the Nexus public v3 commerce API",
+  "description": "Standalone OpenAPI spec for the Scalev public v3 commerce API",
   "packageManager": "pnpm@11.1.0",
   "scripts": {
     "lint": "REDOCLY_TELEMETRY=off REDOCLY_SUPPRESS_UPDATE_NOTICE=true redocly lint specs/v3/openapi.yaml",

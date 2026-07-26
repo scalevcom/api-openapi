@@ -1,5 +1,5 @@
 apis:
-  nexus@v3:
+  scalev@v3:
     root: ./specs/v3/openapi.yaml
 
 extends:
