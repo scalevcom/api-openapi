@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Nexus Commerce API
+  title: Scalev Commerce API
   version: 3.0.0
   description: >
     Public v3 commerce contract for storefront, customer, and authenticated
@@ -41,8 +41,7 @@ tags:
       All store-derived public storefront routes require
       `X-Scalev-Storefront-Api-Key`.
   - name: HTML Mode Pages
-    description:
-      Public HTML Mode runtime endpoints. These routes require
+    description: Public HTML Mode runtime endpoints. These routes require
       `X-Scalev-Page-Api-Key` for the path page and reject storefront public
       API keys.
   - name: OAuth
@@ -160,8 +159,7 @@ paths:
           required: false
           schema:
             type: string
-          description:
-            Filter memberships by business username or account holder.
+          description: Filter memberships by business username or account holder.
         - name: business_name
           in: query
           required: false
@@ -253,8 +251,7 @@ paths:
         - Business Users
       operationId: denyBusinessInvitation
       summary: Deny current business invitation
-      description:
-        Deletes the authenticated caller's selected pending business
+      description: Deletes the authenticated caller's selected pending business
         membership. Already accepted memberships cannot be denied.
       security:
         - bearerAuth: []
@@ -1384,8 +1381,7 @@ paths:
           schema:
             format: uri
             type: string
-        - description:
-            Optional resource audience. MCP clients use
+        - description: Optional resource audience. MCP clients use
             `https://mcp.scalev.com/mcp`. Official Scalev MCP DCR/CIMD
             clients default to this resource when omitted.
           in: query
@@ -1665,8 +1661,7 @@ paths:
         - Discounts
       operationId: deleteDiscountCode
       summary: Delete a discount code
-      description:
-        Deletes a business-scoped discount code when it has no recorded usage.
+      description: Deletes a business-scoped discount code when it has no recorded usage.
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -1870,8 +1865,7 @@ paths:
         - Landing Pages
       operationId: getLandingPagePublicView
       summary: Get landing page public view data
-      description:
-        Returns the authenticated public rendering payload for a landing page.
+      description: Returns the authenticated public rendering payload for a landing page.
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -10062,7 +10056,7 @@ components:
           - mock
       description:
         Local/dev simulation override for WABA sends. When set to `mock`
-        outside production, Nexus records a submitted outbound message without
+        outside production, Scalev records a submitted outbound message without
         sending to Meta Graph. Ignored in production.
     ProductSlug:
       name: slug
@@ -12207,7 +12201,7 @@ components:
         unique_id:
           type: string
           nullable: true
-          description: Business unique id to pass as `business_unique_id` in MCP tools, or as `b_uid` to Nexus HTTP business-scoped routes when selection is required.
+          description: Business unique id to pass as `business_unique_id` in MCP tools, or as `b_uid` to Scalev HTTP business-scoped routes when selection is required.
         username:
           type: string
           nullable: true
@@ -12502,8 +12496,7 @@ components:
         current_page_display_id:
           type: integer
           nullable: true
-          description:
-            Required together with `is_published` when changing published state.
+          description: Required together with `is_published` when changing published state.
         store_id:
           type: integer
           nullable: true
@@ -12572,8 +12565,7 @@ components:
           nullable: true
           allOf:
             - $ref: "#/components/schemas/LandingPageFormDisplayRequest"
-          description:
-            HTML Checkout configuration. Omit or send null for HTML Sales pages.
+          description: HTML Checkout configuration. Omit or send null for HTML Sales pages.
         fb_pixel_ids:
           type: array
           description: >
@@ -12608,8 +12600,7 @@ components:
             type: integer
         onload_fb_events:
           type: array
-          description:
-            Meta/Facebook events fired automatically when the page loads.
+          description: Meta/Facebook events fired automatically when the page loads.
           items:
             type: string
         onload_tiktok_events:
@@ -12619,14 +12610,12 @@ components:
             type: string
         onload_kwai_client_events:
           type: array
-          description:
-            SnackVideo browser events fired automatically when the page loads.
+          description: SnackVideo browser events fired automatically when the page loads.
           items:
             type: string
         onload_kwai_server_events:
           type: array
-          description:
-            SnackVideo server events fired automatically when the page loads.
+          description: SnackVideo server events fired automatically when the page loads.
           items:
             type: string
         fb_events_onload_parameters:
@@ -12681,8 +12670,7 @@ components:
           enum:
             - rotator
             - fixed
-          description:
-            Required for `direct_to_whatsapp`. When fixed, send
+          description: Required for `direct_to_whatsapp`. When fixed, send
             `store_sales_person_id`.
         store_sales_person_id:
           type: integer
@@ -12706,8 +12694,7 @@ components:
             type: string
         onsubmit_tiktok_events:
           type: array
-          description:
-            TikTok events fired after HTML Checkout order creation succeeds.
+          description: TikTok events fired after HTML Checkout order creation succeeds.
           items:
             type: string
         onsubmit_kwai_client_events:
@@ -14800,15 +14787,13 @@ components:
         jwks_uri:
           type: string
           format: uri
-          description:
-            HTTPS JWKS URL required when registering a
+          description: HTTPS JWKS URL required when registering a
             `private_key_jwt` client.
         token_endpoint_auth_signing_alg:
           type: string
           enum:
             - RS256
-          description:
-            JWT assertion signing algorithm for `private_key_jwt` clients.
+          description: JWT assertion signing algorithm for `private_key_jwt` clients.
     OAuthClientRegistration:
       type: object
       additionalProperties: true
@@ -14896,13 +14881,11 @@ components:
             `private_key_jwt`.
         client_assertion_type:
           type: string
-          description:
-            Required for `private_key_jwt`; must be
+          description: Required for `private_key_jwt`; must be
             `urn:ietf:params:oauth:client-assertion-type:jwt-bearer`.
         client_assertion:
           type: string
-          description:
-            Signed JWT client assertion required for `private_key_jwt`.
+          description: Signed JWT client assertion required for `private_key_jwt`.
         code:
           type: string
           description: Authorization code, required for `authorization_code`.
@@ -15548,7 +15531,7 @@ components:
           description: >
             Customer checkout payment method code selected by the buyer.
             Required for normal checkout. May be omitted when the store uses
-            strict two-step Payment Link checkout; Nexus resolves it to
+            strict two-step Payment Link checkout; Scalev resolves it to
             `payment_link`. Virtual Accounts use flat method codes such as
             `va_bca`.
           example: va_bca
@@ -16542,7 +16525,7 @@ components:
           description: >
             Storefront payment method code selected by the buyer. Required for
             normal checkout. May be omitted when the store uses strict
-            two-step Payment Link checkout; Nexus resolves it to `payment_link`.
+            two-step Payment Link checkout; Scalev resolves it to `payment_link`.
             Virtual Accounts use flat method codes such as `va_bca`.
           example: va_bca
         courier_service_id:
@@ -16686,7 +16669,7 @@ components:
           description: >
             Public order payment method code. Required for normal checkout. May
             be omitted when the store uses strict two-step Payment Link checkout;
-            Nexus resolves it to `payment_link`. Virtual Accounts use flat method
+            Scalev resolves it to `payment_link`. Virtual Accounts use flat method
             codes such as `va_bca`.
           example: va_bca
         payment_account_unique_id:

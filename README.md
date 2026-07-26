@@ -1,6 +1,6 @@
 # api-openapi
 
-Standalone OpenAPI repository for the Nexus public commerce API contract.
+Standalone OpenAPI repository for the Scalev public commerce API contract.
 
 ## Source of Truth
 
@@ -25,7 +25,7 @@ pnpm build:site
 - `dist/specs/v3/openapi.yaml`
 - `dist/specs/v3/openapi.json`
 
-When Nexus commerce API behavior changes, update this repo as part of the same work.
+When Scalev commerce API behavior changes, update this repo as part of the same work.
 
 ## GitHub Pages
 
