@@ -736,7 +736,10 @@ paths:
         the guest cart referenced by `X-Scalev-Guest-Token`, or from direct
         `items` while clearing the referenced guest cart after successful order
         creation. Direct checkout items are store-scoped and not blocked by
-        storefront listing visibility.
+        storefront listing visibility. Orders created as `payment_link` start
+        with zero Other Income and zero Service Fee. The hosted Payment Link
+        quotes the Store's frozen Other Income and Service Fee after the buyer
+        chooses a concrete payment method.
       requestBody:
         $ref: "#/components/requestBodies/PublicCheckoutRequestBody"
       responses:
@@ -1017,7 +1020,10 @@ paths:
         `X-Scalev-Page-Api-Key`, and does not accept storefront public API
         keys. The page and store are resolved from the path and page API key;
         any `page_unique_id` or `store_unique_id` values supplied in the JSON
-        body are ignored.
+        body are ignored. Orders created as `payment_link` start with zero
+        Other Income and zero Service Fee. The hosted Payment Link quotes the
+        Store's frozen Other Income and Service Fee after the buyer chooses a
+        concrete payment method.
       requestBody:
         $ref: "#/components/requestBodies/PagePublicOrderCreateRequestBody"
       responses:
@@ -16719,6 +16725,21 @@ components:
           $ref: "#/components/schemas/StorefrontMoneyValue"
         shipping_discount:
           $ref: "#/components/schemas/StorefrontMoneyValue"
+        other_income:
+          allOf:
+            - $ref: "#/components/schemas/StorefrontMoneyValue"
+          description: >
+            Optional compatibility value for direct checkout. When the order
+            is resolved to `payment_link`, the API ignores this value and
+            creates the order with zero Other Income. The hosted Payment Link
+            quotes the frozen Store charge after a concrete method is chosen.
+        other_income_name:
+          type: string
+          nullable: true
+          description: >
+            Optional compatibility label for direct checkout. It is ignored
+            during `payment_link` order creation; the hosted link supplies the
+            frozen Store label with the concrete-method quote.
         discount_code_code:
           type: string
           nullable: true
@@ -17000,7 +17021,13 @@ components:
         shipping_cost:
           $ref: "#/components/schemas/StorefrontMoneyValue"
         other_income:
-          $ref: "#/components/schemas/StorefrontMoneyValue"
+          allOf:
+            - $ref: "#/components/schemas/StorefrontMoneyValue"
+          description: >
+            Store-calculated Other Income for direct checkout. A
+            `payment_link` creation summary returns zero because the hosted
+            Payment Link quotes this charge after the buyer chooses a concrete
+            payment method.
         other_income_name:
           type: string
           nullable: true
@@ -17120,13 +17147,21 @@ components:
         shipping_discount:
           $ref: "#/components/schemas/StorefrontMoneyValue"
         other_income:
-          $ref: "#/components/schemas/StorefrontMoneyValue"
+          allOf:
+            - $ref: "#/components/schemas/StorefrontMoneyValue"
+          description: >
+            Other Income stored on the order. New `payment_link` orders return
+            zero until a concrete Payment Request wins; after payment, the
+            winning request's frozen charge is reconciled onto the order.
         payment_link_income:
           $ref: "#/components/schemas/StorefrontMoneyValue"
           description: Additional E-Payment Link amount paid by the customer.
         other_income_name:
           type: string
           nullable: true
+          description: >
+            Other Income label. For `payment_link`, the winning concrete
+            Payment Request's frozen Store label is reconciled after payment.
         unique_code_discount:
           $ref: "#/components/schemas/StorefrontMoneyValue"
         discount_code_discount:
