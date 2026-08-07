@@ -25,7 +25,7 @@ pnpm build:site
 - `dist/specs/v3/openapi.yaml`
 - `dist/specs/v3/openapi.json`
 
-When Scalev commerce API behavior changes, update this repo as part of the same work.
+When Scalev API behavior changes, update this repo as part of the same work.
 
 ## GitHub Pages
 

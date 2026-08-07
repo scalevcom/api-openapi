@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Scalev Commerce API
+  title: Scalev API
   version: 3.0.0
   description: >
     Public v3 commerce contract for storefront, customer, and authenticated
