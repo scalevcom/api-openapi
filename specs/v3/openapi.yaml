@@ -736,10 +736,11 @@ paths:
         the guest cart referenced by `X-Scalev-Guest-Token`, or from direct
         `items` while clearing the referenced guest cart after successful order
         creation. Direct checkout items are store-scoped and not blocked by
-        storefront listing visibility. Orders created as `payment_link` start
-        with zero Other Income and zero Service Fee. The hosted Payment Link
-        quotes the Store's frozen Other Income and Service Fee after the buyer
-        chooses a concrete payment method.
+        storefront listing visibility. Product prices, discounts, shipping,
+        Other Income, the Store customer-fee policy, and service fees are
+        recalculated from current backend data during creation. Preview values
+        are not confirmation inputs and do not produce a quote-conflict
+        response.
       requestBody:
         $ref: "#/components/requestBodies/PublicCheckoutRequestBody"
       responses:
@@ -988,9 +989,11 @@ paths:
       description: >
         Page-scoped public endpoint used by
         `Scalev.checkout.estimateSummary(payload)`. It accepts HTML Mode
-        `items`, `destination`, `payment_method`, and `shipping_option`,
-        recomputes shipping, and applies store-configured extra fees for
-        display.
+        `items`, `destination`, `payment_method`, `shipping_option`, and an
+        optional `discount_code_code`. It recomputes shipping and applies
+        backend-owned Other Income and service fees for display. The current
+        Store settings are the authoritative customer-fee policy; clients do
+        not submit that policy or a fee confirmation ID.
       requestBody:
         $ref: "#/components/requestBodies/PagePublicCheckoutSummaryRequestBody"
       responses:
@@ -1020,10 +1023,10 @@ paths:
         `X-Scalev-Page-Api-Key`, and does not accept storefront public API
         keys. The page and store are resolved from the path and page API key;
         any `page_unique_id` or `store_unique_id` values supplied in the JSON
-        body are ignored. Orders created as `payment_link` start with zero
-        Other Income and zero Service Fee. The hosted Payment Link quotes the
-        Store's frozen Other Income and Service Fee after the buyer chooses a
-        concrete payment method.
+        body are ignored. Product prices, discounts, shipping, Other Income,
+        the Store customer-fee policy, and service fees are recalculated from
+        current backend data during creation; an earlier summary is not a
+        confirmation input.
       requestBody:
         $ref: "#/components/requestBodies/PagePublicOrderCreateRequestBody"
       responses:
@@ -1147,7 +1150,9 @@ paths:
         destination, courier service, warehouse, payment method, and either
         direct `items` or the guest cart referenced by `X-Scalev-Guest-Token`.
         Client-supplied `shipping_cost` is ignored. Digital-only carts return
-        `shipping_cost: "0"`.
+        `shipping_cost: "0"`. An optional `discount_code_code` is revalidated.
+        Service fees use the current Store customer-fee policy and are returned
+        for display without a confirmation ID.
       requestBody:
         $ref: "#/components/requestBodies/StorefrontCheckoutSummaryRequestBody"
       responses:
@@ -3437,6 +3442,9 @@ paths:
         Customer-authenticated storefront endpoint. Recomputes the selected
         shipping cost from destination, courier service, warehouse, payment
         method, and either direct `items` or the cart referenced by `cart_id`.
+        An optional `discount_code_code` is revalidated. Service fees use the
+        current Store customer-fee policy and are returned for display without
+        a confirmation ID.
       security:
         - bearerAuth: []
       parameters:
@@ -3467,7 +3475,10 @@ paths:
         `items`, from a customer cart referenced by `cart_id`, or from direct
         `items` while clearing the referenced cart after successful order
         creation. Carts must belong to the authenticated customer and current
-        store.
+        store. Product prices, discounts, shipping, Other Income, the Store
+        customer-fee policy, and service fees are recalculated from current
+        backend data during creation. Preview values are not confirmation
+        inputs and do not produce a quote-conflict response.
       security:
         - bearerAuth: []
       parameters:
@@ -9994,7 +10005,7 @@ components:
       schema:
         type: string
         minLength: 1
-        pattern: '^(?:[1-9][0-9]*|store_[A-Za-z0-9]+)$'
+        pattern: "^(?:[1-9][0-9]*|store_[A-Za-z0-9]+)$"
       description: Positive numeric store ID or `store_...` unique reference, resolved within the authenticated business for this product-list route.
     ProductListStoreIds:
       name: store_id
@@ -10162,7 +10173,7 @@ components:
       schema:
         type: string
         minLength: 1
-        pattern: '^(?:[1-9][0-9]*|variant_[A-Za-z0-9_-]+|[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12})$'
+        pattern: "^(?:[1-9][0-9]*|variant_[A-Za-z0-9_-]+|[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12})$"
       description: Positive numeric variant ID, `variant_...` unique reference, or canonical UUID, resolved within the authenticated business.
     BusinessVariantReference:
       name: variant_id
@@ -10171,7 +10182,7 @@ components:
       schema:
         type: string
         minLength: 1
-        pattern: '^(?:[1-9][0-9]*|variant_[A-Za-z0-9_-]+|[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12})$'
+        pattern: "^(?:[1-9][0-9]*|variant_[A-Za-z0-9_-]+|[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12})$"
       description: Positive numeric variant ID, `variant_...` unique reference, or canonical UUID, resolved within the authenticated business.
     PageSize:
       name: page_size
@@ -15536,6 +15547,12 @@ components:
             Storefront payment method code selected by the buyer. Virtual
             Accounts use flat method codes such as `va_bca`.
           example: va_bca
+        discount_code_code:
+          type: string
+          nullable: true
+          description: >
+            Optional discount code to revalidate and apply to this preview.
+            Ineligible codes contribute zero discount.
       additionalProperties: true
     CustomerCheckoutRequest:
       type: object
@@ -16856,6 +16873,12 @@ components:
           properties:
             shipping_option:
               $ref: "#/components/schemas/StorefrontShippingOption"
+            discount_code_code:
+              type: string
+              nullable: true
+              description: >
+                Optional discount code to revalidate and apply to this
+                preview. Ineligible codes contribute zero discount.
           additionalProperties: true
     PagePublicDiscountCodeCheckRequest:
       type: object
@@ -17006,6 +17029,12 @@ components:
               allOf:
                 - $ref: "#/components/schemas/StorefrontMoneyValue"
               description: Ignored by the API. Shipping cost is recomputed from the selected courier service and destination.
+            discount_code_code:
+              type: string
+              nullable: true
+              description: >
+                Optional discount code to revalidate and apply to this
+                preview. Ineligible codes contribute zero discount.
           additionalProperties: true
     StorefrontCheckoutSummaryResponse:
       type: object
@@ -17014,6 +17043,7 @@ components:
         - shipping_cost
         - other_income
         - other_income_name
+        - service_fee
         - gross_revenue
       properties:
         product_price:
@@ -17031,6 +17061,13 @@ components:
         other_income_name:
           type: string
           nullable: true
+        service_fee:
+          allOf:
+            - $ref: "#/components/schemas/StorefrontMoneyValue"
+          description: >
+            Backend-calculated customer service fee using the current Store
+            customer-fee policy. Manual methods and `payment_link` order
+            creation return zero. This preview value has no confirmation ID.
         gross_revenue:
           $ref: "#/components/schemas/StorefrontMoneyValue"
       additionalProperties: false

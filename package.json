@@ -11,7 +11,7 @@
     "build:site": "REDOCLY_TELEMETRY=off REDOCLY_SUPPRESS_UPDATE_NOTICE=true node ./scripts/build-site.mjs"
   },
   "devDependencies": {
-    "@redocly/cli": "2.25.1",
+    "@redocly/cli": "2.39.0",
     "yaml": "2.8.3"
   }
 }
