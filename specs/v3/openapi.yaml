@@ -65,6 +65,12 @@ tags:
     description:
       Authenticated business analytics provider catalogs and pixel/container
       endpoints used when configuring landing page displays.
+  - name: Analytics Ingest
+    description:
+      Public first-party analytics event ingestion. Unauthenticated by design.
+      Tenancy comes from a signed ingest token issued in the storefront
+      configuration and landing page payloads, never from the URL or the request
+      body.
   - name: OAuth Billing
     description: OAuth billing runtime, refund, and developer finance endpoints.
   - name: Customer Auth
@@ -266,6 +272,67 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
+  /v3/public/e:
+    post:
+      tags:
+        - Analytics Ingest
+      operationId: ingestAnalyticsEvents
+      summary: Ingest first-party analytics events
+      description: >
+        Accepts a batch of first-party analytics events from a browser.
+
+
+        Unauthenticated by design. Tenancy is carried by the signed
+        `token` in the request envelope, which is issued in the storefront
+        configuration and landing page payloads. The route is deliberately not
+        store-scoped: landing and sales pages frequently belong to no store, and
+        the token carries a store only when one exists.
+
+
+        The endpoint is designed for `navigator.sendBeacon`, which cannot set
+        request headers and issues a CORS preflight for
+        `application/json`. Browsers frequently abandon preflights during
+        `pagehide`, so `text/plain;charset=UTF-8` is the recommended content type
+        and the token travels in the body. Clients able to set headers may send
+        `application/json` and supply the token in `X-Scalev-Ingest-Token`
+        instead.
+
+
+        Accepted, partially accepted, and fully discarded batches all return
+        `204`. Individual events failing validation are dropped silently and the
+        remainder of the batch is kept; no per-event detail is reported, because
+        a browser cannot act on it. Requests identified as automated traffic are
+        acknowledged with `204` and discarded.
+      security: []
+      parameters:
+        - name: X-Scalev-Ingest-Token
+          in: header
+          required: false
+          description:
+            Alternative location for the signed ingest token, for clients able
+            to set request headers. Takes precedence over the envelope `token`.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              $ref: "#/components/schemas/AnalyticsIngestEnvelope"
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyticsIngestEnvelope"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContentResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "413":
+          $ref: "#/components/responses/PayloadTooLargeResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequestsResponse"
   /v3/stores/{store_id}/public/items:
     parameters:
       - $ref: "#/components/parameters/StoreId"
@@ -11317,6 +11384,12 @@ components:
             $ref: "#/components/schemas/BusinessStoreSalesPersonCollectionResponseBody"
     NoContentResponse:
       description: Success with no response body
+    PayloadTooLargeResponse:
+      description: Request body exceeds the endpoint size limit
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiErrorResponse"
     BadRequestResponse:
       description: Bad Request
       content:
@@ -14530,6 +14603,125 @@ components:
           type: integer
       additionalProperties: false
       description: Paginated list payload for v3.
+    AnalyticsIngestEnvelope:
+      type: object
+      required:
+        - events
+      properties:
+        token:
+          type: string
+          description:
+            Signed ingest token issued in the storefront configuration or
+            landing page payload. Required unless supplied through
+            `X-Scalev-Ingest-Token`. Carries business, store, and page identity;
+            tenancy claimed anywhere else in the payload is ignored.
+        sent_at:
+          type: string
+          format: date-time
+          description: >
+            When the client dispatched the batch, stamped by the same clock that
+            stamped each event's `occurred_at`. The server corrects every event
+            by the difference between its own receive time and this value, which
+            preserves ordering within the batch even when the device clock is
+            badly wrong. Omitting it means events are trusted as sent.
+        events:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/AnalyticsIngestEvent"
+      additionalProperties: false
+    AnalyticsIngestEvent:
+      type: object
+      required:
+        - event_id
+        - event_name
+        - occurred_at
+        - visitor_id
+        - session_id
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          description:
+            Client-minted identifier for this event. Aggregates count distinct
+            values of this field, so a retried beacon must reuse it.
+        event_name:
+          type: string
+          pattern: "^[a-z][a-z0-9_]{0,39}$"
+          description: >
+            Lowercase snake_case event name. The number of distinct names a
+            single business may introduce is capped; events using a name beyond
+            that cap are discarded. Use a bounded vocabulary rather than
+            embedding identifiers in the name.
+        occurred_at:
+          type: string
+          format: date-time
+          description:
+            When the event happened, from the device clock. Corrected against
+            `sent_at` and clamped to a window around the server receive time.
+        visitor_id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        consent_state:
+          type: string
+          enum:
+            - unknown
+            - granted
+            - denied
+          default: unknown
+        render_mode:
+          type: string
+          enum:
+            - csr
+            - ssr
+            - static
+            - other
+          description: Unrecognised values are stored as `other`.
+        page_url:
+          type: string
+          description: >
+            Full page URL. Only the host and path are stored, plus an allowlist
+            of attribution parameters: `utm_source`, `utm_medium`,
+            `utm_campaign`, `utm_content`, `utm_term`, `gclid`, `fbclid`, and
+            `ttclid`. Every other query parameter is discarded and never stored.
+        referrer:
+          type: string
+          description: Full referrer URL. Only the host is stored.
+        device_type:
+          type: string
+          enum:
+            - desktop
+            - mobile
+            - tablet
+            - other
+          description: Unrecognised values are stored as `other`.
+        browser_family:
+          type: string
+          maxLength: 40
+        widget_id:
+          type: string
+          maxLength: 100
+        viewport_w:
+          type: integer
+          minimum: 0
+          maximum: 65535
+        viewport_h:
+          type: integer
+          minimum: 0
+          maximum: 65535
+        props:
+          type: object
+          additionalProperties:
+            type: string
+          description: >
+            Up to 20 string-valued properties. Keys are truncated to 40 bytes
+            and values to 200 bytes; when more than 20 are supplied, the
+            retained subset is chosen by key order.
+      additionalProperties: false
     ApiErrorResponse:
       type: object
       properties:
