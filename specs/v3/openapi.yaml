@@ -279,6 +279,61 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
+  /v3/web-analytics/source-revenue:
+    get:
+      tags:
+        - Web Analytics
+      operationId: getWebAnalyticsSourceRevenue
+      summary: Get visits and earnings per acquisition source
+      description: >
+        Returns, for each acquisition source, how many visits it produced and how
+        much it earned.
+
+
+        The two halves come from different places and describe different moments,
+        so they are returned separately rather than merged into one column.
+        `first_touch` counts visits and is keyed off the URL the visitor arrived
+        on. `last_touch` holds order counts and amounts, keyed off the values
+        recorded when checkout was submitted. Combining them into a single
+        "source" figure would present two different measurements as one.
+
+
+        Only orders that were paid or settled are counted. An order that exists
+        but was never paid is not earnings, and including it makes every source
+        look better than it is.
+
+
+        Amounts are strings, not numbers. They are exact decimals server-side and
+        a JSON number would lose precision for no benefit.
+
+
+        A source may appear on one side only: traffic that produced no orders, or
+        orders whose visit was never recorded. Both are returned so the gap is
+        visible rather than looking like missing data.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth: []
+      parameters:
+        - $ref: "#/components/parameters/WebAnalyticsFrom"
+        - $ref: "#/components/parameters/WebAnalyticsTo"
+        - $ref: "#/components/parameters/WebAnalyticsTimezone"
+        - $ref: "#/components/parameters/WebAnalyticsStoreId"
+        - $ref: "#/components/parameters/WebAnalyticsPageId"
+        - $ref: "#/components/parameters/WebAnalyticsEntityType"
+        - $ref: "#/components/parameters/WebAnalyticsEntityId"
+        - $ref: "#/components/parameters/WebAnalyticsEntityPath"
+        - $ref: "#/components/parameters/WebAnalyticsLimit"
+        - $ref: "#/components/parameters/WebAnalyticsUtmType"
+      responses:
+        "200":
+          $ref: "#/components/responses/WebAnalyticsSourceRevenueResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
   /v3/web-analytics/traffic:
     get:
       tags:
@@ -10298,6 +10353,20 @@ components:
             whats_app_integration:delete: Delete WhatsApp Integrations.
             web_analytics:read: View First-Party Web Analytics.
   parameters:
+    WebAnalyticsUtmType:
+      name: utm_type
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - source
+          - medium
+          - campaign
+        default: source
+      description:
+        Which UTM dimension to group the earnings half by. The visits half is
+        always grouped the same way.
     WebAnalyticsFrom:
       name: from
       in: query
@@ -11466,6 +11535,12 @@ components:
           schema:
             $ref: "#/components/schemas/OAuthBillingWithdrawalRequest"
   responses:
+    WebAnalyticsSourceRevenueResponse:
+      description: Visits and earnings per acquisition source
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/WebAnalyticsSourceRevenueBody"
     WebAnalyticsTrafficResponse:
       description: Daily traffic series for the requested range
       content:
@@ -12601,6 +12676,58 @@ components:
           schema:
             $ref: "#/components/schemas/BundlePriceOptionExtendedRelation"
   schemas:
+    WebAnalyticsSourceRevenueBody:
+      type: object
+      additionalProperties: false
+      required:
+        - utm_type
+        - first_touch
+        - last_touch
+      properties:
+        utm_type:
+          type: string
+          enum:
+            - source
+            - medium
+            - campaign
+        first_touch:
+          type: array
+          description:
+            Visit counts, keyed off the URL the visitor arrived on.
+          items:
+            $ref: "#/components/schemas/WebAnalyticsSource"
+        last_touch:
+          type: array
+          description:
+            Order counts and amounts, keyed off what checkout recorded.
+          items:
+            $ref: "#/components/schemas/WebAnalyticsSourceEarnings"
+    WebAnalyticsSourceEarnings:
+      type: object
+      additionalProperties: false
+      required:
+        - value
+        - orders
+        - gross_revenue
+        - net_revenue
+        - attribution
+      properties:
+        value:
+          type: string
+          description: The UTM value. Empty when the order recorded none.
+        orders:
+          type: integer
+          description: Orders that were paid or settled.
+        gross_revenue:
+          type: string
+          description:
+            Exact decimal as a string. A JSON number would lose precision.
+        net_revenue:
+          type: string
+        attribution:
+          type: string
+          enum:
+            - last_touch
     WebAnalyticsTrafficBody:
       type: object
       additionalProperties: false
