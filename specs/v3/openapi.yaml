@@ -6152,7 +6152,8 @@ paths:
           $ref: "#/components/responses/NotFoundResponse"
       description: >
         Requires the `order:update` scope. Trigger configured third-party
-        purchase events using the order's saved visit decision. Only an explicit
+        purchase events using consent saved when the order was created. Later visitor
+        choices and business policy changes do not alter that order's decision. Only an explicit
         visitor refusal blocks privacy permission; absent consent records and
         grants allow delivery without policy-version or catalog-freshness checks.
         HTTP 200 contains per-provider acknowledgement or error results and does
@@ -18199,7 +18200,9 @@ components:
       nullable: true
       description: >
         Privacy context captured during the originating visit, separately from
-        current first-party analytics context. Third-party server-side tracking
+        current first-party analytics context. For orders, this is saved privately in
+        PostgreSQL at order creation and remains fixed for later delivery.
+        Third-party server-side tracking
         is blocked only by an explicit category or recipient refusal in this
         visit snapshot. Omitted context, consent given, and consent not required
         allow delivery; policy revisions, later configuration changes, receipt
