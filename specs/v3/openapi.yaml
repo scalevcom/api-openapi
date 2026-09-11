@@ -18199,14 +18199,15 @@ components:
       type: object
       nullable: true
       description: >
-        Privacy context captured during the originating visit, separately from
-        current first-party analytics context. For orders, this is saved privately in
+        Privacy context from the originating page and local browser preference.
+        For orders, this is saved privately in
         PostgreSQL at order creation and remains fixed for later delivery.
-        Third-party server-side tracking
-        is blocked only by an explicit category or recipient refusal in this
+        Later server-side order tracking is blocked only by an explicit category or recipient refusal in this
         visit snapshot. Omitted context, consent given, and consent not required
         allow delivery; policy revisions, later configuration changes, receipt
-        expiry and catalog freshness do not add delivery gates. Existing pixel
+        expiry and catalog freshness do not add delivery gates. Direct browser-initiated
+        events before an order exists require a local grant when the page's configured
+        country rule requires consent; otherwise they are allowed. Existing pixel
         configuration, trigger conditions and provider acknowledgement checks
         still apply. This private context is not returned in order metadata.
       properties:
@@ -18223,10 +18224,40 @@ components:
         decision_at:
           type: string
           format: date-time
+        local_choices:
+          type: object
+          description: >
+            Current local browser category preferences, effective immediately without
+            waiting for a signed receipt. The configured country rule determines
+            whether consent is required. In an unrestricted country, not_required
+            supersedes older refusals. For selective marketing consent, send denied
+            as the category default and grant each selected recipient explicitly.
+          properties:
+            analytics:
+              type: string
+              enum: [granted, denied, not_required]
+            marketing:
+              type: string
+              enum: [granted, denied, not_required]
+          additionalProperties: false
+        local_recipient_choices:
+          type: object
+          maxProperties: 100
+          description: >
+            Current local preferences keyed by exact recipient identifier, such as
+            meta:123 or gtm:GTM-ABC. In a consent-required country an exact preference
+            overrides the category default. In an unrestricted country it does not
+            override not_required. No current catalog or policy revision is consulted.
+          additionalProperties:
+            type: string
+            enum: [granted, denied]
         explicit_choices:
           type: object
-          description: Pending explicit refusals; unsigned grants cannot override a saved refusal.
+          description: Legacy pending refusals, used when current local choices are absent.
           properties:
+            analytics:
+              type: string
+              enum: [denied]
             marketing:
               type: string
               enum: [denied]
