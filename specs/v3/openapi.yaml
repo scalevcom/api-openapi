@@ -2618,7 +2618,7 @@ paths:
         - Analytics Setup
       operationId: createGtmContainer
       summary: Create a Google Tag Manager container
-      description: "Requires the `gtm:create` scope."
+      description: "Requires the `gtm:create` scope. A name and container_id are sufficient to configure the container; no manual tag inventory or separate GTM approval is required. On Scalev pages using the container, GTM follows the same marketing consent decision as native pixels: it loads immediately when Customer Privacy does not require consent, or after marketing approval, and honors an explicit refusal."
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -2663,7 +2663,7 @@ paths:
         - Analytics Setup
       operationId: updateGtmContainer
       summary: Update a Google Tag Manager container
-      description: "Requires the `gtm:update` scope."
+      description: "Requires the `gtm:update` scope. A name and container_id are sufficient to configure the container; no manual tag inventory or separate GTM approval is required. On Scalev pages using the container, GTM follows the same marketing consent decision as native pixels: it loads immediately when Customer Privacy does not require consent, or after marketing approval, and honors an explicit refusal."
       security:
         - bearerAuth: []
         - apiKeyAuth: []
