@@ -6150,9 +6150,14 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
-      description:
-        "Requires the `order:update` scope. Trigger purchase event for
-        analytics and tracking."
+      description: >
+        Requires the `order:update` scope. Trigger configured third-party
+        purchase events using the order's saved visit decision. Only an explicit
+        visitor refusal blocks privacy permission; absent consent records and
+        grants allow delivery without policy-version or catalog-freshness checks.
+        HTTP 200 contains per-provider acknowledgement or error results and does
+        not by itself confirm delivery. Previously acknowledged pixels are reused.
+
   /v3/orders/{id}/duplicate:
     parameters:
       - $ref: "#/components/parameters/OrderId"
@@ -11842,7 +11847,7 @@ components:
           schema:
             $ref: "#/components/schemas/Order"
     TriggerOrderPurchaseResponse:
-      description: Purchase event triggered sucessfully
+      description: Per-provider purchase delivery results; HTTP 200 does not imply provider acceptance.
       content:
         application/json:
           schema:
@@ -15557,6 +15562,8 @@ components:
     CustomerCheckoutRequest:
       type: object
       properties:
+        visit_privacy:
+          $ref: "#/components/schemas/VisitPrivacyContext"
         items:
           type: array
           description: >
@@ -16524,6 +16531,8 @@ components:
         - customer_name
         - customer_email
       properties:
+        visit_privacy:
+          $ref: "#/components/schemas/VisitPrivacyContext"
         items:
           type: array
           description: >
@@ -16712,6 +16721,8 @@ components:
         `page_unique_id` or `store_unique_id` and uses the path page plus the
         authenticated page API key instead.
       properties:
+        visit_privacy:
+          $ref: "#/components/schemas/VisitPrivacyContext"
         form:
           type: object
           nullable: true
@@ -18183,6 +18194,48 @@ components:
         shipping_cost:
           $ref: "#/components/schemas/StorefrontMoneyValue"
       additionalProperties: true
+    VisitPrivacyContext:
+      type: object
+      nullable: true
+      description: >
+        Privacy context captured during the originating visit, separately from
+        current first-party analytics context. Third-party server-side tracking
+        is blocked only by an explicit category or recipient refusal in this
+        visit snapshot. Omitted context, consent given, and consent not required
+        allow delivery; policy revisions, later configuration changes, receipt
+        expiry and catalog freshness do not add delivery gates. Existing pixel
+        configuration, trigger conditions and provider acknowledgement checks
+        still apply. This private context is not returned in order metadata.
+      properties:
+        token:
+          type: string
+          description: Signed policy supplied by the page at the time of the visit.
+        receipt:
+          type: string
+          nullable: true
+          description: Signed visitor choice history captured with the visit.
+        subject_id:
+          type: string
+          format: uuid
+        decision_at:
+          type: string
+          format: date-time
+        explicit_choices:
+          type: object
+          description: Pending explicit refusals; unsigned grants cannot override a saved refusal.
+          properties:
+            marketing:
+              type: string
+              enum: [denied]
+          additionalProperties: false
+        explicit_recipient_choices:
+          type: object
+          maxProperties: 100
+          description: Pending refusals keyed by the exact configured recipient identifier.
+          additionalProperties:
+            type: string
+            enum: [denied]
+      additionalProperties: false
     StorefrontAnalyticsVariantItem:
       type: object
       required:
@@ -18284,6 +18337,8 @@ components:
         - user_data
         - events
       properties:
+        visit_privacy:
+          $ref: "#/components/schemas/VisitPrivacyContext"
         event_source_url:
           type: string
           format: uri
@@ -18360,6 +18415,8 @@ components:
         - user
         - events
       properties:
+        visit_privacy:
+          $ref: "#/components/schemas/VisitPrivacyContext"
         event_source_url:
           type: string
           format: uri
@@ -18434,6 +18491,8 @@ components:
         - click_id
         - events
       properties:
+        visit_privacy:
+          $ref: "#/components/schemas/VisitPrivacyContext"
         click_id:
           type: string
           description: SnackVideo click ID.
