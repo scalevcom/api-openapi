@@ -65,6 +65,8 @@ tags:
     description:
       Authenticated business analytics provider catalogs and pixel/container
       endpoints used when configuring landing page displays.
+  - name: Web Analytics
+    description: Authenticated business first-party web analytics reporting.
   - name: OAuth Billing
     description: OAuth billing runtime, refund, and developer finance endpoints.
   - name: Customer Auth
@@ -110,6 +112,130 @@ tags:
   - name: WhatsApp Integrations
     description: Authenticated WhatsApp integration management endpoints.
 paths:
+  /v3/web-analytics/source-revenue:
+    get:
+      tags:
+        - Web Analytics
+      operationId: getWebAnalyticsSourceRevenue
+      summary: Get linked paid-order earnings by acquisition source
+      description: >
+        Requires the `web_analytics:read` scope. Returns first-touch traffic
+        alongside checkout-attributed earnings for the exact paid orders linked
+        by the order funnel. The selected date range and filters apply to the
+        original page view; later order creation and payment update that cohort.
+        Revenue uses the earliest complete linked payment snapshot.
+        Historical events without a snapshot use the current matching order
+        amount. This is gross/net order revenue at payment, not cash collected,
+        and subsequent refunds or order edits do not alter a stored snapshot.
+        A missing historical amount remains unavailable rather than becoming
+        zero or an incomplete total. Each last-touch source has one row per
+        currency; never add amounts across currencies. If a source has missing
+        revenue with unknown currency, its other currency amounts must not be
+        presented as complete source totals. Visit counts are grouped
+        independently by first-touch source and must not be duplicated when
+        joining currency rows. Ranked results select source groups and include
+        all their currencies; limits may omit other sources. Mixed-currency
+        groups rank by linked paid-order count rather than an implied exchange
+        rate. This endpoint does not report all operational orders or earnings.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - web_analytics:read
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: Inclusive first page-view cohort date in the selected timezone. The range is limited to 180 days of retained raw events.
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          description: Inclusive last page-view cohort date. Must be on or after from.
+          schema:
+            type: string
+            format: date
+        - name: timezone
+          in: query
+          description: IANA timezone used for the date boundaries.
+          schema:
+            type: string
+            default: Asia/Jakarta
+        - name: utm_type
+          in: query
+          description: Acquisition dimension used on both sides of the response.
+          schema:
+            type: string
+            enum: [source, medium, campaign, content, term]
+            default: source
+        - name: limit
+          in: query
+          description: Leader count per side before the traffic/revenue source union. All currency rows for each selected source are returned.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+        - name: store_id
+          in: query
+          description: Restrict the originating page views to this business-owned store.
+          schema:
+            type: integer
+            minimum: 1
+        - name: entity_type
+          in: query
+          description: Surface type. An omitted entity_id selects all owners of the type. Cannot be combined with page_id.
+          schema:
+            type: string
+            enum: [landing_page, product, bundle_price_option, store_home, cart, checkout, payment_link, order_detail, order_success, order_invoice]
+        - name: entity_id
+          in: query
+          description: Owner identity for entity_type; landing_page uses a positive integer encoded as text. Requires entity_type.
+          schema:
+            type: string
+        - name: entity_path
+          in: query
+          description: Optional historical path for the selected entity. Requires entity_type, or the legacy page_id selector.
+          schema:
+            type: string
+        - name: page_id
+          in: query
+          description: Legacy alias for entity_type=landing_page and entity_id. Cannot be combined with entity_type or entity_id.
+          schema:
+            type: integer
+            minimum: 1
+        - name: page_host
+          in: query
+          description: Restrict the originating page views to this host.
+          schema:
+            type: string
+        - name: page_path
+          in: query
+          description: Restrict the originating page views to this path. The root path / is a valid filter.
+          schema:
+            type: string
+        - name: ad_click
+          in: query
+          description: Use paid, organic, or an ad network name to filter the originating page views.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Ranked first-touch traffic and linked paid-order revenue by source and currency.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebAnalyticsSourceRevenue"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "429":
+          description: Reporting rate limit exceeded. Machine credentials have a dedicated reporting throttle in addition to their normal limits.
   /v3/me:
     get:
       tags:
@@ -9919,6 +10045,7 @@ components:
           authorizationUrl: https://api.scalev.com/v3/oauth/authorize
           tokenUrl: https://api.scalev.com/v3/oauth/token
           scopes:
+            web_analytics:read: View first-party web analytics.
             order:list: List Orders.
             order:read: View Orders.
             order:statistics:read: View Order Statistics.
@@ -12148,6 +12275,133 @@ components:
           schema:
             $ref: "#/components/schemas/BundlePriceOptionExtendedRelation"
   schemas:
+    WebAnalyticsSourceRevenue:
+      type: object
+      required: [utm_type, first_touch, last_touch, last_touch_scope]
+      properties:
+        utm_type:
+          type: string
+          enum: [source, medium, campaign, content, term]
+        first_touch:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebAnalyticsSourceTrafficRow"
+        last_touch:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebAnalyticsSourceRevenueRow"
+        last_touch_scope:
+          type: object
+          required: [status, applied_filters, unsupported_filters, basis, linked_order_counts_only, revenue_basis]
+          properties:
+            status:
+              type: string
+              enum: [available, unavailable]
+            applied_filters:
+              type: array
+              items:
+                type: string
+            unsupported_filters:
+              type: array
+              items:
+                type: string
+            basis:
+              type: string
+              enum: [page_view_cohort]
+            linked_order_counts_only:
+              type: boolean
+              enum: [true]
+            revenue_basis:
+              type: string
+              enum: [payment_snapshot_with_order_fallback]
+    WebAnalyticsSourceTrafficRow:
+      type: object
+      required: [utm_type, bucket_kind, value, traffic_status, revenue_status, views, visitors, sessions, attribution]
+      properties:
+        utm_type:
+          type: string
+          enum: [source, medium, campaign, content, term]
+        bucket_kind:
+          type: string
+          enum: [direct, label, unknown]
+          description: Use bucket_kind together with exact value to join sources. Direct and Unknown are valid literal campaign labels as well as special buckets.
+        value:
+          type: string
+        traffic_status:
+          type: string
+          enum: [available, unavailable]
+        revenue_status:
+          type: string
+          enum: [available, unavailable]
+        views:
+          type: integer
+          nullable: true
+          minimum: 0
+        visitors:
+          type: integer
+          nullable: true
+          minimum: 0
+        sessions:
+          type: integer
+          nullable: true
+          minimum: 0
+        attribution:
+          type: string
+          enum: [first_touch]
+      description: Distinct traffic counts for the source. Unknown labels may contain incomplete measurements, so their counts are null rather than zero.
+    WebAnalyticsSourceRevenueRow:
+      type: object
+      required: [bucket_kind, value, traffic_status, revenue_status, orders, currency, gross_revenue, net_revenue, snapshot_orders, fallback_orders, missing_revenue_orders, attribution]
+      properties:
+        bucket_kind:
+          type: string
+          enum: [direct, label, unknown]
+        value:
+          type: string
+        traffic_status:
+          type: string
+          enum: [available, unavailable]
+          description: Unavailable means a complete first-touch counterpart cannot be established; do not infer zero visitors or a conversion rate.
+        revenue_status:
+          type: string
+          enum: [available, unavailable]
+          description: Unavailable when the source is unresolved or any revenue amount is missing. Linked order counts remain present for a known source even when money is unavailable.
+        orders:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: Distinct linked paid orders in this source/currency group. This counts orders rather than the funnel's distinct page-view stages. Null for an unresolved source bucket.
+        currency:
+          type: string
+          nullable: true
+          pattern: '^[A-Z]{3}$'
+          description: Currency of this monetary group. Null when unavailable; never assume IDR for an explicit null.
+        gross_revenue:
+          type: string
+          nullable: true
+          description: Exact decimal gross revenue. Null when any amount in the group is missing; a string value of zero is a known zero.
+        net_revenue:
+          type: string
+          nullable: true
+          description: Exact decimal net revenue. Null when any amount in the group is missing.
+        snapshot_orders:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: Linked orders whose amount comes from the payment event snapshot.
+        fallback_orders:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: Historical linked orders whose amount comes from the current order record.
+        missing_revenue_orders:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: Linked orders for which neither a usable snapshot nor a historical order amount is available. Known coverage counts sum to orders; unresolved source buckets expose null counts.
+        attribution:
+          type: string
+          enum: [last_touch]
     FlexibleObject:
       type: object
       additionalProperties: true
