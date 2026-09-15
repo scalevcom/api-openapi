@@ -33,6 +33,12 @@ servers:
     description: Production
 security: []
 tags:
+  - name: Checkout Intents
+    description: Checkout capture, recovery prefill and authenticated merchant access to
+      contactable checkout intents.
+    externalDocs:
+      description: Capture and recover unfinished checkouts.
+      url: https://docs.scalev.dev/docs/checkout-intents
   - name: Orders
     description: Authenticated business order management endpoints.
   - name: Storefront
@@ -60,7 +66,7 @@ tags:
       focus on HTML Mode pages.
     externalDocs:
       description: Read the Landing Pages API guide before creating or publishing HTML Mode pages.
-      url: https://docs.scalev.com/en/landing-pages-api
+      url: https://docs.scalev.dev/docs/landing-pages-api
   - name: Analytics Setup
     description:
       Authenticated business analytics provider catalogs and pixel/container
@@ -9898,6 +9904,581 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
+  /v3/stores/{store_id}/public/checkout-intents:
+    parameters:
+      - $ref: "#/components/parameters/StoreId"
+      - $ref: "#/components/parameters/StorefrontPublicApiKey"
+    post:
+      tags:
+        - Storefront
+      operationId: createStorefrontCheckoutIntent
+      summary: Start or resume a storefront checkout intent
+      description: The path store unique ID and Storefront API key define the capture scope. Use a
+        stable form_widget_id chosen by your storefront. Requires a reCAPTCHA token for action
+        checkout_intent_start. Repeating client_session_id resumes the unfinished attempt without
+        replacing saved snapshots; PATCH with last_sequence + 1 to save new input. A completed
+        session returns 409; create a new client_session_id after checkout succeeds. A valid
+        optional cip_ prefill token resumes its matching unfinished attempt; invalid or
+        mismatched prefill tokens fall back to the client session. Capture failures must not
+        block checkout.
+      externalDocs:
+        description: Capture and recover unfinished checkouts.
+        url: https://docs.scalev.dev/docs/checkout-intents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StorefrontCheckoutIntentStartRequest"
+      responses:
+        "201":
+          description: New or resumed checkout intent and write capability.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutIntentCapture"
+        "400":
+          description: Malformed request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "403":
+          description: Checkout intent is not included in the active business subscription, or
+            authorization failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "404":
+          description: Source API key is missing or invalid, source was not found, or checkout intent
+            does not belong to this source.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "409":
+          description: The checkout intent is completed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "422":
+          description: Invalid capture fields, item references, sequence, form widget, or reCAPTCHA
+            assessment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequestsResponse"
+  /v3/stores/{store_id}/public/checkout-intents/{checkout_intent_id}:
+    parameters:
+      - $ref: "#/components/parameters/StoreId"
+      - $ref: "#/components/parameters/StorefrontPublicApiKey"
+      - $ref: "#/components/parameters/CheckoutIntentId"
+      - $ref: "#/components/parameters/CheckoutIntentToken"
+    patch:
+      tags:
+        - Storefront
+      operationId: updateStorefrontCheckoutIntent
+      summary: Save a storefront checkout intent snapshot
+      description: Uses the cit_ write capability and the same source scope. A sequence less than or
+        equal to last_sequence is an idempotent no-op; only a newer snapshot refreshes activity.
+        Omitted sections and omitted fields are unchanged; null clears a field, and present
+        items/custom_fields arrays replace previous arrays. Completed intents reject updates. No
+        reCAPTCHA token is required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutIntentUpdateRequest"
+      responses:
+        "204":
+          description: Snapshot saved or stale sequence ignored; no response body.
+        "400":
+          description: Malformed request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "401":
+          description: "invalid_checkout_intent_token: the cit_ write capability is missing, invalid, or
+            expired."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "403":
+          description: Checkout intent is not included in the active business subscription, or
+            authorization failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "404":
+          description: Source API key is missing or invalid, source was not found, or checkout intent
+            does not belong to this source.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "409":
+          description: The checkout intent is completed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "422":
+          description: Invalid capture fields, item references, sequence, form widget, or reCAPTCHA
+            assessment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequestsResponse"
+  /v3/pages/{page_unique_id}/checkout-intents:
+    parameters:
+      - $ref: "#/components/parameters/PageUniqueId"
+      - $ref: "#/components/parameters/PagePublicApiKey"
+    post:
+      tags:
+        - Checkout Intents
+      operationId: createPageCheckoutIntent
+      summary: Start or resume a page checkout intent
+      description: Use the published MainForm widget ID, or html-mode-main-form for a published HTML
+        Mode page with checkout form context. The page public API key must match the path page.
+        Requires a reCAPTCHA token for action checkout_intent_start. Repeating client_session_id
+        resumes the unfinished attempt without replacing saved snapshots; PATCH with
+        last_sequence + 1 to save new input. A completed session returns 409; create a new
+        client_session_id after checkout succeeds. A valid optional cip_ prefill token resumes
+        its matching unfinished attempt; invalid or mismatched prefill tokens fall back to the
+        client session. Capture failures must not block checkout.
+      externalDocs:
+        description: Capture and recover unfinished checkouts.
+        url: https://docs.scalev.dev/docs/checkout-intents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PageCheckoutIntentStartRequest"
+      responses:
+        "201":
+          description: New or resumed checkout intent and write capability.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutIntentCapture"
+        "400":
+          description: Malformed request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "403":
+          description: Checkout intent is not included in the active business subscription, or
+            authorization failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "404":
+          description: Source API key is missing or invalid, source was not found, or checkout intent
+            does not belong to this source.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "409":
+          description: The checkout intent is completed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "422":
+          description: Invalid capture fields, item references, sequence, form widget, or reCAPTCHA
+            assessment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequestsResponse"
+  /v3/pages/{page_unique_id}/checkout-intents/{checkout_intent_id}:
+    parameters:
+      - $ref: "#/components/parameters/PageUniqueId"
+      - $ref: "#/components/parameters/PagePublicApiKey"
+      - $ref: "#/components/parameters/CheckoutIntentId"
+      - $ref: "#/components/parameters/CheckoutIntentToken"
+    patch:
+      tags:
+        - Checkout Intents
+      operationId: updatePageCheckoutIntent
+      summary: Save a page checkout intent snapshot
+      description: Uses the cit_ write capability and the same source scope. A sequence less than or
+        equal to last_sequence is an idempotent no-op; only a newer snapshot refreshes activity.
+        Omitted sections and omitted fields are unchanged; null clears a field, and present
+        items/custom_fields arrays replace previous arrays. Completed intents reject updates. No
+        reCAPTCHA token is required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutIntentUpdateRequest"
+      responses:
+        "204":
+          description: Snapshot saved or stale sequence ignored; no response body.
+        "400":
+          description: Malformed request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "401":
+          description: "invalid_checkout_intent_token: the cit_ write capability is missing, invalid, or
+            expired."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "403":
+          description: Checkout intent is not included in the active business subscription, or
+            authorization failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "404":
+          description: Source API key is missing or invalid, source was not found, or checkout intent
+            does not belong to this source.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "409":
+          description: The checkout intent is completed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "422":
+          description: Invalid capture fields, item references, sequence, form widget, or reCAPTCHA
+            assessment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequestsResponse"
+  /v3/checkout-intents/prefill:
+    get:
+      tags:
+        - Checkout Intents
+      operationId: getCheckoutIntentPrefill
+      summary: Read checkout recovery prefill
+      description: Public capability endpoint. Pass the cip_ token from a recovery URL. The token
+        lasts 30 days from issuance and only reads prefill; it cannot update an intent. The
+        response keeps saved item references and adds current catalog display and availability
+        data. Deleted or unavailable items remain in the response with is_available false. Do not
+        send this token to analytics or logs.
+      parameters:
+        - name: checkout_intent_prefill_token
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: ^cip_
+          description: Read capability from the recovery URL.
+      responses:
+        "200":
+          description: Safe form prefill and saved checkout items.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutIntentPrefillResponse"
+        "401":
+          description: Missing, invalid, or expired prefill token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "403":
+          description: Checkout intent is not included in the active business subscription, or
+            authorization failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "404":
+          description: Checkout intent or source was not found in this scope.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequestsResponse"
+  /v3/checkout-intents:
+    get:
+      tags:
+        - Checkout Intents
+      operationId: listCheckoutIntents
+      summary: List contactable checkout intents
+      description: Requires the `checkout_intent:list` scope. Returns only intents with a valid
+        normalized email or phone for the selected business. Use status=abandoned for recovery
+        work. Active means activity within 15 minutes; abandoned means unfinished and idle at
+        least 15 minutes; completed means an order was created. Resumed intents can become active
+        again. Uses cursor pagination ordered by the selected timestamp and intent ID.
+      externalDocs:
+        description: Capture and recover unfinished checkouts.
+        url: https://docs.scalev.dev/docs/checkout-intents
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - checkout_intent:list
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: Omit to include all contactable statuses.
+          schema:
+            type: string
+            enum:
+              - active
+              - abandoned
+              - completed
+        - name: search
+          in: query
+          required: false
+          description: Search customer name, email, or normalized phone.
+          schema:
+            type: string
+        - name: store_unique_id
+          in: query
+          required: false
+          description: Optional capture-source filter within the selected business.
+          schema:
+            type: string
+        - name: page_unique_id
+          in: query
+          required: false
+          description: Optional capture-source filter within the selected business.
+          schema:
+            type: string
+        - name: form_widget_id
+          in: query
+          required: false
+          description: Optional capture-source filter within the selected business.
+          schema:
+            type: string
+        - name: started_at_from
+          in: query
+          required: false
+          description: Inclusive start timestamp.
+          schema:
+            type: string
+            format: date-time
+        - name: started_at_until
+          in: query
+          required: false
+          description: Exclusive end timestamp.
+          schema:
+            type: string
+            format: date-time
+        - name: sort_by
+          in: query
+          required: false
+          description: Timestamp used for cursor ordering. completed_at falls back to started_at for unfinished intents. Keep sort_by and sort_direction unchanged while paging.
+          schema:
+            type: string
+            enum:
+              - last_activity_at
+              - started_at
+              - completed_at
+            default: last_activity_at
+        - name: sort_direction
+          in: query
+          required: false
+          description: Sort direction.
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+        - name: page_size
+          in: query
+          required: false
+          description: Maximum number of rows.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - $ref: "#/components/parameters/NextCursor"
+        - $ref: "#/components/parameters/PreviousCursor"
+      responses:
+        "200":
+          description: Contactable checkout intents.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutIntentCollection"
+        "400":
+          description: Malformed request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "401":
+          description: Missing or invalid business API key or OAuth access token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "403":
+          description: Checkout intent is not included in the active business subscription, or
+            authorization failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "422":
+          description: Invalid checkout intent filters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequestsResponse"
+  /v3/checkout-intents/{checkout_intent_id}:
+    parameters:
+      - $ref: "#/components/parameters/CheckoutIntentId"
+    get:
+      tags:
+        - Checkout Intents
+      operationId: getCheckoutIntent
+      summary: Get a contactable checkout intent
+      description: Requires the `checkout_intent:read` scope. Returns a contactable intent belonging
+        to the selected business, including captured fields, item snapshots, safe attribution and
+        a recovery URL when available. recovery_url and recovery_url_expires_at are null for
+        completed intents or a missing or untrusted source URL. Recovery URLs are customer
+        capabilities; protect them as customer data.
+      externalDocs:
+        description: Capture and recover unfinished checkouts.
+        url: https://docs.scalev.dev/docs/checkout-intents
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - checkout_intent:read
+      responses:
+        "200":
+          description: Contactable checkout intent.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutIntentDetail"
+        "400":
+          description: Malformed request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "401":
+          description: Missing or invalid business API key or OAuth access token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "403":
+          description: Checkout intent is not included in the active business subscription, or
+            authorization failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "404":
+          description: Checkout intent or source was not found in this scope.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequestsResponse"
+  /v3/checkout-intents/{checkout_intent_id}/follow-up-email:
+    parameters:
+      - $ref: "#/components/parameters/CheckoutIntentId"
+    post:
+      tags:
+        - Checkout Intents
+      operationId: sendCheckoutIntentFollowUpEmail
+      summary: Send a checkout intent follow-up email
+      description: Requires the `checkout_intent:follow_up` scope. Queues one personalized email for
+        a contactable intent with a captured customer email. Active, abandoned, and completed
+        intents are accepted. Returns after enqueueing, before delivery. Repeated requests return
+        409 after an email was already queued. The store email identity and configured Reply-To
+        rules apply.
+      externalDocs:
+        description: Capture and recover unfinished checkouts.
+        url: https://docs.scalev.dev/docs/checkout-intents
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - checkout_intent:follow_up
+      responses:
+        "204":
+          description: Follow-up email queued; no response body.
+        "400":
+          description: Malformed request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "401":
+          description: Missing or invalid business API key or OAuth access token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "403":
+          description: Checkout intent is not included in the active business subscription, or
+            authorization failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "404":
+          description: Checkout intent or source was not found in this scope.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "409":
+          description: "checkout_intent_follow_up_email_already_sended: an email was already queued."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "422":
+          description: "checkout_intent_follow_up_email_unavailable: customer email is missing."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "429":
+          $ref: "#/components/responses/TooManyRequestsResponse"
+        "500":
+          description: "checkout_intent_follow_up_failed: email could not be queued."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
 components:
   securitySchemes:
     bearerAuth:
@@ -9919,6 +10500,9 @@ components:
           authorizationUrl: https://api.scalev.com/v3/oauth/authorize
           tokenUrl: https://api.scalev.com/v3/oauth/token
           scopes:
+            checkout_intent:list: List contactable checkout intents.
+            checkout_intent:read: Read contactable checkout intents.
+            checkout_intent:follow_up: Send checkout follow-up email.
             order:list: List Orders.
             order:read: View Orders.
             order:statistics:read: View Order Statistics.
@@ -9983,6 +10567,21 @@ components:
             whats_app_integration:update: Update WhatsApp Integrations.
             whats_app_integration:delete: Delete WhatsApp Integrations.
   parameters:
+    CheckoutIntentId:
+      name: checkout_intent_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    CheckoutIntentToken:
+      name: X-Scalev-Checkout-Intent-Token
+      in: header
+      required: true
+      description: cit_ write capability returned by start/resume. A cip_ prefill token is not accepted.
+      schema:
+        type: string
+        pattern: ^cit_
     StoreId:
       name: store_id
       in: path
@@ -15557,6 +16156,11 @@ components:
     CustomerCheckoutRequest:
       type: object
       properties:
+        checkout_intent_token:
+          type: string
+          description: Optional cit_ write capability from checkout-intent capture. A valid matching
+            token completes the intent when the order commits. Invalid, expired, mismatched or consumed
+            tokens never block order creation.
         items:
           type: array
           description: >
@@ -16524,6 +17128,11 @@ components:
         - customer_name
         - customer_email
       properties:
+        checkout_intent_token:
+          type: string
+          description: Optional cit_ write capability from checkout-intent capture. A valid matching
+            token completes the intent when the order commits. Invalid, expired, mismatched or consumed
+            tokens never block order creation.
         items:
           type: array
           description: >
@@ -16712,6 +17321,11 @@ components:
         `page_unique_id` or `store_unique_id` and uses the path page plus the
         authenticated page API key instead.
       properties:
+        checkout_intent_token:
+          type: string
+          description: Optional cit_ write capability from checkout-intent capture. A valid matching
+            token completes the intent when the order commits. Invalid, expired, mismatched or consumed
+            tokens never block order creation.
         form:
           type: object
           nullable: true
@@ -27522,3 +28136,1002 @@ components:
           type: string
       title: BundlePriceOptionExtendedRelation
       type: object
+    CheckoutIntentFields:
+      type: object
+      additionalProperties: false
+      properties:
+        customer_name:
+          type: string
+          nullable: true
+          maxLength: 200
+        customer_email:
+          type: string
+          nullable: true
+          maxLength: 320
+        customer_phone:
+          type: string
+          nullable: true
+          maxLength: 40
+        shipping_address:
+          type: string
+          nullable: true
+          maxLength: 2000
+        shipping_province:
+          type: string
+          nullable: true
+          maxLength: 200
+        shipping_city:
+          type: string
+          nullable: true
+          maxLength: 200
+        shipping_subdistrict:
+          type: string
+          nullable: true
+          maxLength: 200
+        shipping_postal_code:
+          type: string
+          nullable: true
+          maxLength: 20
+        payment_method:
+          type: string
+          nullable: true
+          maxLength: 100
+        sub_payment_method:
+          type: string
+          nullable: true
+          maxLength: 100
+        notes:
+          type: string
+          nullable: true
+          maxLength: 2000
+        discount_code_code:
+          type: string
+          nullable: true
+          maxLength: 100
+        shipping_location_id:
+          type: integer
+          minimum: 1
+          nullable: true
+        custom_fields:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - key
+              - label
+            properties:
+              key:
+                type: string
+                minLength: 1
+                maxLength: 200
+              label:
+                type: string
+                minLength: 1
+                maxLength: 200
+              value:
+                oneOf:
+                  - type: string
+                    nullable: true
+                    maxLength: 2000
+                  - type: number
+                  - type: boolean
+          maxItems: 50
+    CheckoutIntentAttribution:
+      type: object
+      additionalProperties: false
+      properties:
+        ad_source:
+          type: string
+          nullable: true
+          maxLength: 1000
+        utm_source:
+          type: string
+          nullable: true
+          maxLength: 1000
+        utm_medium:
+          type: string
+          nullable: true
+          maxLength: 1000
+        utm_campaign:
+          type: string
+          nullable: true
+          maxLength: 1000
+        utm_content:
+          type: string
+          nullable: true
+          maxLength: 1000
+        utm_term:
+          type: string
+          nullable: true
+          maxLength: 1000
+        affiliate_code:
+          type: string
+          nullable: true
+          maxLength: 1000
+        fbc:
+          type: string
+          nullable: true
+          maxLength: 1000
+        fbp:
+          type: string
+          nullable: true
+          maxLength: 1000
+        ttclid:
+          type: string
+          nullable: true
+          maxLength: 1000
+        ttp:
+          type: string
+          nullable: true
+          maxLength: 1000
+        gclid:
+          type: string
+          nullable: true
+          maxLength: 1000
+        kwai_clickid:
+          type: string
+          nullable: true
+          maxLength: 1000
+    CheckoutIntentItem:
+      oneOf:
+        - type: object
+          additionalProperties: false
+          required:
+            - type
+            - variant_id
+            - quantity
+          properties:
+            type:
+              type: string
+              enum:
+                - variant
+            variant_id:
+              type: integer
+              minimum: 1
+            quantity:
+              type: integer
+              minimum: 1
+              maximum: 10000
+        - type: object
+          additionalProperties: false
+          required:
+            - type
+            - bundle_price_option_id
+            - quantity
+          properties:
+            type:
+              type: string
+              enum:
+                - bundle_price_option
+            bundle_price_option_id:
+              type: integer
+              minimum: 1
+            quantity:
+              type: integer
+              minimum: 1
+              maximum: 10000
+    StorefrontCheckoutIntentStartRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - recaptcha_token
+        - client_session_id
+        - form_widget_id
+      properties:
+        recaptcha_token:
+          type: string
+          minLength: 1
+          description: reCAPTCHA token for action checkout_intent_start.
+        client_session_id:
+          type: string
+          format: uuid
+          description: Browser-persistent random UUID scoped to the page or storefront checkout; not a
+            guest-cart token.
+        checkout_intent_prefill_token:
+          type: string
+          description: Optional cip_ recovery capability. Invalid or mismatched tokens fall back to
+            client_session_id.
+        form_widget_id:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Stable identifier chosen by the storefront, for example storefront-checkout.
+        fields:
+          $ref: "#/components/schemas/CheckoutIntentFields"
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CheckoutIntentItem"
+          maxItems: 100
+        attribution:
+          $ref: "#/components/schemas/CheckoutIntentAttribution"
+        source_url:
+          type: string
+          nullable: true
+          format: uri
+          description: Current checkout URL. Sensitive query parameters and fragments are stripped.
+            Recovery links are only issued for trusted source origins.
+          maxLength: 2048
+        cart_id:
+          type: integer
+          minimum: 1
+          nullable: true
+    PageCheckoutIntentStartRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - recaptcha_token
+        - client_session_id
+        - form_widget_id
+      properties:
+        recaptcha_token:
+          type: string
+          minLength: 1
+          description: reCAPTCHA token for action checkout_intent_start.
+        client_session_id:
+          type: string
+          format: uuid
+          description: Browser-persistent random UUID scoped to the page or storefront checkout; not a
+            guest-cart token.
+        checkout_intent_prefill_token:
+          type: string
+          description: Optional cip_ recovery capability. Invalid or mismatched tokens fall back to
+            client_session_id.
+        form_widget_id:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: ID of a MainForm in the current published page, or html-mode-main-form for
+            eligible HTML Mode checkout pages.
+        fields:
+          $ref: "#/components/schemas/CheckoutIntentFields"
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CheckoutIntentItem"
+          maxItems: 100
+        attribution:
+          $ref: "#/components/schemas/CheckoutIntentAttribution"
+        source_url:
+          type: string
+          nullable: true
+          format: uri
+          description: Current checkout URL. Sensitive query parameters and fragments are stripped.
+            Recovery links are only issued for trusted source origins.
+          maxLength: 2048
+        cart_id:
+          type: integer
+          minimum: 1
+          nullable: true
+    CheckoutIntentUpdateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - sequence
+      properties:
+        sequence:
+          type: integer
+          minimum: 1
+        fields:
+          $ref: "#/components/schemas/CheckoutIntentFields"
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CheckoutIntentItem"
+          maxItems: 100
+        attribution:
+          $ref: "#/components/schemas/CheckoutIntentAttribution"
+        source_url:
+          type: string
+          nullable: true
+          format: uri
+          description: Current checkout URL. Sensitive query parameters and fragments are stripped.
+            Recovery links are only issued for trusted source origins.
+          maxLength: 2048
+        cart_id:
+          type: integer
+          minimum: 1
+          nullable: true
+    CheckoutIntentCapture:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - form_widget_id
+        - checkout_intent_token
+        - status
+        - last_sequence
+        - started_at
+        - last_activity_at
+        - expires_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        form_widget_id:
+          type: string
+        checkout_intent_token:
+          type: string
+          pattern: ^cit_
+          description: Write capability valid for 24 hours. Start/resume refreshes the window for an
+            unfinished intent. Never include it in URLs or analytics.
+        status:
+          type: string
+          enum:
+            - active
+            - abandoned
+            - completed
+        last_sequence:
+          type: integer
+          minimum: 0
+        started_at:
+          type: string
+          format: date-time
+        last_activity_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+    CheckoutIntentSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - form_widget_id
+        - status
+        - contactable
+        - is_email_follow_up_already_sended
+        - customer
+        - store
+        - page
+        - cart_summary
+        - handler
+        - source_url
+        - started_at
+        - last_activity_at
+        - follow_up_eligible_at
+        - completed_at
+        - order
+      properties:
+        id:
+          type: string
+          format: uuid
+        form_widget_id:
+          type: string
+        status:
+          type: string
+          enum:
+            - active
+            - abandoned
+            - completed
+        contactable:
+          type: boolean
+        is_email_follow_up_already_sended:
+          type: boolean
+        customer:
+          type: object
+          additionalProperties: false
+          required:
+            - name
+            - email
+            - phone
+          properties:
+            name:
+              type: string
+              nullable: true
+            email:
+              type: string
+              nullable: true
+            phone:
+              type: string
+              nullable: true
+        store:
+          type: object
+          additionalProperties: false
+          required:
+            - id
+            - unique_id
+            - name
+          properties:
+            id:
+              type: string
+            unique_id:
+              type: string
+            name:
+              type: string
+          nullable: true
+        page:
+          type: object
+          additionalProperties: false
+          required:
+            - id
+            - unique_id
+            - name
+          properties:
+            id:
+              type: integer
+            unique_id:
+              type: string
+            name:
+              type: string
+          nullable: true
+          description: Null for store-scoped checkout intents.
+        cart_summary:
+          type: object
+          additionalProperties: false
+          required:
+            - item_quantity
+            - estimated_total
+            - currency
+          properties:
+            item_quantity:
+              type: integer
+            estimated_total:
+              type: string
+            currency:
+              type: string
+        handler:
+          type: object
+          additionalProperties: false
+          properties:
+            id:
+              type: integer
+            email:
+              type: string
+              nullable: true
+            phone:
+              type: string
+              nullable: true
+            is_phone_verified:
+              type: boolean
+            fullname:
+              type: string
+              nullable: true
+            avatar:
+              type: string
+              nullable: true
+          nullable: true
+        source_url:
+          type: string
+          nullable: true
+        started_at:
+          type: string
+          format: date-time
+        last_activity_at:
+          type: string
+          format: date-time
+        follow_up_eligible_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        order:
+          type: object
+          additionalProperties: false
+          required:
+            - id
+            - order_id
+            - secret_slug
+          properties:
+            id:
+              type: string
+              format: uuid
+            order_id:
+              type: string
+            secret_slug:
+              type: string
+          nullable: true
+    CheckoutIntentStoredItem:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - quantity
+        - name
+        - unit_price
+        - line_total
+        - currency
+      properties:
+        type:
+          type: string
+          enum:
+            - variant
+            - bundle_price_option
+        variant_id:
+          type: integer
+        bundle_price_option_id:
+          type: integer
+        quantity:
+          type: integer
+        name:
+          type: string
+          nullable: true
+        unit_price:
+          type: string
+        line_total:
+          type: string
+        currency:
+          type: string
+    CheckoutIntentDetail:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - form_widget_id
+        - status
+        - contactable
+        - is_email_follow_up_already_sended
+        - customer
+        - store
+        - page
+        - cart_summary
+        - handler
+        - source_url
+        - started_at
+        - last_activity_at
+        - follow_up_eligible_at
+        - completed_at
+        - order
+        - fields
+        - items
+        - attribution
+        - recovery_url
+        - recovery_url_expires_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        form_widget_id:
+          type: string
+        status:
+          type: string
+          enum:
+            - active
+            - abandoned
+            - completed
+        contactable:
+          type: boolean
+        is_email_follow_up_already_sended:
+          type: boolean
+        customer:
+          type: object
+          additionalProperties: false
+          required:
+            - name
+            - email
+            - phone
+          properties:
+            name:
+              type: string
+              nullable: true
+            email:
+              type: string
+              nullable: true
+            phone:
+              type: string
+              nullable: true
+        store:
+          type: object
+          additionalProperties: false
+          required:
+            - id
+            - unique_id
+            - name
+          properties:
+            id:
+              type: string
+            unique_id:
+              type: string
+            name:
+              type: string
+          nullable: true
+        page:
+          type: object
+          additionalProperties: false
+          required:
+            - id
+            - unique_id
+            - name
+          properties:
+            id:
+              type: integer
+            unique_id:
+              type: string
+            name:
+              type: string
+          nullable: true
+          description: Null for store-scoped checkout intents.
+        cart_summary:
+          type: object
+          additionalProperties: false
+          required:
+            - item_quantity
+            - estimated_total
+            - currency
+          properties:
+            item_quantity:
+              type: integer
+            estimated_total:
+              type: string
+            currency:
+              type: string
+        handler:
+          type: object
+          additionalProperties: false
+          properties:
+            id:
+              type: integer
+            email:
+              type: string
+              nullable: true
+            phone:
+              type: string
+              nullable: true
+            is_phone_verified:
+              type: boolean
+            fullname:
+              type: string
+              nullable: true
+            avatar:
+              type: string
+              nullable: true
+          nullable: true
+        source_url:
+          type: string
+          nullable: true
+        started_at:
+          type: string
+          format: date-time
+        last_activity_at:
+          type: string
+          format: date-time
+        follow_up_eligible_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        order:
+          type: object
+          additionalProperties: false
+          required:
+            - id
+            - order_id
+            - secret_slug
+          properties:
+            id:
+              type: string
+              format: uuid
+            order_id:
+              type: string
+            secret_slug:
+              type: string
+          nullable: true
+        fields:
+          type: object
+          additionalProperties: false
+          properties:
+            shipping_address:
+              type: string
+              nullable: true
+              maxLength: 2000
+            shipping_province:
+              type: string
+              nullable: true
+              maxLength: 200
+            shipping_city:
+              type: string
+              nullable: true
+              maxLength: 200
+            shipping_subdistrict:
+              type: string
+              nullable: true
+              maxLength: 200
+            shipping_postal_code:
+              type: string
+              nullable: true
+              maxLength: 20
+            payment_method:
+              type: string
+              nullable: true
+              maxLength: 100
+            sub_payment_method:
+              type: string
+              nullable: true
+              maxLength: 100
+            notes:
+              type: string
+              nullable: true
+              maxLength: 2000
+            discount_code_code:
+              type: string
+              nullable: true
+              maxLength: 100
+            shipping_location_id:
+              type: integer
+              minimum: 1
+              nullable: true
+            custom_fields:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required:
+                  - key
+                  - label
+                properties:
+                  key:
+                    type: string
+                    minLength: 1
+                    maxLength: 200
+                  label:
+                    type: string
+                    minLength: 1
+                    maxLength: 200
+                  value:
+                    oneOf:
+                      - type: string
+                        nullable: true
+                        maxLength: 2000
+                      - type: number
+                      - type: boolean
+              maxItems: 50
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CheckoutIntentStoredItem"
+        attribution:
+          type: object
+          additionalProperties: false
+          properties:
+            ad_source:
+              type: string
+              nullable: true
+              maxLength: 1000
+            utm_source:
+              type: string
+              nullable: true
+              maxLength: 1000
+            utm_medium:
+              type: string
+              nullable: true
+              maxLength: 1000
+            utm_campaign:
+              type: string
+              nullable: true
+              maxLength: 1000
+            utm_content:
+              type: string
+              nullable: true
+              maxLength: 1000
+            utm_term:
+              type: string
+              nullable: true
+              maxLength: 1000
+            affiliate_code:
+              type: string
+              nullable: true
+              maxLength: 1000
+        recovery_url:
+          type: string
+          nullable: true
+          format: uri
+          description: Trusted checkout source URL with a cip_ prefill token. Null when completed or no
+            trusted source is available.
+        recovery_url_expires_at:
+          type: string
+          format: date-time
+          nullable: true
+    CheckoutIntentCollection:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+        - is_paginated
+        - has_next
+        - has_previous
+        - next_cursor
+        - previous_cursor
+        - page_size
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/CheckoutIntentSummary"
+        is_paginated:
+          type: boolean
+          enum:
+            - true
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+        next_cursor:
+          type: string
+          nullable: true
+        previous_cursor:
+          type: string
+          nullable: true
+        page_size:
+          type: integer
+    CheckoutIntentPrefillItem:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - quantity
+        - available
+        - is_available
+        - unavailable_reason
+      properties:
+        type:
+          type: string
+          enum:
+            - variant
+            - bundle_price_option
+        variant_id:
+          type: integer
+        bundle_price_option_id:
+          type: integer
+        quantity:
+          type: integer
+        name:
+          type: string
+          nullable: true
+        unit_price:
+          type: string
+        line_total:
+          type: string
+        currency:
+          type: string
+        variant_unique_id:
+          type: string
+          nullable: true
+        product_name:
+          type: string
+          nullable: true
+        variant_name:
+          type: string
+          nullable: true
+        bundle_price_option_unique_id:
+          type: string
+          nullable: true
+        bundle_name:
+          type: string
+          nullable: true
+        bundle_price_option_name:
+          type: string
+          nullable: true
+        image:
+          type: string
+          nullable: true
+        images:
+          type: array
+          items:
+            type: string
+        display_images:
+          type: array
+          items:
+            type: string
+        item_type:
+          type: string
+          nullable: true
+        weight:
+          type: number
+          nullable: true
+        weight_bump:
+          type: number
+          nullable: true
+        available_qty:
+          type: number
+          nullable: true
+        available:
+          type: boolean
+        is_available:
+          type: boolean
+        unavailable_reason:
+          type: string
+          nullable: true
+          enum:
+            - deleted
+            - disabled
+            - out_of_stock
+            - null
+        bundlelines:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+            description: Current display, variant and availability fields for a bundled line.
+    CheckoutIntentPrefillResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required:
+            - name
+            - email
+            - phone
+            - fullPhoneNumber
+            - address
+            - province
+            - city
+            - subdistrict
+            - postalCodeSelected
+            - payment_method
+            - sub_payment_method
+            - notes
+            - discountCode
+            - destination_subdistrict_id
+            - checkout_intent
+          properties:
+            name:
+              type: string
+              nullable: true
+            email:
+              type: string
+              nullable: true
+            phone:
+              type: string
+              nullable: true
+            fullPhoneNumber:
+              type: string
+              nullable: true
+            address:
+              type: string
+              nullable: true
+            province:
+              type: string
+              nullable: true
+            city:
+              type: string
+              nullable: true
+            subdistrict:
+              type: string
+              nullable: true
+            postalCodeSelected:
+              type: string
+              nullable: true
+            payment_method:
+              type: string
+              nullable: true
+            sub_payment_method:
+              type: string
+              nullable: true
+            notes:
+              type: string
+              nullable: true
+            discountCode:
+              type: string
+              nullable: true
+            destination_subdistrict_id:
+              type: integer
+              nullable: true
+            checkout_intent:
+              type: object
+              additionalProperties: false
+              required:
+                - id
+                - fields
+                - items
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                fields:
+                  $ref: "#/components/schemas/CheckoutIntentFields"
+                items:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/CheckoutIntentPrefillItem"
