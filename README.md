@@ -9,6 +9,10 @@ Standalone OpenAPI repository for the Scalev public commerce API contract.
 - `specs/v3/openapi.json` is a generated artifact and is not committed
 - `specs/v3/openapi.yaml` intentionally documents only `/v3` endpoints
 
+## Public Naming
+
+Refer to the API service as **Scalev API** in the contract, examples, and generated site. Keep implementation-specific service names out of public documentation.
+
 ## Usage
 
 ```bash
