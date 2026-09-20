@@ -6013,7 +6013,9 @@ paths:
           $ref: "#/components/responses/NotFoundResponse"
       description:
         "Requires the `order:update` scope. Create a payment request /
-        intent for an order."
+        intent for an order. The response body is the payment gateway payload
+        (`pg_payment_info`); order-level URLs and status live on the order
+        responses."
   /v3/orders/{id}/customer:
     parameters:
       - $ref: "#/components/parameters/OrderId"
@@ -13545,109 +13547,67 @@ components:
           examples:
             bankTransfer:
               summary: Manual bank transfer
-              value:
-                pg_payment_info: {}
-                public_order_url: https://demo.scalev.shop/o/order-secret
-                payment_url: https://demo.scalev.shop/o/order-secret/success
-                payment_method: bank_transfer
+              value: {}
             cod:
               summary: Cash on delivery
-              value:
-                pg_payment_info: {}
-                public_order_url: https://demo.scalev.shop/o/order-secret
-                payment_url: https://demo.scalev.shop/o/order-secret/success
-                payment_method: cod
+              value: {}
             virtualAccount:
               summary: Virtual account
               value:
-                pg_payment_info:
-                  payment_method:
-                    virtual_account:
-                      channel_properties:
-                        virtual_account_number: "880812345678"
-                        customer_name: Customer Name
-                public_order_url: https://demo.scalev.shop/o/order-secret
-                payment_url: https://demo.scalev.shop/o/order-secret/success
-                payment_method: va_bca
+                payment_method:
+                  virtual_account:
+                    channel_properties:
+                      virtual_account_number: "880812345678"
+                      customer_name: Customer Name
             qris:
               summary: QRIS
               value:
-                pg_payment_info:
-                  qr_string: "000201010212..."
-                public_order_url: https://demo.scalev.shop/o/order-secret
-                payment_url: https://demo.scalev.shop/o/order-secret/success
-                payment_method: qris
+                qr_string: "000201010212..."
             ewallet:
               summary: E-wallet action URL
               value:
-                pg_payment_info:
-                  actions:
-                    - url_type: WEB
-                      url: https://payments.example/ewallet/web
-                    - url_type: DEEPLINK
-                      url: examplepay://payment/123
-                public_order_url: https://demo.scalev.shop/o/order-secret
-                payment_url: https://demo.scalev.shop/o/order-secret/success
-                payment_method: dana
+                actions:
+                  - url_type: WEB
+                    url: https://payments.example/ewallet/web
+                  - url_type: DEEPLINK
+                    url: examplepay://payment/123
             card:
               summary: Card redirect
               value:
-                pg_payment_info:
-                  redirect_url: https://payments.example/card/session
-                public_order_url: https://demo.scalev.shop/o/order-secret
-                payment_url: https://demo.scalev.shop/o/order-secret/success
-                payment_method: card
+                redirect_url: https://payments.example/card/session
             invoice:
               summary: Hosted invoice
               value:
-                pg_payment_info:
-                  invoice_url: https://payments.example/invoices/inv_123
-                public_order_url: https://demo.scalev.shop/o/order-secret
-                payment_url: https://demo.scalev.shop/o/order-secret/success
-                payment_method: invoice
+                invoice_url: https://payments.example/invoices/inv_123
             singapayVirtualAccount:
               summary: SingaPay virtual account
               value:
-                pg_payment_info:
-                  payment_gateway: singapay
-                  account_id: 01K5G4FZZ18DMK0M5QTR8Y9QY9
-                  provider_transaction_id: va_txn_1
-                  reference_id: ORD-123
-                  va_number: "9090777158248126"
-                  va_name: Customer Name
-                  bank_code: BRI
-                  raw: {}
-                public_order_url: https://demo.scalev.shop/o/order-secret
-                payment_url: https://demo.scalev.shop/o/order-secret/success
-                payment_method: va_bri
-                epayment_provider: singapay
+                payment_gateway: singapay
+                account_id: 01K5G4FZZ18DMK0M5QTR8Y9QY9
+                provider_transaction_id: va_txn_1
+                reference_id: ORD-123
+                va_number: "9090777158248126"
+                va_name: Customer Name
+                bank_code: BRI
+                raw: {}
             singapayEwallet:
               summary: SingaPay e-wallet checkout
               value:
-                pg_payment_info:
-                  payment_gateway: singapay
-                  account_id: 01K5G4FZZ18DMK0M5QTR8Y9QY9
-                  provider_transaction_id: "42"
-                  reference_id: ORD-123
-                  payment_url: https://wallet.example/checkout
-                  deeplink_url: dana://checkout/token
-                  raw: {}
-                public_order_url: https://demo.scalev.shop/o/order-secret
-                payment_url: https://demo.scalev.shop/o/order-secret/success
-                payment_method: dana
-                epayment_provider: singapay
+                payment_gateway: singapay
+                account_id: 01K5G4FZZ18DMK0M5QTR8Y9QY9
+                provider_transaction_id: "42"
+                reference_id: ORD-123
+                payment_url: https://wallet.example/checkout
+                deeplink_url: dana://checkout/token
+                raw: {}
             retailOutlet:
               summary: Alfamart payment code
               value:
-                pg_payment_info:
-                  payment_method:
-                    over_the_counter:
-                      channel_properties:
-                        payment_code: "1234567890"
-                        customer_name: Customer Name
-                public_order_url: https://demo.scalev.shop/o/order-secret
-                payment_url: https://demo.scalev.shop/o/order-secret/success
-                payment_method: alfamart
+                payment_method:
+                  over_the_counter:
+                    channel_properties:
+                      payment_code: "1234567890"
+                      customer_name: Customer Name
     UpdateOrderCustomerResponse:
       description: Customer updated successfully
       content:
@@ -14392,6 +14352,8 @@ components:
           nullable: true
         is_sending_email_invoice:
           type: boolean
+          deprecated: true
+          description: Deprecated and ignored. Scalev always sends the invoice email; the store notification settings remain the only control. Accepted for compatibility and echoed as stored.
         is_disable_custom_font:
           type: boolean
         is_disable_client_tagging:
@@ -15646,6 +15608,8 @@ components:
               additionalProperties: true
             is_sending_email_invoice:
               type: boolean
+              deprecated: true
+              description: Deprecated and ignored. Scalev always sends the invoice email; the store notification settings remain the only control. Accepted for compatibility and echoed as stored.
             is_disable_custom_font:
               type: boolean
             is_disable_client_tagging:
@@ -15687,6 +15651,8 @@ components:
           type: boolean
         is_sending_email_invoice:
           type: boolean
+          deprecated: true
+          description: Deprecated and ignored. Scalev always sends the invoice email; the store notification settings remain the only control. Accepted for compatibility and echoed as stored.
         is_disable_custom_font:
           type: boolean
         is_disable_client_tagging:
@@ -18974,6 +18940,21 @@ components:
           type: string
           format: uri
           nullable: true
+        redirect_url:
+          type: string
+          format: uri
+          nullable: true
+          description: >
+            Canonical destination the buyer opens after checkout, resolved from
+            the order's payment method and the page's After Checkout setting. An
+            electronic payment method overrides the configured action and
+            resolves to the payment page; everything else follows the configured
+            destination (hosted instruction page, order page, WhatsApp, another
+            page, or a custom URL). Retained attribution parameters are forwarded
+            onto a configured page or custom URL only while it stays on the
+            buyer's own host or a Scalev-owned one. Null when that destination is
+            incomplete. Prefer this over `payment_url`, which stays scoped to the
+            payment step.
         order_id:
           type: string
         status:
@@ -25026,36 +25007,20 @@ components:
       type: object
     CreateOrderPaymentResponseBody:
       type: object
-      properties:
-        pg_payment_info:
-          type: object
-          additionalProperties: true
-          description: >
-            Payment gateway payload. Manual methods such as `bank_transfer` and
-            `cod` can return an empty object while the public order contains
-            the buyer-facing instructions to render. Virtual account methods
-            expose provider reference and account details under the provider's
-            `payment_method` object. QRIS responses expose QR data or a QR image
-            payload. E-wallet, card, and invoice methods may expose provider
-            actions or hosted provider URLs. Storefronts should render their
-            own payment page from these fields and use `payment_url` only as a
-            hosted fallback. SingaPay payments use normalized keys such as
-            `payment_url`, `deeplink_url`, `qr_string`, `qr_image_url`,
-            `va_number`, and `va_name`.
-        public_order_url:
-          type: string
-          format: uri
-          nullable: true
-          description: Buyer-facing public order status URL.
-        payment_url:
-          type: string
-          format: uri
-          nullable: true
-          description: Buyer-facing payment or instruction URL. Redirect or open this URL for hosted payment methods.
-        payment_method:
-          type: string
-          example: bank_transfer
       additionalProperties: true
+      description: >
+        The payment gateway payload for the order, returned as the response
+        body itself — the same object the order responses expose as
+        `pg_payment_info`. Manual methods such as `bank_transfer` and `cod`
+        return an empty object. Virtual account methods expose provider
+        reference and account details under the provider's `payment_method`
+        object. QRIS responses expose QR data or a QR image payload. E-wallet,
+        card, and invoice methods may expose provider actions or hosted
+        provider URLs. SingaPay payments use normalized keys such as
+        `payment_gateway`, `payment_url`, `deeplink_url`, `qr_string`,
+        `qr_image_url`, `va_number`, and `va_name`. Order-level fields
+        (`public_order_url`, `payment_url`, `redirect_url`, `payment_method`)
+        are not part of this body; read them from the order responses.
     UpdateOrderCustomerRequest:
       properties:
         customer_id:
