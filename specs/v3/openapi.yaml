@@ -14485,6 +14485,11 @@ components:
     LandingPageFormDisplayRequest:
       type: object
       additionalProperties: true
+      description: >
+        Checkout form configuration. When creating a new display for an existing
+        page, omitted after-submit destination, WhatsApp recipient, assignment,
+        and chat-template settings retain the values from the latest saved
+        display. Explicitly supplied settings take precedence.
       properties:
         store_id:
           type: integer
@@ -14509,6 +14514,11 @@ components:
             `variant_id` or `bundle_price_option_id`.
         after_submit_event:
           type: string
+          description: >
+            Destination after checkout submission. When omitted for a new
+            checkout form, uses `success_page` (payment instructions). A new
+            display for an existing page inherits this setting from the latest
+            saved display when it is omitted.
           enum:
             - success_page
             - direct_to_whatsapp
@@ -14522,8 +14532,11 @@ components:
           enum:
             - rotator
             - fixed
-          description: Required for `direct_to_whatsapp`. When fixed, send
-            `store_sales_person_id`.
+          description: >
+            Recipient assignment for `direct_to_whatsapp`. When omitted for a
+            new checkout form, uses `rotator`. A new display for an existing
+            page inherits this setting from the latest saved display when it is
+            omitted. When fixed, send `store_sales_person_id`.
         store_sales_person_id:
           type: integer
           nullable: true
