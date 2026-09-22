@@ -18043,6 +18043,8 @@ components:
         - code
         - label
         - enabled
+        - provider
+        - supports_partnership_payout
         - requires_redirect
       properties:
         code:
@@ -18057,6 +18059,20 @@ components:
           nullable: true
         enabled:
           type: boolean
+        provider:
+          type: string
+          nullable: true
+          description: >-
+            Payment gateway settling this method. Null when the storefront payload was built
+            without resolved provider data, in which case supports_partnership_payout is false.
+          example: xendit
+        supports_partnership_payout:
+          type: boolean
+          description: >-
+            Whether an order paid with this method can settle an affiliate, affiliate pro or
+            dropfiliate payout. Payouts run through Xendit split rules, so this is false for every
+            other gateway. Collaboration checkouts must hide methods where this is false.
+          example: true
         requires_redirect:
           type: boolean
         metadata:
