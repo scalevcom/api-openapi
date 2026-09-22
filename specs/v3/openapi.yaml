@@ -6431,7 +6431,7 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
       description:
         "Requires the `product:create` scope. Creates a new product with
-        the provided data."
+        the provided data. Active variants must have unique combinations of configured option values; surrounding whitespace is ignored and unused option dimensions do not distinguish variants. Price, SKU, and weight do not make a combination unique."
   /v3/products/simplified:
     get:
       tags:
@@ -6784,6 +6784,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/DuplicateProductResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
@@ -6795,7 +6797,7 @@ paths:
         product including all variants, digital files, course structure (for
         courses), labels, follow-up chats, and email automation settings. The
         new product name will be suffixed with '(Copy)'. Partnership settings
-        and store associations are NOT copied."
+        and store associations are NOT copied. Returns 400 if active variants have duplicate configured option combinations; the operation is atomic and does not create a partial copy."
   /v3/products/{product_id}/variants:
     parameters:
       - $ref: "#/components/parameters/ProductId"
@@ -6807,7 +6809,7 @@ paths:
       description:
         "Requires the `product:update` scope. Creates a single variant for an
         existing product. The request must provide values for all configured
-        product option dimensions."
+        product option dimensions. The new variant must not duplicate an existing active option combination, ignoring surrounding whitespace and unused dimensions."
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -6837,7 +6839,7 @@ paths:
         variant on the product, or the weight of every active variant when the
         product is physical. This endpoint only accepts the `price` field for all
         product types and the `weight` field for physical products. It does not
-        create, delete, hide, or update option values on variants."
+        create, delete, hide, or update option values on variants. Existing duplicate option combinations do not block price or weight edits; all pricing and business validations still apply."
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -7420,7 +7422,7 @@ paths:
       summary: Update one product variant
       description:
         "Requires the `product:update` scope. Updates a single variant. Product
-        update does not accept bulk variant changes."
+        update does not accept bulk variant changes. Legacy duplicate combinations may be edited without changing their option identity or repaired one variant at a time. An update must not introduce or add a variant to a duplicate option combination."
       security:
         - bearerAuth: []
         - apiKeyAuth: []
