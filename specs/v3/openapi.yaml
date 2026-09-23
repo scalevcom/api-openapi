@@ -21395,6 +21395,20 @@ components:
         store_id:
           description: ID of the store
           type: integer
+        variants:
+          description: List of variants in the parcel, used to determine dangerous-goods handling. Omitting this disables dangerous-goods filtering.
+          items:
+            properties:
+              qty:
+                description: Quantity of the product variant
+                type: integer
+              variant_id:
+                description: ID of the product variant
+                type: integer
+            required:
+              - variant_id
+            type: object
+          type: array
         warehouse_id:
           description: ID of the warehouse
           type: integer
@@ -25318,6 +25332,9 @@ components:
         is_inventory:
           description: Indicates if the product is tracked in inventory
           type: boolean
+        is_dangerous_goods:
+          description: Whether the product contains dangerous goods. Only meaningful for physical products.
+          type: boolean
         is_multiple:
           description: Indicates if the product has multiple variants
           type: boolean
@@ -25689,6 +25706,9 @@ components:
         is_inventory:
           description: Is Inventory
           type: boolean
+        is_dangerous_goods:
+          description: Whether the product contains dangerous goods. Only meaningful for physical products.
+          type: boolean
         is_product_sharing:
           description: Is Product Sharing
           type: boolean
@@ -26058,6 +26078,9 @@ components:
           type: object
         is_inventory:
           description: Is Inventory
+          type: boolean
+        is_dangerous_goods:
+          description: Whether the product contains dangerous goods. Only meaningful for physical products.
           type: boolean
         uuid:
           description: Product UUID
@@ -26575,6 +26598,9 @@ components:
           type: string
         is_inventory:
           description: Is Inventory
+          type: boolean
+        is_dangerous_goods:
+          description: Whether the product contains dangerous goods. Only meaningful for physical products.
           type: boolean
         is_product_sharing:
           description: Is Product Sharing
@@ -27817,6 +27843,9 @@ components:
             is_inventory:
               description: Is Inventory
               type: boolean
+            is_dangerous_goods:
+              description: Whether the product contains dangerous goods. Only meaningful for physical products.
+              type: boolean
             is_multiple:
               description: Is Multiple
               type: boolean
@@ -28498,6 +28527,9 @@ components:
                         type: integer
                       is_inventory:
                         description: Is Inventory
+                        type: boolean
+                      is_dangerous_goods:
+                        description: Whether the product contains dangerous goods. Only meaningful for physical products.
                         type: boolean
                       is_multiple:
                         description: Is Multiple
