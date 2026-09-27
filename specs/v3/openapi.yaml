@@ -1746,6 +1746,9 @@ paths:
         draft and is not returned as the page's current display; create or pick
         a page display, then call `PATCH /v3/pages/{id}` with
         `is_published: true` and `current_page_display_id` to publish it.
+        A saved checkout form initializes an unbound page's `store_id` from
+        `page_display.form_display.store_id`, including unpublished drafts.
+        The store must belong to the same business.
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -1843,7 +1846,9 @@ paths:
         the same page update behavior as Landing Page Studio. Send
         `is_published: true` with `current_page_display_id` to publish a page
         display, or `is_published: false` with `current_page_display_id: null`
-        to unpublish the page.
+        to unpublish the page. Once assigned, the page's `store_id` cannot be
+        changed or cleared, including by unpublishing or selecting a display
+        without a checkout form.
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -1968,9 +1973,13 @@ paths:
         - Landing Pages
       operationId: createLandingPageDisplay
       summary: Create a landing page display
-      description:
+      description: >-
         Creates a new display for an existing landing page. The request body
         below documents the HTML Mode page display payload.
+        Saving the first checkout form initializes an unbound page's `store_id`
+        from `form_display.store_id` immediately, before publication. The store
+        must belong to the same business. An existing page store association is
+        retained and cannot be changed or cleared by later display saves.
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -14325,9 +14334,11 @@ components:
         store_id:
           type: integer
           nullable: true
-          description:
-            Optional top-level store association. HTML Checkout store context is
-            configured through `page_display.form_display.store_id`.
+          description: >-
+            Optional top-level store association within the same business.
+            When unbound, the page takes its store from
+            `page_display.form_display.store_id` even for an unpublished draft.
+            Once assigned, the page store cannot be changed or cleared.
         page_display:
           $ref: "#/components/schemas/LandingPageDisplayRequest"
     LandingPageUpdateRequest:
@@ -14350,6 +14361,9 @@ components:
         store_id:
           type: integer
           nullable: true
+          description: >-
+            Store association within the same business. An existing non-null
+            value is retained and cannot be changed or cleared.
         is_sending_email_invoice:
           type: boolean
           deprecated: true
@@ -15529,6 +15543,9 @@ components:
         store_id:
           type: integer
           nullable: true
+          description: >-
+            Saved store association: null for a landing page, non-null for a
+            checkout flow, including unpublished checkout drafts.
     LandingPageDisplaySummary:
       type: object
       additionalProperties: false
@@ -15583,6 +15600,10 @@ components:
         store_id:
           type: integer
           nullable: true
+          description: >-
+            Saved store association: null for a landing page, non-null for a
+            checkout flow, including unpublished checkout drafts. Once assigned,
+            this value is retained even if a later display has no checkout form.
         store:
           type: object
           nullable: true
