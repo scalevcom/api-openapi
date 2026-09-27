@@ -18974,21 +18974,28 @@ components:
           type: string
           format: uri
           nullable: true
+          deprecated: true
+          description: >
+            Deprecated for checkout navigation. Retained for compatibility and
+            scoped to the payment step. Always use `redirect_url` to navigate the
+            buyer after checkout; do not use this field to infer the destination.
         redirect_url:
           type: string
           format: uri
           nullable: true
           description: >
-            Canonical destination the buyer opens after checkout, resolved from
-            the order's payment method and the page's After Checkout setting. An
-            electronic payment method overrides the configured action and
-            resolves to the payment page; everything else follows the configured
-            destination (hosted instruction page, order page, WhatsApp, another
-            page, or a custom URL). Retained attribution parameters are forwarded
-            onto a configured page or custom URL only while it stays on the
-            buyer's own host or a Scalev-owned one. Null when that destination is
-            incomplete. Prefer this over `payment_url`, which stays scoped to the
-            payment step.
+            Canonical destination the buyer opens after checkout. Always prefer
+            this field over the deprecated `payment_url`. The server resolves
+            the destination from the payment method and After Checkout setting,
+            including the payment page, order page, WhatsApp, another page, or a
+            custom URL. When a destination cannot be resolved because the
+            configuration is missing or unsupported, or a required phone number,
+            page, or URL is unavailable, it falls back to Scalev's hosted payment
+            instructions page (Halaman Instruksi Pembayaran) at
+            `/o/{secret_slug}/success`, not the Thank You Page. This fallback
+            requires a valid order identity and host. Retained attribution
+            parameters are forwarded onto a configured page or custom URL only
+            while it stays on the buyer's own host or a Scalev-owned one.
         order_id:
           type: string
         status:
