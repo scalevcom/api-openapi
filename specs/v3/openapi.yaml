@@ -14386,8 +14386,13 @@ components:
         authoritative and replaces all legacy html_code, css_code, js_code and
         additional_head_code inputs for rendering. Null, empty and whitespace-only
         values on legacy records use the legacy source. Reading and validation do
-        not persist migration. New legacy display snapshots are assembled into a
-        document when saved. Settings-only version writes preserve the preceding
+        not persist migration. Existing clients may continue sending html_code,
+        css_code and js_code instead of html_document, including after a previous
+        version used unified source. Send all three fields for a complete legacy
+        snapshot, using empty strings for intentionally blank sections. Include
+        additional_head_code when needed; omitted snapshot sections are empty.
+        Legacy snapshots are assembled into a document on content save when
+        unified writing is enabled. Settings-only version writes preserve the preceding
         source. Clearing an already migrated document returns 422; save
         <!doctype html><html><head></head><body></body></html> for a deliberately
         blank page. Platform runtime, tokens, analytics and public data are injected
@@ -14424,13 +14429,20 @@ components:
           $ref: "#/components/schemas/HtmlModeDocument"
         html_code:
           type: string
-          description: Legacy body-only HTML. New integrations should send html_document. A new display version using legacy fields is treated as a complete snapshot.
+          description: >-
+            Supported legacy body-only HTML input. Existing clients may continue
+            sending html_code, css_code and js_code as a complete snapshot, including
+            after unified versions. New integrations should send html_document.
+            A new display version using legacy code fields uses snapshot semantics,
+            so omitted code sections are empty rather than copied from a prior version.
           maxLength: 204800
         css_code:
           type: string
+          description: Supported legacy CSS input; include with html_code and js_code for a complete legacy snapshot. A nonempty html_document takes precedence.
           maxLength: 102400
         js_code:
           type: string
+          description: Supported legacy JavaScript input; include with html_code and css_code for a complete legacy snapshot. A nonempty html_document takes precedence.
           maxLength: 102400
         additional_head_code:
           type: string
