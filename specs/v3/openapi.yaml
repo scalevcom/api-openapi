@@ -14391,8 +14391,8 @@ components:
         version used unified source. Send all three fields for a complete legacy
         snapshot, using empty strings for intentionally blank sections. Include
         additional_head_code when needed; omitted snapshot sections are empty.
-        Legacy snapshots are assembled into a document on content save when
-        unified writing is enabled. Settings-only version writes preserve the preceding
+        Legacy snapshots are automatically assembled into a document on every
+        HTML Mode content save. Settings-only version writes preserve the preceding
         source. Clearing an already migrated document returns 422; save
         <!doctype html><html><head></head><body></body></html> for a deliberately
         blank page. Platform runtime, tokens, analytics and public data are injected
