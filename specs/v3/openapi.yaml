@@ -14578,6 +14578,80 @@ components:
           $ref: "#/components/schemas/LandingPageDisplayRequest/properties/kwai_client_events_onload_parameters"
         kwai_server_events_onload_parameters:
           $ref: "#/components/schemas/LandingPageDisplayRequest/properties/kwai_server_events_onload_parameters"
+    CheckoutOrderBump:
+      type: object
+      required: [key, enabled, type]
+      properties:
+        key:
+          type: string
+          pattern: '^[a-zA-Z0-9_-]{1,64}$'
+          description: Stable offer identity retained across versions and reorder operations.
+        enabled:
+          type: boolean
+        available:
+          type: boolean
+          readOnly: true
+          description: False when the referenced item or its underlying catalog products are inactive or draft.
+        type:
+          type: string
+          enum: [variant, bundle]
+        variant_id:
+          type: integer
+          nullable: true
+          description: Required for an enabled variant offer; must belong to the form's store.
+        bundle_price_option_id:
+          type: integer
+          nullable: true
+          description: Required for an enabled bundle offer; must belong to the form's store.
+        title:
+          type: string
+          maxLength: 500
+          default: ""
+        description:
+          type: string
+          maxLength: 5000
+          default: ""
+        images:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            maxLength: 500
+        auto_check:
+          type: boolean
+          default: false
+        shown:
+          type: boolean
+          default: true
+        toggle_position:
+          type: string
+          enum: [top, bottom]
+          default: top
+        image_autoslide:
+          type: boolean
+          default: true
+        image_duration:
+          type: integer
+          minimum: 0
+          maximum: 3600
+          default: 5
+        variant:
+          type: object
+          nullable: true
+          readOnly: true
+          additionalProperties: true
+          description: Existing public variant representation, including current pricing and availability.
+        bundle_price_option:
+          type: object
+          nullable: true
+          readOnly: true
+          additionalProperties: true
+          description: Existing public bundle option representation and its bundle lines.
+      description: >
+        At most three offers, including disabled offers, belong to a checkout form.
+        Products and bundle price options must be distinct across offers. Existing digital/course overlap restrictions
+        also apply to underlying bundle variants and main selections. Buyers can select
+        any combination; each selected offer adds one item or one bundle option.
     LandingPageFormDisplayRequest:
       type: object
       additionalProperties: true
@@ -14587,6 +14661,22 @@ components:
         and chat-template settings retain the values from the latest saved
         display. Explicitly supplied settings take precedence.
       properties:
+        order_bumps:
+          type: array
+          maxItems: 3
+          description: >
+            Builder checkout offers with independent selection and placement. An explicit
+            empty array removes all offers. On writes, omit to inherit the previous collection. Legacy bump
+            edits against multiple offers return 409. HTML Mode does not support this field.
+          items:
+            $ref: "#/components/schemas/CheckoutOrderBump"
+        form_position:
+          type: array
+          description: >
+            Ordered form field keys. Each configured offer must appear exactly once as
+            order_bump:<key>, independently of the other offers.
+          items:
+            type: string
         store_id:
           type: integer
           description: >
@@ -15873,6 +15963,24 @@ components:
       type: object
       additionalProperties: true
       properties:
+        order_bumps:
+          type: array
+          nullable: true
+          maxItems: 3
+          description: >
+            Builder checkout offers with independent selection and placement. Null in a
+            response denotes a legacy single-bump form; an explicit empty array removes
+            all offers. On writes, omit to inherit the previous collection. Legacy bump
+            edits against multiple offers return 409. HTML Mode does not support this field.
+          items:
+            $ref: "#/components/schemas/CheckoutOrderBump"
+        form_position:
+          type: array
+          description: >
+            Ordered form field keys. Each configured offer must appear exactly once as
+            order_bump:<key>, independently of the other offers.
+          items:
+            type: string
         id:
           type: integer
         store:
@@ -29468,6 +29576,17 @@ components:
       type: object
       additionalProperties: false
       properties:
+        selected_order_bump_keys:
+          type: array
+          maxItems: 3
+          uniqueItems: true
+          description: >
+            Optional Builder offer selection metadata for recovery. Items still include
+            the selected offer quantities. An empty array means no offers were selected.
+            These keys do not authorize products or determine prices.
+          items:
+            type: string
+            pattern: '^[a-zA-Z0-9_-]{1,64}$'
         customer_name:
           type: string
           nullable: true
