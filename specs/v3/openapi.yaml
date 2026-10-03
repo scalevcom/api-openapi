@@ -19185,9 +19185,21 @@ components:
             page, or URL is unavailable, it falls back to Scalev's hosted payment
             instructions page (Halaman Instruksi Pembayaran) at
             `/o/{secret_slug}/success`, not the Thank You Page. This fallback
-            requires a valid order identity and host. Retained attribution
+            requires a valid order identity and host. Storefront checkout records
+            the normalized request Origin header, never body-supplied
+            metadata.origin. Hosted order and Scalev PayLink URLs use HTTPS on
+            that host only while it is a verified custom domain of the same
+            business, connected to Scalev hosting. Otherwise links use the store's
+            configured default domain if verified and owned by the same business,
+            then the business's default Scalev domain if no eligible store domain
+            exists. A CORS allowlist entry alone is insufficient. The same
+            validation applies when generating later order responses and follow-up
+            chat or WABA links. External provider URLs and configured custom
+            destinations retain their existing behavior. Retained attribution
             parameters are forwarded onto a configured page or custom URL only
-            while it stays on the buyer's own host or a Scalev-owned one.
+            while it stays on the currently validated checkout host or a
+            Scalev-owned one. Null only when required order identity or host data
+            is unavailable.
         order_id:
           type: string
         status:
@@ -22414,14 +22426,17 @@ components:
           nullable: true
           type: string
         public_order_url:
-          description:
-            Public order URL built from metadata.custom_domain_full_url and
-            secret_slug.
+          description: >
+            Public order URL on the verified checkout hostname for orders created
+            through a hosted page or storefront. Otherwise uses the store's
+            verified default domain, then the business's default Scalev domain.
+            Custom domains must belong to the same business. Revalidated when
+            rendered; stale domain metadata is not authoritative.
           nullable: true
           type: string
           format: uri
         payment_url:
-          description: Payment URL built from public_order_url with /success appended.
+          description: Scalev PayLink URL rebuilt from its identity on the currently resolved order domain, or public_order_url with /success appended for other payment methods.
           nullable: true
           type: string
           format: uri
@@ -23973,14 +23988,17 @@ components:
           description: Secret slug of the order
           type: string
         public_order_url:
-          description:
-            Public order URL built from metadata.custom_domain_full_url and
-            secret_slug.
+          description: >
+            Public order URL on the verified checkout hostname for orders created
+            through a hosted page or storefront. Otherwise uses the store's
+            verified default domain, then the business's default Scalev domain.
+            Custom domains must belong to the same business. Revalidated when
+            rendered; stale domain metadata is not authoritative.
           nullable: true
           type: string
           format: uri
         payment_url:
-          description: Payment URL built from public_order_url with /success appended.
+          description: Scalev PayLink URL rebuilt from its identity on the currently resolved order domain, or public_order_url with /success appended for other payment methods.
           nullable: true
           type: string
           format: uri
@@ -24361,14 +24379,17 @@ components:
           description: Order ID in string format
           type: string
         public_order_url:
-          description:
-            Public order URL built from metadata.custom_domain_full_url and
-            secret_slug.
+          description: >
+            Public order URL on the verified checkout hostname for orders created
+            through a hosted page or storefront. Otherwise uses the store's
+            verified default domain, then the business's default Scalev domain.
+            Custom domains must belong to the same business. Revalidated when
+            rendered; stale domain metadata is not authoritative.
           nullable: true
           type: string
           format: uri
         payment_url:
-          description: Payment URL built from public_order_url with /success appended.
+          description: Scalev PayLink URL rebuilt from its identity on the currently resolved order domain, or public_order_url with /success appended for other payment methods.
           nullable: true
           type: string
           format: uri
@@ -24467,14 +24488,17 @@ components:
           description: Order ID in string format
           type: string
         public_order_url:
-          description:
-            Public order URL built from metadata.custom_domain_full_url and
-            secret_slug.
+          description: >
+            Public order URL on the verified checkout hostname for orders created
+            through a hosted page or storefront. Otherwise uses the store's
+            verified default domain, then the business's default Scalev domain.
+            Custom domains must belong to the same business. Revalidated when
+            rendered; stale domain metadata is not authoritative.
           nullable: true
           type: string
           format: uri
         payment_url:
-          description: Payment URL built from public_order_url with /success appended.
+          description: Scalev PayLink URL rebuilt from its identity on the currently resolved order domain, or public_order_url with /success appended for other payment methods.
           nullable: true
           type: string
           format: uri
@@ -24547,14 +24571,17 @@ components:
           description: Order ID in string format
           type: string
         public_order_url:
-          description:
-            Public order URL built from metadata.custom_domain_full_url and
-            secret_slug.
+          description: >
+            Public order URL on the verified checkout hostname for orders created
+            through a hosted page or storefront. Otherwise uses the store's
+            verified default domain, then the business's default Scalev domain.
+            Custom domains must belong to the same business. Revalidated when
+            rendered; stale domain metadata is not authoritative.
           nullable: true
           type: string
           format: uri
         payment_url:
-          description: Payment URL built from public_order_url with /success appended.
+          description: Scalev PayLink URL rebuilt from its identity on the currently resolved order domain, or public_order_url with /success appended for other payment methods.
           nullable: true
           type: string
           format: uri
@@ -24621,14 +24648,17 @@ components:
                 description: Order ID in string format
                 type: string
               public_order_url:
-                description:
-                  Public order URL built from metadata.custom_domain_full_url and
-                  secret_slug.
+                description: >
+                  Public order URL on the verified checkout hostname for orders created
+                  through a hosted page or storefront. Otherwise uses the store's
+                  verified default domain, then the business's default Scalev domain.
+                  Custom domains must belong to the same business. Revalidated when
+                  rendered; stale domain metadata is not authoritative.
                 nullable: true
                 type: string
                 format: uri
               payment_url:
-                description: Payment URL built from public_order_url with /success appended.
+                description: Scalev PayLink URL rebuilt from its identity on the currently resolved order domain, or public_order_url with /success appended for other payment methods.
                 nullable: true
                 type: string
                 format: uri
@@ -24959,14 +24989,17 @@ components:
         order_id:
           type: string
         public_order_url:
-          description:
-            Public order URL built from metadata.custom_domain_full_url and
-            secret_slug.
+          description: >
+            Public order URL on the verified checkout hostname for orders created
+            through a hosted page or storefront. Otherwise uses the store's
+            verified default domain, then the business's default Scalev domain.
+            Custom domains must belong to the same business. Revalidated when
+            rendered; stale domain metadata is not authoritative.
           nullable: true
           type: string
           format: uri
         payment_url:
-          description: Payment URL built from public_order_url with /success appended.
+          description: Scalev PayLink URL rebuilt from its identity on the currently resolved order domain, or public_order_url with /success appended for other payment methods.
           nullable: true
           type: string
           format: uri
@@ -25034,14 +25067,17 @@ components:
           description: Order ID in string format
           type: string
         public_order_url:
-          description:
-            Public order URL built from metadata.custom_domain_full_url and
-            secret_slug.
+          description: >
+            Public order URL on the verified checkout hostname for orders created
+            through a hosted page or storefront. Otherwise uses the store's
+            verified default domain, then the business's default Scalev domain.
+            Custom domains must belong to the same business. Revalidated when
+            rendered; stale domain metadata is not authoritative.
           nullable: true
           type: string
           format: uri
         payment_url:
-          description: Payment URL built from public_order_url with /success appended.
+          description: Scalev PayLink URL rebuilt from its identity on the currently resolved order domain, or public_order_url with /success appended for other payment methods.
           nullable: true
           type: string
           format: uri
@@ -25179,14 +25215,17 @@ components:
         id:
           $ref: "#/components/schemas/OrderPrimaryKey"
         public_order_url:
-          description:
-            Public order URL built from metadata.custom_domain_full_url and
-            secret_slug.
+          description: >
+            Public order URL on the verified checkout hostname for orders created
+            through a hosted page or storefront. Otherwise uses the store's
+            verified default domain, then the business's default Scalev domain.
+            Custom domains must belong to the same business. Revalidated when
+            rendered; stale domain metadata is not authoritative.
           nullable: true
           type: string
           format: uri
         payment_url:
-          description: Payment URL built from public_order_url with /success appended.
+          description: Scalev PayLink URL rebuilt from its identity on the currently resolved order domain, or public_order_url with /success appended for other payment methods.
           nullable: true
           type: string
           format: uri
