@@ -1381,9 +1381,10 @@ paths:
       operationId: getOAuthAuthorizationServerMetadata
       summary: Get OAuth authorization server metadata
       description:
-        Public OAuth metadata endpoint. Advertises only `/v3` OAuth endpoints,
-        dynamic client registration, Client ID Metadata Documents, PKCE, and
-        supported global machine scopes.
+        Public OAuth metadata endpoint. Advertises `/v3` OAuth API endpoints,
+        the browser authorization endpoint, dynamic client registration,
+        Client ID Metadata Documents, PKCE, RFC 9207 issuer-bound authorization
+        responses, and supported global machine scopes.
       responses:
         "200":
           $ref: "#/components/responses/OAuthAuthorizationServerMetadataResponse"
@@ -16758,6 +16759,7 @@ components:
       additionalProperties: true
       required:
         - issuer
+        - authorization_response_iss_parameter_supported
         - authorization_endpoint
         - token_endpoint
         - registration_endpoint
@@ -16772,6 +16774,14 @@ components:
           type: string
           format: uri
           example: https://api.scalev.com/v3/oauth
+        authorization_response_iss_parameter_supported:
+          type: boolean
+          enum: [true]
+          description: >
+            RFC 9207 support. Both successful and denied browser authorization
+            callbacks include an `iss` query parameter exactly matching `issuer`,
+            including when the authorization endpoint uses a different origin.
+          example: true
         authorization_endpoint:
           type: string
           format: uri
