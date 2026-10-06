@@ -2195,6 +2195,332 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
+  /v3/google-ads/destinations:
+    get:
+      tags:
+        - Analytics Setup
+      operationId: listGoogleAdsDestinations
+      summary: List Google Ads destinations
+      description: Requires the `google_ads:list` scope.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - google_ads:list
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/GoogleAdsDestination"
+                  is_paginated:
+                    type: boolean
+                    enum:
+                      - false
+                required:
+                  - data
+                  - is_paginated
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+    post:
+      tags:
+        - Analytics Setup
+      operationId: createGoogleAdsDestination
+      summary: Create a Google Ads destination
+      description: Requires the `google_ads:create` scope. An existing business-owned Google connection is
+        required. The selected enabled website Purchase conversion is verified with Google. OAuth
+        connection and account discovery are dashboard-only.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - google_ads:create
+      responses:
+        "201":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoogleAdsDestination"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "502":
+          $ref: "#/components/responses/BadGatewayResponse"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoogleAdsDestinationCreate"
+  /v3/google-ads/destinations/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Scalev Google Ads destination ID.
+    get:
+      tags:
+        - Analytics Setup
+      operationId: getGoogleAdsDestination
+      summary: Get a Google Ads destination
+      description: Requires the `google_ads:read` scope.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - google_ads:read
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoogleAdsDestination"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+    patch:
+      tags:
+        - Analytics Setup
+      operationId: updateGoogleAdsDestination
+      summary: Update a Google Ads destination
+      description: Requires the `google_ads:update` scope. Only name and enabled may change. Account and
+        conversion identity are immutable.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - google_ads:update
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoogleAdsDestination"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                enabled:
+                  type: boolean
+    delete:
+      tags:
+        - Analytics Setup
+      operationId: disableGoogleAdsDestination
+      summary: Disable a Google Ads destination
+      description: Requires the `google_ads:delete` scope. Disables delivery and the managed browser tag;
+        keeps historical diagnostics.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - google_ads:delete
+      responses:
+        "204":
+          description: No content
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/google-ads/destinations/{id}/validate:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Scalev Google Ads destination ID.
+    post:
+      tags:
+        - Analytics Setup
+      operationId: validateGoogleAdsDestination
+      summary: Validate Google Ads integration
+      description: Requires the `google_ads:update` scope. Sends a synthetic request using Google Data
+        Manager validateOnly. Records no conversion, changes no delivery state, and does not prove
+        attribution.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - google_ads:update
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  validated:
+                    type: boolean
+                  executed:
+                    type: boolean
+                    enum:
+                      - false
+                  warning_count:
+                    type: integer
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "502":
+          $ref: "#/components/responses/BadGatewayResponse"
+  /v3/google-ads/destinations/{id}/deliveries:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Scalev Google Ads destination ID.
+    get:
+      tags:
+        - Analytics Setup
+      operationId: getGoogleAdsPurchaseDeliveries
+      summary: Read Google Ads ingestion diagnostics for an order
+      description: Requires the `google_ads:read` scope. Order must belong to the current business.
+        Submitted means Google accepted a request for processing. Success and partial_success are
+        batch ingestion results, not attribution evidence.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - google_ads:read
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/GoogleAdsDelivery"
+                  is_paginated:
+                    type: boolean
+                    enum:
+                      - false
+                required:
+                  - data
+                  - is_paginated
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+      parameters:
+        - name: order_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+  /v3/google-ads/destinations/{id}/retry:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Scalev Google Ads destination ID.
+    post:
+      tags:
+        - Analytics Setup
+      operationId: retryGoogleAdsPurchase
+      summary: Retry a failed Google Ads purchase
+      description: Requires the `google_ads:update` scope. Queues an existing failed, reconnect_required,
+        or partial_success obligation with its original payload and transaction ID. Does not backfill
+        orders or change trigger eligibility.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - google_ads:update
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoogleAdsDelivery"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "409":
+          $ref: "#/components/responses/ConflictResponse"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                order_id:
+                  type: string
+                  format: uuid
+              required:
+                - order_id
   /v3/fb-pixels:
     get:
       tags:
@@ -11570,6 +11896,11 @@ components:
             store:list: List Stores.
             store:read: View Stores.
             store:update: Update Stores.
+            google_ads:list: list Google Ads destinations.
+            google_ads:read: read Google Ads destinations.
+            google_ads:create: create Google Ads destinations.
+            google_ads:update: update Google Ads destinations.
+            google_ads:delete: delete Google Ads destinations.
             fb_pixel:list: List Facebook Pixels.
             fb_pixel:read: View Facebook Pixels.
             fb_pixel:create: Create Facebook Pixels.
@@ -13218,6 +13549,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ApiErrorResponse"
+    BadGatewayResponse:
+      description: The provider could not complete the request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiErrorResponse"
     ConflictResponse:
       description: Conflict
       content:
@@ -13954,6 +14291,126 @@ components:
           schema:
             $ref: "#/components/schemas/BundlePriceOptionExtendedRelation"
   schemas:
+    GoogleAdsDestination:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        connection_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        customer_id:
+          type: string
+          pattern: ^\d{10}$
+        login_customer_id:
+          type: string
+          nullable: true
+        conversion_action_id:
+          type: string
+        tag_id:
+          type: string
+        conversion_label:
+          type: string
+        currency:
+          type: string
+          enum:
+            - IDR
+        enabled:
+          type: boolean
+      required:
+        - id
+        - name
+        - connection_id
+        - customer_id
+        - conversion_action_id
+        - tag_id
+        - conversion_label
+        - currency
+        - enabled
+    GoogleAdsDestinationCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        connection_id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          pattern: ^\d{10}$
+        login_customer_id:
+          type: string
+          nullable: true
+        conversion_action_id:
+          type: string
+      required:
+        - name
+        - connection_id
+        - customer_id
+        - conversion_action_id
+    GoogleAdsDelivery:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        destination_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - pending
+            - sending
+            - submitted
+            - success
+            - partial_success
+            - failed
+            - skipped
+            - reconnect_required
+        event_timestamp:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+          nullable: true
+        attempts:
+          type: integer
+        last_error:
+          type: string
+          nullable: true
+        diagnostics:
+          type: object
+          additionalProperties: true
+        updated_at:
+          type: string
+          format: date-time
+    GoogleAdsBrowserPurchase:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tag_id:
+          type: string
+        conversion_label:
+          type: string
+        transaction_id:
+          type: string
+          format: uuid
+        value:
+          type: number
+        currency:
+          type: string
+          enum:
+            - IDR
     FlexibleObject:
       type: object
       additionalProperties: true
@@ -14464,6 +14921,13 @@ components:
           allOf:
             - $ref: "#/components/schemas/LandingPageFormDisplayRequest"
           description: HTML Checkout configuration. Omit or send null for HTML Sales pages.
+        google_ads_destination_ids:
+          type: array
+          maxItems: 10
+          description: Business-owned Scalev Google Ads destination IDs. Server purchase timing follows the store Meta CAPI triggers.
+          items:
+            type: string
+            format: uuid
         fb_pixel_ids:
           type: array
           description: >
@@ -14555,6 +15019,13 @@ components:
           $ref: "#/components/schemas/LandingPageDisplayRequest/properties/meta"
         form_display:
           $ref: "#/components/schemas/LandingPageDisplayRequest/properties/form_display"
+        google_ads_destination_ids:
+          type: array
+          maxItems: 10
+          description: Business-owned Scalev Google Ads destination IDs. Server purchase timing follows the store Meta CAPI triggers.
+          items:
+            type: string
+            format: uuid
         fb_pixel_ids:
           $ref: "#/components/schemas/LandingPageDisplayRequest/properties/fb_pixel_ids"
         tiktok_pixel_ids:
@@ -18865,6 +19336,12 @@ components:
         gclid:
           type: string
           nullable: true
+        gbraid:
+          type: string
+          nullable: true
+        wbraid:
+          type: string
+          nullable: true
         ttp:
           type: string
           nullable: true
@@ -19147,6 +19624,12 @@ components:
         - pg_payment_info
         - orderlines
       properties:
+        google_ads_purchase:
+          type: array
+          readOnly: true
+          description: Eligible Google browser conversions using the immutable server transaction ID and value. Empty before the configured purchase trigger.
+          items:
+            $ref: "#/components/schemas/GoogleAdsBrowserPurchase"
         id:
           $ref: "#/components/schemas/OrderPrimaryKey"
         business:
@@ -22843,6 +23326,12 @@ components:
       type: object
     Order:
       properties:
+        google_ads_purchase:
+          type: array
+          readOnly: true
+          description: Eligible Google browser conversions with the immutable server transaction ID and value. Empty before the configured trigger.
+          items:
+            $ref: "#/components/schemas/GoogleAdsBrowserPurchase"
         gross_revenue_for_dropshipper:
           description: Gross revenue for dropshipper after discounts
           format: decimal
@@ -25392,6 +25881,10 @@ components:
       type: object
     TriggerPurchase:
       properties:
+        google:
+          type: object
+          additionalProperties: true
+          description: Google purchase queue result; ingestion status is asynchronous.
         kwai:
           additionalProperties: true
           description: Kwai purchase trigger response
@@ -29762,6 +30255,14 @@ components:
           nullable: true
           maxLength: 1000
         gclid:
+          type: string
+          nullable: true
+          maxLength: 1000
+        gbraid:
+          type: string
+          nullable: true
+          maxLength: 1000
+        wbraid:
           type: string
           nullable: true
           maxLength: 1000
