@@ -1403,7 +1403,13 @@ paths:
         - OAuth
       operationId: getOAuthApplicationPublic
       summary: Get public OAuth application metadata
-      description: "No OAuth installation scope. OAuth flow endpoint."
+      description: >-
+        Public metadata for the requesting OAuth client, used before login.
+        DCR/CIMD clients return their own client ID and self-asserted name,
+        the validated callback, and null provider branding. They are always
+        unverified. Application identity is verified only after explicit
+        administrator review; registration alone is not verification.
+        No OAuth installation scope is required.
       parameters:
         - description: OAuth client ID.
           in: query
@@ -1429,7 +1435,7 @@ paths:
             type: string
       responses:
         "200":
-          $ref: "#/components/responses/SuccessResponse"
+          $ref: "#/components/responses/OAuthPublicClientResponse"
         "404":
           $ref: "#/components/responses/NotFoundResponse"
   /v3/oauth/scopes:
@@ -1475,7 +1481,10 @@ paths:
         Dynamic Client Registration endpoint for platform clients. Registrations
         are attached to Scalev's official OAuth application for supported
         resource audiences. Public clients should use
-        `token_endpoint_auth_method=none` and PKCE.
+        `token_endpoint_auth_method=none` and S256 PKCE. Registration is open
+        and does not grant business access or verify client identity. The
+        `scope` registration metadata is ignored; scopes are validated during
+        authorization and require explicit merchant consent.
       requestBody:
         $ref: "#/components/requestBodies/OAuthClientRegistrationRequestBody"
       responses:
@@ -1493,7 +1502,21 @@ paths:
         No OAuth installation scope. OAuth flow endpoint. Confidential clients
         authenticate with `client_secret_post` or HTTP Basic auth. Public client
         registrations with `token_endpoint_auth_method=none` omit
-        `client_secret` and must use PKCE.
+        `client_secret` and must use S256 PKCE. Authorization-code exchanges
+        require `redirect_uri` exactly as approved, including a native loopback
+        port chosen at authorization time. Missing or mismatched callbacks
+        return `invalid_grant`. Codes are consumed atomically only after all
+        validation succeeds. Registered-client tokens remain limited to their
+        own approved scopes, including after refresh. Older registered-client
+        tokens without a client-specific scope grant recover only scopes common
+        to that client's retained historical consents; missing history requires
+        fresh consent and differing historical grants can reduce access.
+        When a merchant revokes an app installation, tokens and authorization
+        codes based on consent approved before that revocation cannot regain
+        access to that business when this or another client reconnects. Fresh
+        consent approved after revocation is required. Refresh preserves the
+        original consent boundary and omits revoked businesses; other authorized
+        businesses remain usable. Refresh returns `invalid_grant` when none remain.
       requestBody:
         $ref: "#/components/requestBodies/OAuthTokenRequestBody"
       responses:
@@ -1521,7 +1544,15 @@ paths:
         - OAuth
       operationId: introspectOAuthToken
       summary: Introspect an OAuth access or refresh token
-      description: "No OAuth installation scope. OAuth flow endpoint."
+      description: >-
+        No OAuth installation scope. OAuth flow endpoint. Reports the token's
+        current access after installation status, merchant revocation and client
+        consent limits are applied. For tokens covering multiple businesses,
+        `authorized_business_ids` and scopes include only the remaining active,
+        enabled businesses authorized by that token. Revoking one business does
+        not revoke the others. Reconnecting an app through another client does
+        not revive consent predating the merchant's revocation. Returns
+        `active: false` when no authorized business remains.
       requestBody:
         $ref: "#/components/requestBodies/GenericJsonRequestBody"
       responses:
@@ -12946,6 +12977,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/OAuthAuthorizationServerMetadata"
+    OAuthPublicClientResponse:
+      description: Public identity and callback for the requesting OAuth client
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/OAuthPublicClient"
     OAuthScopeCatalogResponse:
       description: OAuth scope catalog
       content:
@@ -16853,6 +16890,10 @@ components:
         client_name:
           type: string
           example: MCP Client
+        scope:
+          type: string
+          description: Ignored at registration. This field does not grant or
+            pre-approve permissions. Request scopes during authorization.
         client_uri:
           type: string
           format: uri
@@ -16862,6 +16903,10 @@ components:
         redirect_uris:
           type: array
           minItems: 1
+          description: HTTPS callbacks, or HTTP loopback callbacks for native
+            clients. Userinfo, fragments and wildcard hosts are rejected.
+            Authorization requires exact string matching, except an ephemeral
+            port for a registered HTTP loopback callback without an explicit port.
           items:
             type: string
             format: uri
@@ -16895,6 +16940,46 @@ components:
           enum:
             - RS256
           description: JWT assertion signing algorithm for `private_key_jwt` clients.
+    OAuthClientIdentity:
+      type: object
+      additionalProperties: false
+      required: [client_id, client_name, registration_source, is_verified]
+      properties:
+        client_id:
+          type: string
+        client_name:
+          type: string
+          description: Self-asserted for unverified clients; must not imply endorsement.
+        registration_source:
+          type: string
+          enum: [application, dcr, cimd, static]
+        is_verified:
+          type: boolean
+          description: True only for an application identity explicitly reviewed by an administrator. Always false for DCR/CIMD and static client registrations.
+    OAuthPublicClient:
+      type: object
+      additionalProperties: false
+      required: [client_id, name, description, logo_url, homepage_url, redirect_uri, client]
+      properties:
+        client_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        logo_url:
+          type: string
+          nullable: true
+        homepage_url:
+          type: string
+          nullable: true
+        redirect_uri:
+          type: string
+          format: uri
+          description: Validated callback from the request, including the selected loopback port when applicable.
+        client:
+          $ref: "#/components/schemas/OAuthClientIdentity"
     OAuthClientRegistration:
       type: object
       additionalProperties: true
@@ -16993,12 +17078,14 @@ components:
         redirect_uri:
           type: string
           format: uri
-          description: Redirect URI used on the authorization request.
+          description: Required for authorization_code. Must exactly match the
+            approved authorization request, including the loopback port if used.
         code_verifier:
           type: string
           description:
-            PKCE code verifier. Required for public clients and recommended for
-            all authorization-code exchanges.
+            PKCE code verifier, required for every authorization-code exchange.
+            Must contain 43 to 128 unreserved characters and match the S256
+            challenge submitted during authorization.
         refresh_token:
           type: string
           description: Refresh token, required for `refresh_token`.
