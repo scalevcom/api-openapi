@@ -21482,6 +21482,7 @@ components:
               - first
               - star
               - idl
+              - spx
             example: jne
             title: CourierCode
             type: string
