@@ -1209,7 +1209,11 @@ paths:
         - Storefront
       operationId: updateStorefrontPublicOrder
       summary: Update a public storefront order
-      description: "Public storefront endpoint."
+      description: >
+        Public storefront endpoint. Transfer proof URLs must be the exact
+        Scalev file URL for a registered safe image or PDF belonging to the
+        order's business. Arbitrary external URLs and active-content files
+        are rejected with a validation error.
       requestBody:
         $ref: "#/components/requestBodies/StorefrontPublicOrderUpdateRequestBody"
       responses:
@@ -1260,6 +1264,9 @@ paths:
         confirmation. Returns a direct-to-storage `upload_url` plus the public
         `file_url`. Upload the image with `PUT upload_url`, then set the order's
         `transferproof_url` with `PATCH /v3/stores/{store_id}/public/orders/{secret_slug}`.
+        The filename extension must match the declared image MIME type.
+        Send the declared `Content-Type` and `Content-Length` headers with the
+        storage PUT; both headers are bound to the signed upload URL.
       requestBody:
         $ref: "#/components/requestBodies/StorefrontPublicOrderTransferProofUploadRequestBody"
       responses:
@@ -18841,6 +18848,12 @@ components:
         transferproof_url:
           type: string
           nullable: true
+          description: >
+            Exact Scalev CDN file URL of a registered safe image or PDF owned
+            by the checkout business, with a filename extension matching its
+            MIME type. External URLs, unregistered files, query strings,
+            fragments, and active-content files are rejected. Omit this field
+            or send null or an empty string when no proof is supplied.
         cart_id:
           oneOf:
             - type: integer
@@ -19931,6 +19944,12 @@ components:
         transferproof_url:
           type: string
           nullable: true
+          description: >
+            Exact Scalev CDN file URL of a registered safe image or PDF owned
+            by this order's business, with a filename extension matching its
+            MIME type. External URLs, unregistered files, query strings,
+            fragments, and active-content files are rejected. Null or an empty
+            string clears the proof.
         transfer_time:
           type: string
           format: date-time
@@ -19963,6 +19982,7 @@ components:
         filename:
           type: string
           example: transfer-proof.png
+          description: Filename ending in .jpg or .jpeg for image/jpeg, .png for image/png, or .webp for image/webp. The extension must match content_type.
         content_type:
           type: string
           enum:
