@@ -1759,7 +1759,9 @@ paths:
         The store must belong to the same business.
         Supported embedded base64 images are uploaded before the page is created;
         read its saved display for canonical CDN-backed html_document source.
-        Invalid embedded images return 422 and upload failures return 503.
+        Invalid embedded images return 422 and upload failures return 503. Final
+        authored HTML after image replacement is limited to 1 MiB of UTF-8 bytes;
+        exceeding the limit returns 422 before uploads or page creation.
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -1996,7 +1998,8 @@ paths:
         below documents the HTML Mode page display payload. Content saves convert
         supported base64 images to CDN URLs; use the returned html_document as
         canonical source. Invalid embedded images return 422, upload failures 503,
-        and edits made concurrently during upload 409.
+        and edits made concurrently during upload 409. After image replacement,
+        final authored HTML must be at most 1 MiB of UTF-8 bytes or saving returns 422.
         Saving the first checkout form initializes an unbound page's `store_id`
         from `form_display.store_id` immediately, before publication. The store
         must belong to the same business. An existing page store association is
@@ -14447,6 +14450,11 @@ components:
         remain unchanged. Upload failure returns 503 without saving a page
         version; an intervening edit during upload returns 409. Retry may reuse
         completed uploads. Reads and settings-only saves never convert images.
+        Supplied HTML content must be at most 1,048,576 UTF-8 bytes (1 MiB) after
+        replacing embedded images with CDN URLs. The limit includes inline scripts
+        and styles and is checked before uploads; excess content returns 422.
+        Existing larger documents remain readable. Settings-only saves that omit
+        source fields preserve them. The incoming HTTP body limit also still applies.
       example: '<!doctype html><html lang="id"><head><title>My page</title><style>main { color: #111827; }</style></head><body><main>Hello</main><script>console.log(Scalev.data.get());</script></body></html>'
     LandingPageDisplayRequest:
       type: object
