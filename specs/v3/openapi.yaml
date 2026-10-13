@@ -1757,6 +1757,9 @@ paths:
         A saved checkout form initializes an unbound page's `store_id` from
         `page_display.form_display.store_id`, including unpublished drafts.
         The store must belong to the same business.
+        Supported embedded base64 images are uploaded before the page is created;
+        read its saved display for canonical CDN-backed html_document source.
+        Invalid embedded images return 422 and upload failures return 503.
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -1775,6 +1778,13 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
         "422":
           $ref: "#/components/responses/ValidationFailedResponse"
+        "503":
+          description: Embedded image upload failed; no page or display was saved. Retry the save.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+
   /v3/pages/simplified:
     get:
       tags:
@@ -1983,7 +1993,10 @@ paths:
       summary: Create a landing page display
       description: >-
         Creates a new display for an existing landing page. The request body
-        below documents the HTML Mode page display payload.
+        below documents the HTML Mode page display payload. Content saves convert
+        supported base64 images to CDN URLs; use the returned html_document as
+        canonical source. Invalid embedded images return 422, upload failures 503,
+        and edits made concurrently during upload 409.
         Saving the first checkout form initializes an unbound page's `store_id`
         from `form_display.store_id` immediately, before publication. The store
         must belong to the same business. An existing page store association is
@@ -2008,6 +2021,19 @@ paths:
           $ref: "#/components/responses/NotFoundResponse"
         "422":
           $ref: "#/components/responses/ValidationFailedResponse"
+        "503":
+          description: Embedded image upload failed; no page or display was saved. Retry the save.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "409":
+          description: The page changed while images were uploading. Reload before saving again.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+
   /v3/pages/{page_id}/page-displays/validate:
     parameters:
       - $ref: "#/components/parameters/LandingPagePageId"
@@ -2018,7 +2044,10 @@ paths:
       summary: Validate a landing page display
       description:
         Validates the same landing page display payload accepted by create
-        without persisting a page-display record.
+        without persisting a page-display record or uploading images. For supplied
+        HTML content, html_image_conversion reports source bytes, projected final
+        bytes and the number of unique images. Image validation errors appear in
+        validation_errors.
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -14408,6 +14437,16 @@ components:
         stylesheets, import maps and document attributes are retained. Dependencies
         still require directive-specific permission in csp_policy. CSP meta tags are
         retained in source but ignored at execution with a validation warning.
+        On content saves, supported base64 images in HTML image attributes,
+        responsive image candidates, metadata and CSS url() values are uploaded
+        to Scalev media storage and replaced with immutable CDN URLs. Read back
+        the returned html_document as canonical source. PNG, JPEG, GIF, WebP,
+        HEIC, HEIF and ICO are supported, up to 10 MiB decoded per image.
+        Unsupported or malformed embedded images return 422 with Upload Image
+        guidance. Scripts, comments, remote URLs and non-image data URLs in CSS
+        remain unchanged. Upload failure returns 503 without saving a page
+        version; an intervening edit during upload returns 409. Retry may reuse
+        completed uploads. Reads and settings-only saves never convert images.
       example: '<!doctype html><html lang="id"><head><title>My page</title><style>main { color: #111827; }</style></head><body><main>Hello</main><script>console.log(Scalev.data.get());</script></body></html>'
     LandingPageDisplayRequest:
       type: object
@@ -14886,6 +14925,20 @@ components:
         - validation_warnings
         - validation_errors
       properties:
+        html_image_conversion:
+          type: object
+          additionalProperties: false
+          required: [source_bytes, final_bytes, image_count]
+          properties:
+            source_bytes:
+              type: integer
+              description: UTF-8 bytes before conversion.
+            final_bytes:
+              type: integer
+              description: Projected UTF-8 bytes after image URL replacement.
+            image_count:
+              type: integer
+              description: Unique decoded images to host; existing assets may be reused.
         valid:
           type: boolean
         validation_warnings:
