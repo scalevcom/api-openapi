@@ -1070,7 +1070,9 @@ paths:
       description: >
         Page-scoped public endpoint used by `Scalev.analytics.track("meta",
         payload)` and `Scalev.analytics.track("facebook", payload)`. The page
-        path and API key select the page analytics configuration.
+        path and API key select the page analytics configuration. A `domain`
+        value supplied in the JSON body remains accepted, but does not change
+        that page-scoped selection.
       requestBody:
         $ref: "#/components/requestBodies/StorefrontMetaConversionEventRequestBody"
       responses:
@@ -1092,7 +1094,9 @@ paths:
       description: >
         Page-scoped public endpoint used by
         `Scalev.analytics.track("tiktok", payload)`. The page path and API key
-        select the page analytics configuration.
+        select the page analytics configuration. A `domain` value supplied in
+        the JSON body remains accepted, but does not change that page-scoped
+        selection.
       requestBody:
         $ref: "#/components/requestBodies/StorefrontTiktokConversionEventRequestBody"
       responses:
@@ -1115,7 +1119,9 @@ paths:
         Page-scoped public endpoint used by
         `Scalev.analytics.track("snackvideo", payload)` and
         `Scalev.analytics.track("kwai", payload)`. The page path and API key
-        select the page analytics configuration.
+        select the page analytics configuration. A `domain` value supplied in
+        the JSON body remains accepted, but does not change that page-scoped
+        selection.
       requestBody:
         $ref: "#/components/requestBodies/StorefrontSnackVideoConversionEventRequestBody"
       responses:
