@@ -19143,6 +19143,58 @@ components:
         - type: string
           nullable: true
         - type: number
+    CustomerPrivacyPolicy:
+      type: object
+      nullable: true
+      additionalProperties: true
+      description: >
+        Read-only privacy configuration for the business owning this order.
+        First-party analytics requires `analytics_enabled` to be exactly true
+        in addition to applicable visitor permission. An absent or false flag
+        disables first-party analytics without changing managed marketing
+        permissions or the availability of checkout and payment. Other policy
+        fields describe the existing regional and recipient-specific choices.
+      properties:
+        analytics_enabled:
+          type: boolean
+          readOnly: true
+          description: >
+            Whether the current owner's accepted Terms and Privacy Policy versions
+            both satisfy the required release, with recorded acceptance timestamps.
+            Clients must treat a missing flag as false.
+        analytics_legal_acceptance:
+          $ref: "#/components/schemas/AnalyticsLegalAcceptance"
+    AnalyticsLegalAcceptance:
+      type: object
+      readOnly: true
+      additionalProperties: false
+      required:
+        - required_version
+      description: >
+        Owner acceptance evidence used to derive first-party analytics eligibility.
+        Acceptance fields may be omitted when the current owner is unavailable.
+        This evidence is separate from the visitor's privacy choices.
+      properties:
+        required_version:
+          type: string
+          format: date
+          example: "2026-09-09"
+        terms_version:
+          type: string
+          nullable: true
+        terms_accepted_at:
+          type: integer
+          format: int64
+          nullable: true
+          description: Terms acceptance time as Unix seconds.
+        privacy_version:
+          type: string
+          nullable: true
+        privacy_accepted_at:
+          type: integer
+          format: int64
+          nullable: true
+          description: Privacy Policy acceptance time as Unix seconds.
     StorefrontPublicOrder:
       type: object
       required:
@@ -19160,6 +19212,8 @@ components:
         - pg_payment_info
         - orderlines
       properties:
+        customer_privacy:
+          $ref: "#/components/schemas/CustomerPrivacyPolicy"
         id:
           $ref: "#/components/schemas/OrderPrimaryKey"
         business:
