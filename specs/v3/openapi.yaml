@@ -411,7 +411,7 @@ paths:
       summary: Search storefront delivery locations
       description: >
         Public storefront endpoint. Supports province, city, kecamatan, and kelurahan/desa search; every word of the search must match (e.g. `siak perawang`).
-        Results are kelurahan/desa locations only (`parent_id` points to the kecamatan); kecamatan locations are never listed.
+        Results are kelurahan/desa locations only; kecamatan locations are never listed.
         Results are ordered by kecamatan, city, then kelurahan; when no location contains every word, a typo-tolerant fallback returns the closest matches ranked by similarity.
       parameters:
         - name: search
@@ -516,7 +516,7 @@ paths:
       summary: List storefront delivery subdistricts
       description: >
         Lists the delivery locations of a city, ordered by kecamatan then kelurahan.
-        Results are kelurahan/desa locations only (`parent_id` points to the kecamatan); kecamatan locations are never listed.
+        Results are kelurahan/desa locations only; kecamatan locations are never listed.
       parameters:
         - name: city_id
           in: query
@@ -799,7 +799,7 @@ paths:
         the browser origin against domains attached to the page, or the
         business domains when the page has no attached domains.
         Search matches province, city, kecamatan, and kelurahan/desa names; every word of the search must match (e.g. `siak perawang`).
-        Results are kelurahan/desa locations only (`parent_id` points to the kecamatan); kecamatan locations are never listed.
+        Results are kelurahan/desa locations only; kecamatan locations are never listed.
         Results are ordered by kecamatan, city, then kelurahan; when no location contains every word, a typo-tolerant fallback returns the closest matches ranked by similarity.
       parameters:
         - name: search
@@ -904,7 +904,7 @@ paths:
       summary: List HTML Mode delivery subdistricts
       description: >
         Lists the delivery locations of a city, ordered by kecamatan then kelurahan.
-        Results are kelurahan/desa locations only (`parent_id` points to the kecamatan); kecamatan locations are never listed.
+        Results are kelurahan/desa locations only; kecamatan locations are never listed.
       parameters:
         - name: city_id
           in: query
@@ -4762,7 +4762,7 @@ paths:
       description:
         "Requires the `order:create` scope. Retrieve a cursor-paginated
         list of locations with optional search. Search matches province, city,
-        kecamatan, and kelurahan/desa names. Results are kelurahan/desa locations only (`parent_id` points to the kecamatan); kecamatan locations are never listed. Results are ordered by kecamatan, city, then kelurahan; when no location contains every word, a typo-tolerant fallback returns the closest matches ranked by similarity."
+        kecamatan, and kelurahan/desa names. Results are kelurahan/desa locations only; kecamatan locations are never listed. Results are ordered by kecamatan, city, then kelurahan; when no location contains every word, a typo-tolerant fallback returns the closest matches ranked by similarity."
       parameters:
         - description: Number of items per page.
           in: query
@@ -18310,9 +18310,7 @@ components:
         - city_name
         - province_name
         - kelurahan_name
-        - parent_id
         - display
-        - full_address
       properties:
         id:
           type: integer
@@ -18327,22 +18325,12 @@ components:
           type: string
           nullable: true
           description: Kelurahan/desa name, or `null` for a kecamatan location.
-        parent_id:
-          type: integer
-          nullable: true
-          description: Location ID of the kecamatan for a kelurahan location, or `null` for a kecamatan location.
         display:
           type: string
           description: >
             `Kelurahan, Kecamatan, City, Province` for a kelurahan location and
             `Kecamatan, City, Province` for a kecamatan location.
           example: Cempaka Putih Timur, Cempaka Putih, Kota Jakarta Pusat, DKI Jakarta
-        full_address:
-          type: string
-          description: >
-            Province-first address used by location search: `Province, City, Kecamatan, Kelurahan`
-            (without the kelurahan for a kecamatan location).
-          example: DKI Jakarta, Kota Jakarta Pusat, Cempaka Putih, Cempaka Putih Timur
       additionalProperties: false
     StorefrontLocationListResponse:
       type: object
@@ -21462,9 +21450,7 @@ components:
         - city_name
         - province_name
         - kelurahan_name
-        - parent_id
         - display
-        - full_address
       properties:
         id:
           description: Location ID
@@ -21483,22 +21469,12 @@ components:
           type: string
           nullable: true
           example: Cempaka Putih Timur
-        parent_id:
-          description: Location ID of the kecamatan for a kelurahan location, or `null` for a kecamatan location.
-          type: integer
-          nullable: true
         display:
           description: >
             Display name: `Kelurahan, Kecamatan, City, Province` for a kelurahan location and
             `Kecamatan, City, Province` for a kecamatan location.
           type: string
           example: Cempaka Putih Timur, Cempaka Putih, Kota Jakarta Pusat, DKI Jakarta
-        full_address:
-          description: >
-            Province-first address used by location search: `Province, City, Kecamatan, Kelurahan`
-            (without the kelurahan for a kecamatan location).
-          type: string
-          example: DKI Jakarta, Kota Jakarta Pusat, Cempaka Putih, Cempaka Putih Timur
       title: Location
       type: object
       additionalProperties: false
