@@ -17433,10 +17433,15 @@ components:
               type: integer
             subdistrict_name:
               type: string
+              description: Kecamatan (district) name.
             city_name:
               type: string
             province_name:
               type: string
+            kelurahan_name:
+              type: string
+              nullable: true
+              description: Kelurahan/desa name, or `null` for a kecamatan location.
           additionalProperties: true
         address:
           type: string
@@ -19510,6 +19515,7 @@ components:
               type: string
               nullable: true
             subdistrict:
+              description: Kecamatan of the address; `Kecamatan, Kelurahan` when its location is a kelurahan/desa.
               type: string
               nullable: true
             city:
@@ -19859,6 +19865,7 @@ components:
           type: string
           nullable: true
         subdistrict:
+          description: Kecamatan of the address; `Kecamatan, Kelurahan` when its location is a kelurahan/desa.
           type: string
           nullable: true
         city:
@@ -21897,7 +21904,7 @@ components:
                   description: Province of the warehouse address
                   type: string
                 subdistrict:
-                  description: Subdistrict of the warehouse address
+                  description: Kecamatan of the warehouse address; `Kecamatan, Kelurahan` when its location is a kelurahan/desa.
                   type: string
               title: WarehouseAddressLocationData
               type: object
@@ -22173,7 +22180,7 @@ components:
               description: Province of the warehouse address
               type: string
             subdistrict:
-              description: Subdistrict of the warehouse address
+              description: Kecamatan of the warehouse address; `Kecamatan, Kelurahan` when its location is a kelurahan/desa.
               type: string
             warehouse:
               description: ID of the associated warehouse
@@ -22684,7 +22691,7 @@ components:
               description: Province of the address
               type: string
             subdistrict:
-              description: Subdistrict of the address
+              description: Kecamatan of the address; `Kecamatan, Kelurahan` when its location is a kelurahan/desa.
               type: string
           title: OrderAddress
           type: object
@@ -23292,7 +23299,7 @@ components:
               description: Province of the warehouse address
               type: string
             subdistrict:
-              description: Subdistrict of the warehouse address
+              description: Kecamatan of the warehouse address; `Kecamatan, Kelurahan` when its location is a kelurahan/desa.
               type: string
             warehouse:
               description: ID of the associated warehouse
@@ -24273,7 +24280,7 @@ components:
               description: Province of the address
               type: string
             subdistrict:
-              description: Subdistrict of the address
+              description: Kecamatan of the address; `Kecamatan, Kelurahan` when its location is a kelurahan/desa.
               type: string
           title: OrderAddress
           type: object
