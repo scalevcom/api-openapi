@@ -191,7 +191,11 @@ paths:
         not authorize these operations. Responses are private and must not be cached. Synchronize
         confirmed payments and expiry, then return the current destination. A payment-provider return
         or invoice creation alone does not confirm payment. Active journeys retain their published
-        snapshot. Subscription expiry bypasses new offers.
+        snapshot. Subscription expiry bypasses new offers. An unavailable variant or bundle skips
+        the whole offer along its configured decline route, repeating until an available offer or
+        Thank You is reached. This is rechecked before opening an offer and before sending email or
+        WhatsApp invitations. Unavailable offers do not send invitations. Existing pending invoices
+        retain their payment flow.
       security:
         - checkoutJourneyAuth: []
       parameters:
@@ -327,8 +331,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApiErrorResponse"
         "409":
-          description: This offer is no longer current, including after expiry or a concurrent transition.
-            Resume the journey to obtain its canonical state.
+          description: This offer is no longer current, including after expiry, stock becoming unavailable,
+            or a concurrent transition. Automatic progress is committed. Resume the journey to retrieve
+            the new destination (error code checkout_offer_changed); never automatically repeat the buyer action on a replacement offer.
           content:
             application/json:
               schema:
@@ -398,8 +403,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApiErrorResponse"
         "409":
-          description: This offer is no longer current, including after expiry or a concurrent transition.
-            Resume the journey to obtain its canonical state.
+          description: This offer is no longer current, including after expiry, stock becoming unavailable,
+            or a concurrent transition. Automatic progress is committed. Resume the journey to retrieve
+            the new destination (error code checkout_offer_changed); never automatically repeat the buyer action on a replacement offer.
           content:
             application/json:
               schema:
@@ -476,8 +482,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApiErrorResponse"
         "409":
-          description: This offer is no longer current, including after expiry or a concurrent transition.
-            Resume the journey to obtain its canonical state.
+          description: This offer is no longer current, including after expiry, stock becoming unavailable,
+            or a concurrent transition. Automatic progress is committed. Resume the journey to retrieve
+            the new destination (error code checkout_offer_changed); never automatically repeat the buyer action on a replacement offer.
           content:
             application/json:
               schema:
@@ -544,8 +551,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApiErrorResponse"
         "409":
-          description: This offer is no longer current, including after expiry or a concurrent transition.
-            Resume the journey to obtain its canonical state.
+          description: This offer is no longer current, including after expiry, stock becoming unavailable,
+            or a concurrent transition. Automatic progress is committed. Resume the journey to retrieve
+            the new destination (error code checkout_offer_changed); never automatically repeat the buyer action on a replacement offer.
           content:
             application/json:
               schema:
@@ -614,8 +622,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApiErrorResponse"
         "409":
-          description: This offer is no longer current, including after expiry or a concurrent transition.
-            Resume the journey to obtain its canonical state.
+          description: This offer is no longer current, including after expiry, stock becoming unavailable,
+            or a concurrent transition. Automatic progress is committed. Resume the journey to retrieve
+            the new destination (error code checkout_offer_changed); never automatically repeat the buyer action on a replacement offer.
           content:
             application/json:
               schema:
