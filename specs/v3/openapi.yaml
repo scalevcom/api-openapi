@@ -141,7 +141,9 @@ paths:
         to this store and purchase attempt. Storefront, page, business and customer API credentials do
         not authorize these operations. Responses are private and must not be cached. Read current
         state without activating an offer or starting its timer. Use resume to synchronize payment and
-        expiry progress.
+        expiry progress. Offers require successful electronic payment on the originating order.
+        Existing non-electronic journeys are shown as complete without exposing an offer; this
+        read does not persist a transition.
       security:
         - checkoutJourneyAuth: []
       parameters:
@@ -195,7 +197,11 @@ paths:
         the whole offer along its configured decline route, repeating until an available offer or
         Thank You is reached. This is rechecked before opening an offer and before sending email or
         WhatsApp invitations. Unavailable offers do not send invitations. Existing pending invoices
-        retain their payment flow.
+        retain their payment flow while the originating payment remains eligible. Only originating
+        orders paid or settled through an electronic payment method may enter offers. Bank transfer,
+        COD, marketplace and no-payment orders bypass offers even when the same checkout page also
+        enables E-Payment. Existing ineligible journeys complete without sending email or WhatsApp
+        invitations; merely confirming an order does not qualify it.
       security:
         - checkoutJourneyAuth: []
       parameters:
@@ -14780,7 +14786,10 @@ components:
         - store
         - customer
         - destination
-      description: One buyer purchase attempt with a published flow snapshot. Successful linked orders
+      description: One buyer purchase attempt with a published flow snapshot. Offers require successful
+        electronic payment on the originating order. Non-electronic orders do not create journeys;
+        legacy ineligible journeys complete without an offer. Eligibility follows the order's actual
+        method, not the page's method list. Successful linked orders
         appear in purchase order, excluding failed, cancelled and unpaid offers. Expired access links do
         not remove the order. A late payment remains linked and appears after refresh without reopening
         a completed branch.
