@@ -193,7 +193,7 @@ paths:
         not authorize these operations. Responses are private and must not be cached. Synchronize
         confirmed payments and expiry, then return the current destination. A payment-provider return
         or invoice creation alone does not confirm payment. Active journeys retain their published
-        snapshot. Subscription expiry bypasses new offers. An unavailable variant or bundle skips
+        snapshot. Subscription expiry bypasses new offers. Only products and bundles owned by the checkout business qualify; reseller or shared resources are unavailable even if listed in the store. An unavailable variant or bundle skips
         the whole offer along its configured decline route, repeating until an available offer or
         Thank You is reached. This is rechecked before opening an offer and before sending email or
         WhatsApp invitations. Unavailable offers do not send invitations. Existing pending invoices
@@ -4814,6 +4814,13 @@ paths:
         - scalevOAuth:
             - bundle:list
       parameters:
+        - description: Set to self to include only bundles owned by the authenticated business, excluding shared bundles before pagination.
+          in: query
+          name: owner_filter
+          required: false
+          schema:
+            type: string
+            enum: [self]
         - description: Number of items per page.
           in: query
           name: page_size
@@ -8609,6 +8616,13 @@ paths:
         order and cannot be changed. Uses cursor-based pagination with default
         page size of 25 and maximum of 25."
       parameters:
+        - description: Set to self to include only bundles owned by the authenticated business, excluding shared bundles before pagination.
+          in: query
+          name: owner_filter
+          required: false
+          schema:
+            type: string
+            enum: [self]
         - description: "Number of items per page (default: 25, max: 25)"
           in: query
           name: page_size
@@ -14477,6 +14491,7 @@ components:
             $ref: "#/components/schemas/BundlePriceOptionExtendedRelation"
   schemas:
     CheckoutJourneyRequiredFields:
+      description: Missing buyer fields required by the offer. Postal code is included only when enabled by the store.
       type: array
       uniqueItems: true
       items:
@@ -14528,6 +14543,7 @@ components:
                     - $ref: "#/components/schemas/CheckoutJourneyRequiredFields"
                     - maxItems: 0
     CheckoutJourneyDestination:
+      description: Active checkout journey destination. Null after completion so order-detail links do not re-enter the flow.
       type: object
       properties:
         id: &a1
@@ -19809,7 +19825,6 @@ components:
       type: object
       required:
         - location_id
-        - postal_code
       properties:
         location_id:
           oneOf:
@@ -19817,6 +19832,7 @@ components:
             - type: string
         postal_code:
           type: string
+          description: Required when the store enables postal code; otherwise optional.
       additionalProperties: false
     StorefrontCheckoutShippingOptionsRequest:
       type: object
