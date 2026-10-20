@@ -196,7 +196,12 @@ paths:
         snapshot. Subscription expiry bypasses new offers. Only products and bundles owned by the checkout business qualify; reseller or shared resources are unavailable even if listed in the store. An unavailable variant or bundle skips
         the whole offer along its configured decline route, repeating until an available offer or
         Thank You is reached. This is rechecked before opening an offer and before sending email or
-        WhatsApp invitations. Unavailable offers do not send invitations. Existing pending invoices
+        WhatsApp invitations. Unavailable offers do not send invitations. A known final payable total
+        outside IDR 10,000 through IDR 1,000,000,000 follows the same decline route without an invoice
+        or invitation. The limit applies to quantity, discounts, shipping and applicable charges together,
+        not individual unit prices. If delivery details are missing, the final amount is checked when
+        supplied; an unpayable summary or acceptance commits the next route and returns checkout_offer_changed.
+        Existing pending invoices
         retain their payment flow while the originating payment remains eligible. Only originating
         orders paid or settled through an electronic payment method may enter offers. Bank transfer,
         COD, marketplace and no-payment orders bypass offers even when the same checkout page also
@@ -14732,8 +14737,10 @@ components:
           type: string
           format: uri
           nullable: true
-          description: Canonical hosted payment-instructions destination for the pending order. Payment
-            confirmation is required before proceeding to an offer.
+          description: Canonical payment destination for the pending order. Orders originating through
+            PayLink retain PayLink mode for each offer and return the new child order's /pay/pl_ URL,
+            even when the original paid order records its concrete selected channel. Direct-channel
+            orders retain their payment instructions. Payment confirmation is required before proceeding.
         orders:
           type: array
           items:
