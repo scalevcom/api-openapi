@@ -409,10 +409,7 @@ paths:
         - Storefront
       operationId: searchStorefrontLocations
       summary: Search storefront delivery locations
-      description: >
-        Public storefront endpoint. Supports province, city, kecamatan, and kelurahan/desa search; every word of the search must match (e.g. `siak perawang`).
-        Results are kelurahan/desa locations only; kecamatan locations are never listed.
-        Results are ordered by kecamatan, city, then kelurahan; when no location contains every word, a typo-tolerant fallback returns the closest matches ranked by similarity.
+      description: Public storefront endpoint. Supports direct province, city, district, or subdistrict search.
       parameters:
         - name: search
           in: query
@@ -514,9 +511,6 @@ paths:
         - Storefront
       operationId: listStorefrontLocationSubdistricts
       summary: List storefront delivery subdistricts
-      description: >
-        Lists the delivery locations of a city, ordered by kecamatan then kelurahan.
-        Results are kelurahan/desa locations only; kecamatan locations are never listed.
       parameters:
         - name: city_id
           in: query
@@ -798,9 +792,6 @@ paths:
         page public API key for the `page_unique_id` path page and validates
         the browser origin against domains attached to the page, or the
         business domains when the page has no attached domains.
-        Search matches province, city, kecamatan, and kelurahan/desa names; every word of the search must match (e.g. `siak perawang`).
-        Results are kelurahan/desa locations only; kecamatan locations are never listed.
-        Results are ordered by kecamatan, city, then kelurahan; when no location contains every word, a typo-tolerant fallback returns the closest matches ranked by similarity.
       parameters:
         - name: search
           in: query
@@ -902,9 +893,6 @@ paths:
         - HTML Mode Pages
       operationId: listPagePublicLocationSubdistricts
       summary: List HTML Mode delivery subdistricts
-      description: >
-        Lists the delivery locations of a city, ordered by kecamatan then kelurahan.
-        Results are kelurahan/desa locations only; kecamatan locations are never listed.
       parameters:
         - name: city_id
           in: query
@@ -4761,8 +4749,7 @@ paths:
           $ref: "#/components/responses/ForbiddenResponse"
       description:
         "Requires the `order:create` scope. Retrieve a cursor-paginated
-        list of locations with optional search. Search matches province, city,
-        kecamatan, and kelurahan/desa names. Results are kelurahan/desa locations only; kecamatan locations are never listed. Results are ordered by kecamatan, city, then kelurahan; when no location contains every word, a typo-tolerant fallback returns the closest matches ranked by similarity."
+        list of locations with optional search."
       parameters:
         - description: Number of items per page.
           in: query
@@ -19515,7 +19502,11 @@ components:
               type: string
               nullable: true
             subdistrict:
-              description: Kecamatan of the address; `Kecamatan, Kelurahan` when its location is a kelurahan/desa.
+              description: Kecamatan (district) of the address, masked as `***`.
+              type: string
+              nullable: true
+            kelurahan:
+              description: Kelurahan/desa of the address, masked as `***`, or `null` when its location is a kecamatan.
               type: string
               nullable: true
             city:
@@ -19865,7 +19856,11 @@ components:
           type: string
           nullable: true
         subdistrict:
-          description: Kecamatan of the address; `Kecamatan, Kelurahan` when its location is a kelurahan/desa.
+          description: Kecamatan (district) of the address
+          type: string
+          nullable: true
+        kelurahan:
+          description: Kelurahan/desa of the address, or `null` when its location is a kecamatan
           type: string
           nullable: true
         city:
@@ -21449,8 +21444,7 @@ components:
     Location:
       description: >
         A kecamatan or a kelurahan/desa. Both kinds are valid wherever a `location_id` is accepted;
-        kelurahan locations carry their kecamatan's courier coverage and resolve couriers that price
-        per kelurahan more precisely.
+        a kelurahan location carries its kecamatan's courier coverage.
       required:
         - id
         - subdistrict_name
@@ -21894,6 +21888,10 @@ components:
                 id:
                   description: Warehouse Address ID
                   type: integer
+                kelurahan:
+                  description: Kelurahan/desa of the warehouse address, or `null` when its location is a kecamatan
+                  type: string
+                  nullable: true
                 location:
                   description: Location ID for the address
                   type: integer
@@ -21904,7 +21902,7 @@ components:
                   description: Province of the warehouse address
                   type: string
                 subdistrict:
-                  description: Kecamatan of the warehouse address; `Kecamatan, Kelurahan` when its location is a kelurahan/desa.
+                  description: Kecamatan (district) of the warehouse address
                   type: string
               title: WarehouseAddressLocationData
               type: object
@@ -22167,6 +22165,10 @@ components:
             id:
               description: Warehouse Address ID
               type: integer
+            kelurahan:
+              description: Kelurahan/desa of the warehouse address, or `null` when its location is a kecamatan
+              type: string
+              nullable: true
             location:
               description: Location ID for the address
               type: integer
@@ -22180,7 +22182,7 @@ components:
               description: Province of the warehouse address
               type: string
             subdistrict:
-              description: Kecamatan of the warehouse address; `Kecamatan, Kelurahan` when its location is a kelurahan/desa.
+              description: Kecamatan (district) of the warehouse address
               type: string
             warehouse:
               description: ID of the associated warehouse
@@ -22675,6 +22677,10 @@ components:
             id:
               description: Order Address ID
               type: integer
+            kelurahan:
+              description: Kelurahan/desa of the address, or `null` when its location is a kecamatan
+              type: string
+              nullable: true
             location:
               description: Location ID for the address
               type: integer
@@ -22691,7 +22697,7 @@ components:
               description: Province of the address
               type: string
             subdistrict:
-              description: Kecamatan of the address; `Kecamatan, Kelurahan` when its location is a kelurahan/desa.
+              description: Kecamatan (district) of the address
               type: string
           title: OrderAddress
           type: object
@@ -23286,6 +23292,10 @@ components:
             id:
               description: Warehouse Address ID
               type: integer
+            kelurahan:
+              description: Kelurahan/desa of the warehouse address, or `null` when its location is a kecamatan
+              type: string
+              nullable: true
             location:
               description: Location ID for the address
               type: integer
@@ -23299,7 +23309,7 @@ components:
               description: Province of the warehouse address
               type: string
             subdistrict:
-              description: Kecamatan of the warehouse address; `Kecamatan, Kelurahan` when its location is a kelurahan/desa.
+              description: Kecamatan (district) of the warehouse address
               type: string
             warehouse:
               description: ID of the associated warehouse
@@ -24264,6 +24274,10 @@ components:
             id:
               description: Order Address ID
               type: integer
+            kelurahan:
+              description: Kelurahan/desa of the address, or `null` when its location is a kecamatan
+              type: string
+              nullable: true
             location:
               description: Location ID for the address
               type: integer
@@ -24280,7 +24294,7 @@ components:
               description: Province of the address
               type: string
             subdistrict:
-              description: Kecamatan of the address; `Kecamatan, Kelurahan` when its location is a kelurahan/desa.
+              description: Kecamatan (district) of the address
               type: string
           title: OrderAddress
           type: object
