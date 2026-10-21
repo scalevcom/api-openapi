@@ -191,7 +191,11 @@ paths:
       description: Authorize with the opaque journey credential from the private resume link. It is bound
         to this store and purchase attempt. Storefront, page, business and customer API credentials do
         not authorize these operations. Responses are private and must not be cached. Synchronize
-        confirmed payments and expiry, then return the current destination. A payment-provider return
+        confirmed payments and expiry, then return the current destination. Expiry of any active offer
+        ends the entire journey at Thank You with completion_reason offer_expired, without following
+        accept or decline routes or activating another offer. This reason persists on later reads and
+        resumes; normal completion returns null. Pending invoices retain their existing payment lifecycle.
+        A payment-provider return
         or invoice creation alone does not confirm payment. Active journeys retain their published
         snapshot. Subscription expiry bypasses new offers. Only products and bundles owned by the checkout business qualify; reseller or shared resources are unavailable even if listed in the store. An unavailable variant or bundle skips
         the whole offer along its configured decline route, repeating until an available offer or
@@ -14698,6 +14702,13 @@ components:
       type: object
       properties:
         id: *a1
+        completion_reason:
+          type: string
+          nullable: true
+          enum: [offer_expired, null]
+          description: offer_expired only when an offer countdown ended the journey. Null for ordinary
+            completion and pre-existing journeys. Persisted across reloads; clients may show an expiry
+            notice on the normal Thank You page without a countdown or intermediate page.
         status:
           type: string
           enum:
