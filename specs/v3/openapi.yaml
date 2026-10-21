@@ -194,7 +194,9 @@ paths:
         confirmed payments and expiry, then return the current destination. Expiry of any active offer
         ends the entire journey at Thank You with completion_reason offer_expired, without following
         accept or decline routes or activating another offer. This reason persists on later reads and
-        resumes; normal completion returns null. Pending invoices retain their existing payment lifecycle.
+        resumes; normal completion returns null. Both show the ordinary Thank You page without any expiry message.
+        Each offer deadline starts at eligibility, before invitations are queued; opening or reopening
+        never resets it. Email invitations use that same deadline. Pending invoices retain their existing payment lifecycle.
         A payment-provider return
         or invoice creation alone does not confirm payment. Active journeys retain their published
         snapshot. Subscription expiry bypasses new offers. Only products and bundles owned by the checkout business qualify; reseller or shared resources are unavailable even if listed in the store. An unavailable variant or bundle skips
@@ -303,8 +305,8 @@ paths:
       description: "Authorize with the opaque journey credential from the private resume link. It is bound
         to this store and purchase attempt. Storefront, page, business and customer API credentials do
         not authorize these operations. Responses are private and must not be cached. Call only when
-        the buyer actually opens the current offer. Starts its persisted deadline once. Repeated
-        activation preserves the deadline; passive fetching and previews must not activate it. No
+        the buyer actually opens the current offer. Records opened_at while preserving the deadline
+        established at eligibility. Repeated activation preserves both values; passive fetching and previews must not activate it. No
         request body is required. Buyer, address, shipping, payment and total overrides are ignored;
         all checkout data is derived from the successful initial order and selected offer items. "
       security:
@@ -14707,8 +14709,8 @@ components:
           nullable: true
           enum: [offer_expired, null]
           description: offer_expired only when an offer countdown ended the journey. Null for ordinary
-            completion and pre-existing journeys. Persisted across reloads; clients may show an expiry
-            notice on the normal Thank You page without a countdown or intermediate page.
+            completion and pre-existing journeys. Persisted across reloads for flow state; the normal
+            Thank You page has no expiry message or intermediate page.
         status:
           type: string
           enum:
@@ -14735,7 +14737,13 @@ components:
           type: string
           format: date-time
           nullable: true
-        expires_at: *a3
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Persisted when the current offer becomes eligible, before any invitation is queued.
+            Opening, resuming or reloading does not restart it. Legacy unopened opportunities without a
+            deadline derive it from eligible_at and the snapshotted timer; established deadlines remain intact.
         server_time:
           type: string
           format: date-time
