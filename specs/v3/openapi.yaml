@@ -981,7 +981,21 @@ paths:
         Page-scoped public endpoint used by
         `Scalev.checkout.shippingOptions(payload)`. It accepts HTML Mode
         `items`, `destination`, and `payment_method`, then resolves the store
-        from the authenticated page.
+        from the authenticated page. For an authorized published builder page,
+        postcode collection follows that page's store configuration. A postcode
+        remains required for authored HTML pages. For the current published
+        builder form only, `allow_incomplete: true` also permits quoting shipping
+        before a required postcode is selected. This preview does not authorize
+        order creation or bypass the form's postcode validation. Other browser
+        parameters cannot override the postcode policy. The destination
+        location, current items, shipping availability and quoted costs are still
+        validated by the backend. Published builder forms follow the existing
+        landing-page draft order policy: insufficient inventory does not block
+        shipping previews. With both `allow_incomplete: true` and
+        `include_provisional: true`, the current published builder can quote
+        shipping while a customer-entered price is unfinished. The result is
+        non-payable and never authorizes an order. Storefront and authored HTML
+        validation remains unchanged; order creation stays strict.
       requestBody:
         $ref: "#/components/requestBodies/PagePublicCheckoutShippingOptionsRequestBody"
       responses:
@@ -1003,7 +1017,7 @@ paths:
       tags:
         - HTML Mode Pages
       operationId: getPagePublicCheckoutSummary
-      summary: Compute an HTML Mode checkout summary
+      summary: Compute a page runtime checkout summary
       description: >
         Page-scoped public endpoint used by
         `Scalev.checkout.estimateSummary(payload)`. It accepts HTML Mode
@@ -1011,7 +1025,24 @@ paths:
         optional `discount_code_code`. It recomputes shipping and applies
         backend-owned Other Income and service fees for display. The current
         Store settings are the authoritative customer-fee policy; clients do
-        not submit that policy or a fee confirmation ID.
+        not submit that policy or a fee confirmation ID. Authorized compiled
+        builder contexts use this same runtime API without changing the page's
+        render mode. With `allow_incomplete: true`, missing delivery selections
+        return an explicitly incomplete product subtotal, never a payable total.
+        For the current published builder form, an unselected postcode alone
+        does not prevent a shipping quote; the form and order endpoint still
+        enforce postcode collection. Authored HTML and storefront rules stay strict.
+        With `include_breakdown: true`, the response also includes backend-owned
+        receipt lines and discount amounts. Equal-price occurrences of the same
+        variant across selected items and bundles share one receipt line with
+        their combined quantity, retaining first occurrence order. Distinct
+        catalog identities or unit prices remain separate. These flags default to false;
+        omitting them preserves the existing complete-summary response.
+        Published builder forms follow the landing-page draft order policy:
+        insufficient stock alone does not make a quote incomplete. A quote is
+        not inventory authorization; order creation and status transitions
+        enforce the existing inventory policy. Storefront and authored HTML
+        stock checks remain unchanged.
       requestBody:
         $ref: "#/components/requestBodies/PagePublicCheckoutSummaryRequestBody"
       responses:
@@ -1020,7 +1051,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StorefrontCheckoutSummaryResponse"
+                $ref: "#/components/schemas/PagePublicCheckoutSummaryResponse"
         "400":
           $ref: "#/components/responses/BadRequestResponse"
         "404":
@@ -18935,6 +18966,21 @@ components:
         payment_method:
           type: string
           example: bank_transfer
+        allow_incomplete:
+          type: boolean
+          default: false
+          description: >
+            For the current published builder form only, allow a shipping preview
+            before its postcode is selected. Authored HTML and storefront
+            requirements stay strict. A preview never authorizes order creation.
+        include_provisional:
+          type: boolean
+          default: false
+          description: >
+            With allow_incomplete, permit unfinished nonnegative whole-IDR prices
+            only for the current published builder form. The backend still
+            validates items, quantities, destination and shipping availability.
+            Ordinary shipping requests and order creation keep strict price checks.
       additionalProperties: true
     PagePublicCheckoutSummaryRequest:
       allOf:
@@ -18945,6 +18991,38 @@ components:
             `shippingOptions` as `shipping_option` when the checkout contains
             physical items.
           properties:
+            allow_incomplete:
+              type: boolean
+              default: false
+              description: >
+                Return `is_complete: false` and a product subtotal while required
+                delivery selections are missing. Invalid items, unavailable
+                shipping and payment failures still return normal errors.
+                For the current published builder form, an unselected postcode
+                alone does not prevent quoting shipping and totals; form and
+                order validation still require it. An incomplete result must not
+                enable order submission.
+            include_provisional:
+              type: boolean
+              default: false
+              description: >
+                With allow_incomplete, include a separate backend-calculated
+                provisional receipt excluding shipping while delivery is missing.
+                For a currently published builder form in the page's store,
+                also return a non-payable receipt for blank, zero or below-minimum
+                whole-IDR customer prices. Such results include
+                invalid_customer_prices. Negative, fractional, excessive amounts
+                and inactive or foreign catalog items still fail validation. This preview never
+                authorizes order creation. Ordinary shipping validation and all
+                order creation keep strict price checks.
+            include_breakdown:
+              type: boolean
+              default: false
+              description: >
+                Include backend-owned receipt lines and product discount. A
+                complete result also includes the applied discount-code amount.
+                This flag affects presentation only; it does not authorize an
+                order or let the client override prices or eligibility.
             shipping_option:
               $ref: "#/components/schemas/StorefrontShippingOption"
             discount_code_code:
@@ -18954,6 +19032,163 @@ components:
                 Optional discount code to revalidate and apply to this
                 preview. Ineligible codes contribute zero discount.
           additionalProperties: true
+    PagePublicCheckoutReceiptLine:
+      type: object
+      required:
+        - name
+        - quantity
+        - unit_price
+        - amount
+      properties:
+        name:
+          type: string
+          description: Public product/variant or bundle package display name.
+        quantity:
+          type: integer
+          minimum: 1
+        unit_price:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        amount:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+      additionalProperties: false
+    PagePublicCheckoutSummaryResponse:
+      description: >
+        Complete payable quote, or an explicitly incomplete product subtotal
+        when requested. Optional receipt amounts come from the same backend
+        calculation. Bundle lines may expand to child products or use the
+        public package name; clients must not recalculate bundle discounts.
+        Order creation always revalidates the current authoritative data.
+      oneOf:
+        - type: object
+          required:
+            - product_price
+            - shipping_cost
+            - other_income
+            - other_income_name
+            - service_fee
+            - gross_revenue
+          properties:
+            product_price:
+              $ref: "#/components/schemas/StorefrontMoneyValue"
+            shipping_cost:
+              $ref: "#/components/schemas/StorefrontMoneyValue"
+            other_income:
+              $ref: "#/components/schemas/StorefrontMoneyValue"
+            other_income_name:
+              type: string
+              nullable: true
+            service_fee:
+              $ref: "#/components/schemas/StorefrontMoneyValue"
+            gross_revenue:
+              $ref: "#/components/schemas/StorefrontMoneyValue"
+            lines:
+              type: array
+              description: Present only when include_breakdown is true.
+              items:
+                $ref: "#/components/schemas/PagePublicCheckoutReceiptLine"
+            product_discount:
+              allOf:
+                - $ref: "#/components/schemas/StorefrontMoneyValue"
+              description: >
+                Non-negative backend-owned reduction from displayed receipt
+                lines to product_price, present only with include_breakdown.
+            discount_code_discount:
+              allOf:
+                - $ref: "#/components/schemas/StorefrontMoneyValue"
+              description: >
+                Actual non-negative discount-code reduction in the payable
+                quote, including backend caps. Present only with include_breakdown.
+          additionalProperties: false
+        - type: object
+          required:
+            - is_complete
+            - product_price
+          properties:
+            is_complete:
+              type: boolean
+              enum:
+                - false
+            product_price:
+              $ref: "#/components/schemas/StorefrontMoneyValue"
+            provisional:
+              $ref: "#/components/schemas/PagePublicCheckoutProvisionalQuote"
+            is_delivery_complete:
+              type: boolean
+              description: >
+                Present with invalid_customer_prices. True when the provisional
+                receipt includes a current backend shipping quote, including free
+                shipping. False when delivery is still incomplete and provisional
+                amounts exclude shipping. is_complete remains false in both cases.
+            invalid_customer_prices:
+              type: array
+              description: >
+                Present for unfinished customer prices on published builder forms.
+                Disable order submission and show the current minimum for each
+                affected variant. These are presentation amounts, not payable quotes.
+              items:
+                type: object
+                required: [variant_id, minimum_customer_price]
+                properties:
+                  variant_id:
+                    type: integer
+                  minimum_customer_price:
+                    $ref: "#/components/schemas/StorefrontMoneyValue"
+                additionalProperties: false
+            lines:
+              type: array
+              description: Present only when include_breakdown is true.
+              items:
+                $ref: "#/components/schemas/PagePublicCheckoutReceiptLine"
+            product_discount:
+              allOf:
+                - $ref: "#/components/schemas/StorefrontMoneyValue"
+              description: Present only when include_breakdown is true.
+          additionalProperties: false
+    PagePublicCheckoutProvisionalQuote:
+      description: >
+        Backend-calculated presentation before delivery or customer price input is
+        complete. Shipping is excluded when delivery is missing; gross_revenue here
+        is provisional and cannot authorize an order.
+      type: object
+      required:
+        - product_price
+        - shipping_cost
+        - other_income
+        - other_income_name
+        - service_fee
+        - gross_revenue
+      properties:
+        product_price:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        shipping_cost:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        other_income:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        other_income_name:
+          type: string
+          nullable: true
+        service_fee:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        gross_revenue:
+          $ref: "#/components/schemas/StorefrontMoneyValue"
+        lines:
+          type: array
+          description: Present only when include_breakdown is true.
+          items:
+            $ref: "#/components/schemas/PagePublicCheckoutReceiptLine"
+        product_discount:
+          allOf:
+            - $ref: "#/components/schemas/StorefrontMoneyValue"
+          description: >
+            Non-negative backend-owned reduction from displayed receipt
+            lines to product_price, present only with include_breakdown.
+        discount_code_discount:
+          allOf:
+            - $ref: "#/components/schemas/StorefrontMoneyValue"
+          description: >
+            Actual non-negative discount-code reduction in the provisional
+            quote, including backend caps. Present only with include_breakdown.
+      additionalProperties: false
     PagePublicDiscountCodeCheckRequest:
       type: object
       required:
@@ -19029,6 +19264,10 @@ components:
         courier_code:
           type: string
           example: jne
+        courier_name:
+          type: string
+          description: Customer-facing courier name, separate from the service name.
+          example: Ninja Xpress
         service_code:
           type: string
           example: REG
