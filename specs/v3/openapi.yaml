@@ -17424,6 +17424,9 @@ components:
               type: string
             province_name:
               type: string
+            kelurahan_name:
+              type: string
+              nullable: true
           additionalProperties: true
         address:
           type: string
@@ -18295,6 +18298,7 @@ components:
         - subdistrict_name
         - city_name
         - province_name
+        - kelurahan_name
         - display
       properties:
         id:
@@ -18305,9 +18309,12 @@ components:
           type: string
         province_name:
           type: string
+        kelurahan_name:
+          type: string
+          nullable: true
         display:
           type: string
-          example: Cempaka Putih, Kota Jakarta Pusat, DKI Jakarta
+          example: Cempaka Putih Timur, Cempaka Putih, Kota Jakarta Pusat, DKI Jakarta
       additionalProperties: false
     StorefrontLocationListResponse:
       type: object
@@ -19489,6 +19496,9 @@ components:
             subdistrict:
               type: string
               nullable: true
+            kelurahan:
+              type: string
+              nullable: true
             city:
               type: string
               nullable: true
@@ -19836,6 +19846,9 @@ components:
           type: string
           nullable: true
         subdistrict:
+          type: string
+          nullable: true
+        kelurahan:
           type: string
           nullable: true
         city:
@@ -21422,6 +21435,7 @@ components:
         - subdistrict_name
         - city_name
         - province_name
+        - kelurahan_name
         - display
       properties:
         id:
@@ -21436,10 +21450,15 @@ components:
         province_name:
           description: Province name
           type: string
+        kelurahan_name:
+          description: Kelurahan name
+          type: string
+          nullable: true
+          example: Cempaka Putih Timur
         display:
           description: Display name
           type: string
-          example: Cempaka Putih, Kota Jakarta Pusat, DKI Jakarta
+          example: Cempaka Putih Timur, Cempaka Putih, Kota Jakarta Pusat, DKI Jakarta
       title: Location
       type: object
       additionalProperties: false
@@ -21852,6 +21871,10 @@ components:
                 id:
                   description: Warehouse Address ID
                   type: integer
+                kelurahan:
+                  description: Kelurahan of the warehouse address
+                  type: string
+                  nullable: true
                 location:
                   description: Location ID for the address
                   type: integer
@@ -22125,6 +22148,10 @@ components:
             id:
               description: Warehouse Address ID
               type: integer
+            kelurahan:
+              description: Kelurahan of the warehouse address
+              type: string
+              nullable: true
             location:
               description: Location ID for the address
               type: integer
@@ -22633,6 +22660,10 @@ components:
             id:
               description: Order Address ID
               type: integer
+            kelurahan:
+              description: Kelurahan of the address
+              type: string
+              nullable: true
             location:
               description: Location ID for the address
               type: integer
@@ -23244,6 +23275,10 @@ components:
             id:
               description: Warehouse Address ID
               type: integer
+            kelurahan:
+              description: Kelurahan of the warehouse address
+              type: string
+              nullable: true
             location:
               description: Location ID for the address
               type: integer
@@ -24222,6 +24257,10 @@ components:
             id:
               description: Order Address ID
               type: integer
+            kelurahan:
+              description: Kelurahan of the address
+              type: string
+              nullable: true
             location:
               description: Location ID for the address
               type: integer
