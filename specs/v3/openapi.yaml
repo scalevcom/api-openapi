@@ -33,6 +33,8 @@ servers:
     description: Production
 security: []
 tags:
+  - name: Hosted Apps
+    description: Bring your own code, stable previews and explicit production releases.
   - name: Checkout Intents
     description: Checkout capture, recovery prefill and authenticated merchant access to
       contactable checkout intents.
@@ -128,6 +130,808 @@ tags:
   - name: WhatsApp Integrations
     description: Authenticated WhatsApp integration management endpoints.
 paths:
+  /v3/hosted-apps:
+    get:
+      tags:
+        - Hosted Apps
+      operationId: listHostedApps
+      summary: List external hosted apps
+      description: Requires the `hosted_app:list` scope, the AI_BUILDER invitation, and current
+        business-owner authorization. List external hosted apps. The pilot permits at most three
+        active projects across both sources.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - hosted_app:list
+      parameters:
+        - name: b_uid
+          in: query
+          description: Selected business unique id. Required when credentials connect multiple businesses.
+          schema: &a1
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &a2
+                      type: object
+                      required:
+                        - id
+                        - name
+                        - source
+                        - revision
+                        - status
+                      properties:
+                        id: &a3
+                          type: string
+                          format: uuid
+                        name: *a1
+                        source:
+                          type: string
+                          enum:
+                            - external
+                        revision: &a4
+                          type: integer
+                          minimum: 0
+                        status: *a1
+                        preview_url:
+                          type: string
+                          nullable: true
+                        published_url:
+                          type: string
+                          nullable: true
+                        preview_deployment_id:
+                          type: string
+                          format: uuid
+                          nullable: true
+                        production_deployment_id:
+                          type: string
+                          format: uuid
+                          nullable: true
+                  is_paginated:
+                    type: boolean
+                    enum:
+                      - false
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "409":
+          description: Stale revision, conflicting idempotency key, active deployment, or project quota.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: *a1
+                  error_code: *a1
+    post:
+      tags:
+        - Hosted Apps
+      operationId: createHostedApp
+      summary: Create an external hosted app
+      description: Requires the `hosted_app:create` scope, the AI_BUILDER invitation, and current
+        business-owner authorization. Create an external hosted app. This never starts AI generation
+        or debits Volt.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - hosted_app:create
+      parameters:
+        - name: b_uid
+          in: query
+          description: Selected business unique id. Required when credentials connect multiple businesses.
+          schema: *a1
+      responses:
+        "201":
+          description: Success
+          content:
+            application/json:
+              schema: *a2
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "409":
+          description: Stale revision, conflicting idempotency key, active deployment, or project quota.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: *a1
+                  error_code: *a1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: &a5
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+              additionalProperties: false
+  /v3/hosted-apps/{id}:
+    get:
+      tags:
+        - Hosted Apps
+      operationId: getHostedApp
+      summary: Read a hosted app and its twenty most recent deployments
+      description: Requires the `hosted_app:read` scope, the AI_BUILDER invitation, and current
+        business-owner authorization. Read a hosted app and its twenty most recent deployments. Code
+        stays in the merchant’s local tools.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - hosted_app:read
+      parameters:
+        - name: b_uid
+          in: query
+          description: Selected business unique id. Required when credentials connect multiple businesses.
+          schema: *a1
+        - name: id
+          in: path
+          required: true
+          schema: *a3
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  project: *a2
+                  deployments:
+                    type: array
+                    maxItems: 20
+                    items: &a6
+                      type: object
+                      required: &a7
+                        - id
+                        - project_id
+                        - action
+                        - status
+                        - revision
+                      properties: &a8
+                        id: *a3
+                        project_id: *a3
+                        artifact_id:
+                          type: string
+                          format: uuid
+                          nullable: true
+                        action:
+                          type: string
+                          enum:
+                            - preview
+                            - publish
+                            - rollback
+                            - unpublish
+                            - archive
+                        status:
+                          type: string
+                          enum:
+                            - pending
+                            - ready
+                            - failed
+                        revision: *a4
+                        url:
+                          type: string
+                          nullable: true
+                        error:
+                          type: string
+                          nullable: true
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "409":
+          description: Stale revision, conflicting idempotency key, active deployment, or project quota.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: *a1
+                  error_code: *a1
+    patch:
+      tags:
+        - Hosted Apps
+      operationId: updateHostedApp
+      summary: Rename a hosted app without changing its URL or database identity
+      description: Requires the `hosted_app:update` scope, the AI_BUILDER invitation, and current
+        business-owner authorization. Rename a hosted app without changing its URL or database
+        identity.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - hosted_app:update
+      parameters:
+        - name: b_uid
+          in: query
+          description: Selected business unique id. Required when credentials connect multiple businesses.
+          schema: *a1
+        - name: id
+          in: path
+          required: true
+          schema: *a3
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema: *a2
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "409":
+          description: Stale revision, conflicting idempotency key, active deployment, or project quota.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: *a1
+                  error_code: *a1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: *a5
+    delete:
+      tags:
+        - Hosted Apps
+      operationId: archiveHostedApp
+      summary: Archive an unpublished app asynchronously, disabling its preview while retaining history
+        and data
+      description: Requires the `hosted_app:delete` scope, the AI_BUILDER invitation, and current
+        business-owner authorization. Archive an unpublished app asynchronously, disabling its preview
+        while retaining history and data.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - hosted_app:delete
+      parameters:
+        - name: b_uid
+          in: query
+          description: Selected business unique id. Required when credentials connect multiple businesses.
+          schema: *a1
+        - name: id
+          in: path
+          required: true
+          schema: *a3
+      responses:
+        "202":
+          description: Deployment accepted for asynchronous processing. Poll its status.
+          content:
+            application/json:
+              schema: *a6
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "409":
+          description: Stale revision, conflicting idempotency key, active deployment, or project quota.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: *a1
+                  error_code: *a1
+  /v3/hosted-apps/{id}/artifacts:
+    post:
+      tags:
+        - Hosted Apps
+      operationId: uploadHostedAppArtifact
+      summary: Upload a canonical ZIP STORE artifact from the Scalev CLI
+      description: Requires the `hosted_app:deploy` scope, the AI_BUILDER invitation, and current
+        business-owner authorization. Upload a canonical ZIP STORE artifact from the Scalev CLI. Both
+        uploaded and expanded content are limited to 20 MiB. The server verifies SHA-256, manifest,
+        paths, compiled modules and byte-safe assets. This endpoint cannot be called through JSON-only
+        MCP tools; use the CLI or multipart HTTP.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - hosted_app:deploy
+      parameters:
+        - name: b_uid
+          in: query
+          description: Selected business unique id. Required when credentials connect multiple businesses.
+          schema: *a1
+        - name: id
+          in: path
+          required: true
+          schema: *a3
+      responses:
+        "201":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: *a3
+                  project_id: *a3
+                  sha256: *a1
+                  size: *a4
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "409":
+          description: Stale revision, conflicting idempotency key, active deployment, or project quota.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: *a1
+                  error_code: *a1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - artifact
+                - sha256
+              properties:
+                artifact:
+                  type: string
+                  format: binary
+                sha256:
+                  type: string
+                  pattern: ^[a-f0-9]{64}$
+  /v3/hosted-apps/{id}/deployments:
+    post:
+      tags:
+        - Hosted Apps
+      operationId: deployHostedAppPreview
+      summary: Deploy an uploaded immutable artifact to the stable, unlisted public preview URL
+      description: Requires the `hosted_app:deploy` scope, the AI_BUILDER invitation, and current
+        business-owner authorization. Deploy an uploaded immutable artifact to the stable, unlisted
+        public preview URL. Failed attempts retain the previous serving revision. No merchant build
+        commands execute on Scalev servers.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - hosted_app:deploy
+      parameters:
+        - name: b_uid
+          in: query
+          description: Selected business unique id. Required when credentials connect multiple businesses.
+          schema: *a1
+        - name: id
+          in: path
+          required: true
+          schema: *a3
+      responses:
+        "202":
+          description: Deployment accepted for asynchronous processing. Poll its status.
+          content:
+            application/json:
+              schema: *a6
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "409":
+          description: Stale revision, conflicting idempotency key, active deployment, or project quota.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: *a1
+                  error_code: *a1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - artifact_id
+                - expected_revision
+                - idempotency_key
+              properties:
+                artifact_id: *a3
+                expected_revision: *a4
+                idempotency_key: &a9
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+  /v3/hosted-apps/{id}/deployments/{deployment_id}:
+    get:
+      tags:
+        - Hosted Apps
+      operationId: getHostedAppDeployment
+      summary: Read deployment status
+      description: Requires the `hosted_app:read` scope, the AI_BUILDER invitation, and current
+        business-owner authorization. Read deployment status. Pending operations are processed by Oban
+        and retries reconcile the same artifact.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - hosted_app:read
+      parameters:
+        - name: b_uid
+          in: query
+          description: Selected business unique id. Required when credentials connect multiple businesses.
+          schema: *a1
+        - name: id
+          in: path
+          required: true
+          schema: *a3
+        - name: deployment_id
+          in: path
+          required: true
+          schema: *a3
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema: *a6
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "409":
+          description: Stale revision, conflicting idempotency key, active deployment, or project quota.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: *a1
+                  error_code: *a1
+  /v3/hosted-apps/{id}/deployments/{deployment_id}/diagnostics:
+    get:
+      tags:
+        - Hosted Apps
+      operationId: getHostedAppDiagnostics
+      summary: Read bounded deployment diagnostics
+      description: Requires the `hosted_app:read` scope, the AI_BUILDER invitation, and current
+        business-owner authorization. Read bounded deployment diagnostics. Artifact contents and
+        credentials are never returned.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - hosted_app:read
+      parameters:
+        - name: b_uid
+          in: query
+          description: Selected business unique id. Required when credentials connect multiple businesses.
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deployment_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deployment:
+                    type: object
+                    required:
+                      - id
+                      - project_id
+                      - action
+                      - status
+                      - revision
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      project_id:
+                        type: string
+                        format: uuid
+                      artifact_id:
+                        type: string
+                        format: uuid
+                        nullable: true
+                      action:
+                        type: string
+                        enum:
+                          - preview
+                          - publish
+                          - rollback
+                          - unpublish
+                          - archive
+                      status:
+                        type: string
+                        enum:
+                          - pending
+                          - ready
+                          - failed
+                      revision:
+                        type: integer
+                        minimum: 0
+                      url:
+                        type: string
+                        nullable: true
+                      error:
+                        type: string
+                        nullable: true
+                  runtime:
+                    type: object
+                    properties:
+                      preview:
+                        type: array
+                        maxItems: 20
+                        items:
+                          type: object
+                          properties:
+                            at:
+                              type: string
+                              format: date-time
+                            status:
+                              type: integer
+                              minimum: 500
+                              maximum: 599
+                      production:
+                        type: array
+                        maxItems: 20
+                        items:
+                          type: object
+                          properties:
+                            at:
+                              type: string
+                              format: date-time
+                            status:
+                              type: integer
+                              minimum: 500
+                              maximum: 599
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "409":
+          description: Stale revision, conflicting idempotency key, active deployment, or project quota.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  error_code:
+                    type: string
+  /v3/hosted-apps/{id}/deployments/{deployment_id}/retry:
+    post:
+      tags:
+        - Hosted Apps
+      operationId: retryHostedAppDeployment
+      summary: Retry a failed deployment using the same deployment identity and immutable artifact
+      description: Requires the `hosted_app:deploy` scope, the AI_BUILDER invitation, and current
+        business-owner authorization. Retry a failed deployment using the same deployment identity and
+        immutable artifact.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - hosted_app:deploy
+      parameters:
+        - name: b_uid
+          in: query
+          description: Selected business unique id. Required when credentials connect multiple businesses.
+          schema: *a1
+        - name: id
+          in: path
+          required: true
+          schema: *a3
+        - name: deployment_id
+          in: path
+          required: true
+          schema: *a3
+      responses:
+        "202":
+          description: Deployment accepted for asynchronous processing. Poll its status.
+          content:
+            application/json:
+              schema: *a6
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "409":
+          description: Stale revision, conflicting idempotency key, active deployment, or project quota.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: *a1
+                  error_code: *a1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+  /v3/hosted-apps/{id}/preview:
+    get:
+      tags:
+        - Hosted Apps
+      operationId: getHostedAppPreview
+      summary: Get the current preview URL without building
+      description: Requires the `hosted_app:read` scope, the AI_BUILDER invitation, and current
+        business-owner authorization. Get the current preview URL without building. Anyone with the
+        link can open it. Agents should include an [Open preview](URL) Markdown link in their reply.
+        serving identifies the working revision; latest may describe a failed newer attempt.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - hosted_app:read
+      parameters:
+        - name: b_uid
+          in: query
+          description: Selected business unique id. Required when credentials connect multiple businesses.
+          schema: *a1
+        - name: id
+          in: path
+          required: true
+          schema: *a3
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    nullable: true
+                  serving:
+                    type: object
+                    required: *a7
+                    properties: *a8
+                    nullable: true
+                  latest:
+                    type: object
+                    required: *a7
+                    properties: *a8
+                    nullable: true
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "409":
+          description: Stale revision, conflicting idempotency key, active deployment, or project quota.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: *a1
+                  error_code: *a1
+  /v3/hosted-apps/{id}/releases:
+    post:
+      tags:
+        - Hosted Apps
+      operationId: releaseHostedApp
+      summary: Explicitly publish a selected successful deployment, roll back code while retaining
+        production data, or unpublish production while leaving the preview available
+      description: Requires the `hosted_app:deploy` scope, the AI_BUILDER invitation, and current
+        business-owner authorization. Explicitly publish a selected successful deployment, roll back
+        code while retaining production data, or unpublish production while leaving the preview
+        available. No rebuild is performed. deployment_id is mandatory for publish and rollback.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - hosted_app:deploy
+      parameters:
+        - name: b_uid
+          in: query
+          description: Selected business unique id. Required when credentials connect multiple businesses.
+          schema: *a1
+        - name: id
+          in: path
+          required: true
+          schema: *a3
+      responses:
+        "202":
+          description: Deployment accepted for asynchronous processing. Poll its status.
+          content:
+            application/json:
+              schema: *a6
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "409":
+          description: Stale revision, conflicting idempotency key, active deployment, or project quota.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: *a1
+                  error_code: *a1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+                - expected_revision
+                - idempotency_key
+              properties:
+                action:
+                  type: string
+                  enum:
+                    - publish
+                    - rollback
+                    - unpublish
+                deployment_id: *a3
+                expected_revision: *a4
+                idempotency_key: *a9
   /v3/me:
     get:
       tags:
@@ -11555,6 +12359,12 @@ components:
           authorizationUrl: https://api.scalev.com/v3/oauth/authorize
           tokenUrl: https://api.scalev.com/v3/oauth/token
           scopes:
+            hosted_app:list: list hosted apps.
+            hosted_app:read: read hosted apps.
+            hosted_app:create: create hosted apps.
+            hosted_app:update: update hosted apps.
+            hosted_app:deploy: deploy hosted apps.
+            hosted_app:delete: delete hosted apps.
             web_analytics:read: Read Web Analytics reports and scope options.
             business:read: Read business settings, including customer privacy.
             business:update: Update business settings, including customer privacy.
