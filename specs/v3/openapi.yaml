@@ -14496,6 +14496,11 @@ components:
         conversion_action_id:
           type: string
           pattern: '^\d{1,30}$'
+        conversion_action_name:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Google conversion-action name verified during configuration; used as the selector label.
         enabled:
           type: boolean
           default: true
