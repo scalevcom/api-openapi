@@ -14405,7 +14405,7 @@ components:
         is_sending_email_invoice:
           type: boolean
           deprecated: true
-          description: Deprecated and ignored. Scalev always sends the invoice email; the store notification settings remain the only control. Accepted for compatibility and echoed as stored.
+          description: Deprecated page-level compatibility field; accepted and echoed as stored but not used for delivery. Configure form_display.is_sending_email_invoice on the page display instead. E-Payment invoices are exempt from the form preference, and store notification settings still apply.
         is_disable_custom_font:
           type: boolean
         is_disable_client_tagging:
@@ -14700,6 +14700,15 @@ components:
         and chat-template settings retain the values from the latest saved
         display. Explicitly supplied settings take precedence.
       properties:
+        is_sending_email_invoice:
+          type: boolean
+          default: true
+          description: >
+            Whether invoice emails are enabled for non-E-Payment orders from
+            this checkout form. Applies to Builder and HTML checkout. E-Payment
+            invoices remain enabled regardless of this preference. Store email
+            notification settings and allowed statuses still apply. Does not
+            control offer invitations or purchased-product access emails.
         order_bumps:
           type: array
           maxItems: 3
@@ -15854,7 +15863,7 @@ components:
             is_sending_email_invoice:
               type: boolean
               deprecated: true
-              description: Deprecated and ignored. Scalev always sends the invoice email; the store notification settings remain the only control. Accepted for compatibility and echoed as stored.
+              description: Deprecated page-level compatibility field; accepted and echoed as stored but not used for delivery. Configure form_display.is_sending_email_invoice on the page display instead. E-Payment invoices are exempt from the form preference, and store notification settings still apply.
             is_disable_custom_font:
               type: boolean
             is_disable_client_tagging:
@@ -15897,7 +15906,7 @@ components:
         is_sending_email_invoice:
           type: boolean
           deprecated: true
-          description: Deprecated and ignored. Scalev always sends the invoice email; the store notification settings remain the only control. Accepted for compatibility and echoed as stored.
+          description: Deprecated page-level compatibility field; accepted and echoed as stored but not used for delivery. Configure form_display.is_sending_email_invoice on the page display instead. E-Payment invoices are exempt from the form preference, and store notification settings still apply.
         is_disable_custom_font:
           type: boolean
         is_disable_client_tagging:
@@ -16002,6 +16011,15 @@ components:
       type: object
       additionalProperties: true
       properties:
+        is_sending_email_invoice:
+          type: boolean
+          default: true
+          description: >
+            Whether invoice emails are enabled for non-E-Payment orders from
+            this checkout form. Applies to Builder and HTML checkout. E-Payment
+            invoices remain enabled regardless of this preference. Store email
+            notification settings and allowed statuses still apply. Does not
+            control offer invitations or purchased-product access emails.
         order_bumps:
           type: array
           nullable: true
