@@ -15,7 +15,7 @@ info:
     `/v3/stores/{store_id}/public/*` require
     `X-Scalev-Storefront-Api-Key`.
 
-    HTML Mode public page runtime routes under `/v3/pages/{page_unique_id}/*`
+    Public landing page runtime routes under `/v3/pages/{page_unique_id}/*`
     require `X-Scalev-Page-Api-Key` and do not accept storefront public API
     keys.
 
@@ -46,8 +46,9 @@ tags:
       Public storefront catalog, guest cart, and guest checkout flows.
       All store-derived public storefront routes require
       `X-Scalev-Storefront-Api-Key`.
-  - name: HTML Mode Pages
-    description: Public HTML Mode runtime endpoints. These routes require
+  - name: Landing Page Runtime
+    description: Public landing page runtime endpoints for HTML Mode and authorized Builder
+      pages. These routes require
       `X-Scalev-Page-Api-Key` for the path page and reject storefront public
       API keys.
   - name: OAuth
@@ -784,11 +785,11 @@ paths:
       - $ref: "#/components/parameters/PagePublicApiKey"
     get:
       tags:
-        - HTML Mode Pages
+        - Landing Page Runtime
       operationId: searchPagePublicLocations
-      summary: Search HTML Mode delivery locations
+      summary: Search landing page delivery locations
       description: >
-        Page-scoped public endpoint for HTML Mode location lookup. Requires the
+        Page-scoped public endpoint for landing page location lookup. Requires the
         page public API key for the `page_unique_id` path page and validates
         the browser origin against domains attached to the page, or the
         business domains when the page has no attached domains.
@@ -832,9 +833,9 @@ paths:
       - $ref: "#/components/parameters/PagePublicApiKey"
     get:
       tags:
-        - HTML Mode Pages
+        - Landing Page Runtime
       operationId: listPagePublicLocationProvinces
-      summary: List HTML Mode delivery provinces
+      summary: List landing page delivery provinces
       parameters:
         - name: search
           in: query
@@ -857,9 +858,9 @@ paths:
       - $ref: "#/components/parameters/PagePublicApiKey"
     get:
       tags:
-        - HTML Mode Pages
+        - Landing Page Runtime
       operationId: listPagePublicLocationCities
-      summary: List HTML Mode delivery cities
+      summary: List landing page delivery cities
       parameters:
         - name: province_id
           in: query
@@ -890,9 +891,9 @@ paths:
       - $ref: "#/components/parameters/PagePublicApiKey"
     get:
       tags:
-        - HTML Mode Pages
+        - Landing Page Runtime
       operationId: listPagePublicLocationSubdistricts
-      summary: List HTML Mode delivery subdistricts
+      summary: List landing page delivery subdistricts
       parameters:
         - name: city_id
           in: query
@@ -924,9 +925,9 @@ paths:
       - $ref: "#/components/parameters/LocationId"
     get:
       tags:
-        - HTML Mode Pages
+        - Landing Page Runtime
       operationId: listPagePublicLocationPostalCodes
-      summary: List HTML Mode delivery postal codes
+      summary: List landing page delivery postal codes
       parameters:
         - name: search
           in: query
@@ -949,11 +950,11 @@ paths:
       - $ref: "#/components/parameters/PagePublicApiKey"
     post:
       tags:
-        - HTML Mode Pages
+        - Landing Page Runtime
       operationId: checkPagePublicDiscountCode
-      summary: Check an HTML Mode discount code
+      summary: Check a landing page discount code
       description: >
-        Page-scoped public endpoint for HTML Mode discount validation. The
+        Page-scoped public endpoint for landing page discount validation. The
         discount context is evaluated against the authenticated path page.
       requestBody:
         $ref: "#/components/requestBodies/PagePublicDiscountCodeCheckRequestBody"
@@ -974,12 +975,12 @@ paths:
       - $ref: "#/components/parameters/PagePublicApiKey"
     post:
       tags:
-        - HTML Mode Pages
+        - Landing Page Runtime
       operationId: listPagePublicCheckoutShippingOptions
-      summary: List HTML Mode checkout shipping options
+      summary: List landing page checkout shipping options
       description: >
         Page-scoped public endpoint used by
-        `Scalev.checkout.shippingOptions(payload)`. It accepts HTML Mode
+        `Scalev.checkout.shippingOptions(payload)`. It accepts
         `items`, `destination`, and `payment_method`, then resolves the store
         from the authenticated page. For an authorized published builder page,
         postcode collection follows that page's store configuration. A postcode
@@ -1000,7 +1001,7 @@ paths:
         $ref: "#/components/requestBodies/PagePublicCheckoutShippingOptionsRequestBody"
       responses:
         "200":
-          description: HTML Mode checkout shipping options
+          description: Landing page checkout shipping options
           content:
             application/json:
               schema:
@@ -1015,19 +1016,18 @@ paths:
       - $ref: "#/components/parameters/PagePublicApiKey"
     post:
       tags:
-        - HTML Mode Pages
+        - Landing Page Runtime
       operationId: getPagePublicCheckoutSummary
       summary: Compute a page runtime checkout summary
       description: >
         Page-scoped public endpoint used by
-        `Scalev.checkout.estimateSummary(payload)`. It accepts HTML Mode
+        `Scalev.checkout.estimateSummary(payload)`. It accepts
         `items`, `destination`, `payment_method`, `shipping_option`, and an
         optional `discount_code_code`. It recomputes shipping and applies
         backend-owned Other Income and service fees for display. The current
         Store settings are the authoritative customer-fee policy; clients do
-        not submit that policy or a fee confirmation ID. Authorized compiled
-        builder contexts use this same runtime API without changing the page's
-        render mode. With `allow_incomplete: true`, missing delivery selections
+        not submit that policy or a fee confirmation ID. Authorized Builder pages
+        use this same runtime API. With `allow_incomplete: true`, missing delivery selections
         return an explicitly incomplete product subtotal, never a payable total.
         For the current published builder form, an unselected postcode alone
         does not prevent a shipping quote; the form and order endpoint still
@@ -1047,7 +1047,7 @@ paths:
         $ref: "#/components/requestBodies/PagePublicCheckoutSummaryRequestBody"
       responses:
         "200":
-          description: HTML Mode checkout summary
+          description: Landing page checkout summary
           content:
             application/json:
               schema:
@@ -1062,12 +1062,12 @@ paths:
       - $ref: "#/components/parameters/PagePublicApiKey"
     post:
       tags:
-        - HTML Mode Pages
+        - Landing Page Runtime
       operationId: createPagePublicOrder
-      summary: Create an HTML Mode public order
+      summary: Create a landing page public order
       description: >
-        Page-scoped public endpoint for HTML Mode `Scalev.checkout.createOrder`.
-        This route accepts HTML Mode order payloads with `customer`,
+        Page-scoped public endpoint for `Scalev.checkout.createOrder`.
+        This route accepts landing page order payloads with `customer`,
         `destination`, `items`, and `shipping_option`, requires
         `X-Scalev-Page-Api-Key`, and does not accept storefront public API
         keys. The page and store are resolved from the path and page API key;
@@ -1080,7 +1080,7 @@ paths:
         $ref: "#/components/requestBodies/PagePublicOrderCreateRequestBody"
       responses:
         "201":
-          description: Flat HTML Mode public order object.
+          description: Flat landing page public order object.
           content:
             application/json:
               schema:
@@ -1095,9 +1095,9 @@ paths:
       - $ref: "#/components/parameters/PagePublicApiKey"
     post:
       tags:
-        - HTML Mode Pages
+        - Landing Page Runtime
       operationId: sendPagePublicMetaConversionEvent
-      summary: Send an HTML Mode Meta Conversion API event
+      summary: Send a landing page Meta Conversion API event
       description: >
         Page-scoped public endpoint used by `Scalev.analytics.track("meta",
         payload)` and `Scalev.analytics.track("facebook", payload)`. The page
@@ -1117,9 +1117,9 @@ paths:
       - $ref: "#/components/parameters/PagePublicApiKey"
     post:
       tags:
-        - HTML Mode Pages
+        - Landing Page Runtime
       operationId: sendPagePublicTiktokConversionEvent
-      summary: Send an HTML Mode TikTok Events API event
+      summary: Send a landing page TikTok Events API event
       description: >
         Page-scoped public endpoint used by
         `Scalev.analytics.track("tiktok", payload)`. The page path and API key
@@ -1139,9 +1139,9 @@ paths:
       - $ref: "#/components/parameters/PagePublicApiKey"
     post:
       tags:
-        - HTML Mode Pages
+        - Landing Page Runtime
       operationId: sendPagePublicSnackVideoConversionEvent
-      summary: Send an HTML Mode SnackVideo event
+      summary: Send a landing page SnackVideo event
       description: >
         Page-scoped public endpoint used by
         `Scalev.analytics.track("snackvideo", payload)` and
@@ -18751,7 +18751,7 @@ components:
       additionalProperties: true
     PagePublicCheckoutCustomer:
       type: object
-      description: Buyer contact details submitted by an HTML Mode page.
+      description: Buyer contact details submitted by a landing page.
       required:
         - name
         - phone
@@ -18772,7 +18772,7 @@ components:
       additionalProperties: true
     PagePublicCheckoutDestination:
       type: object
-      description: Buyer destination submitted by an HTML Mode page.
+      description: Buyer destination submitted by a landing page.
       properties:
         address:
           type: string
@@ -18791,7 +18791,7 @@ components:
       additionalProperties: true
     PagePublicCheckoutItem:
       type: object
-      description: Product or bundle item selected by an HTML Mode page.
+      description: Product or bundle item selected by a landing page.
       required:
         - type
         - quantity
@@ -18818,7 +18818,7 @@ components:
     PagePublicOrderCreateRequest:
       type: object
       description: >
-        HTML Mode public order payload. Use `customer`, `destination`, and
+        Landing page public order payload. Use `customer`, `destination`, and
         one combined `items` list for checkout details. Pass the chosen option returned by
         `shippingOptions` as `shipping_option`. The API ignores any supplied
         `page_unique_id` or `store_unique_id` and uses the path page plus the
@@ -18969,7 +18969,7 @@ components:
     PagePublicCheckoutShippingOptionsRequest:
       type: object
       description: >
-        HTML Mode checkout payload used by
+        Landing page checkout payload used by
         `Scalev.checkout.shippingOptions(payload)`. Use one combined `items`
         list for item selection; the path page and page API key
         determine the store context.
@@ -19005,7 +19005,7 @@ components:
         - $ref: "#/components/schemas/PagePublicCheckoutShippingOptionsRequest"
         - type: object
           description: >
-            HTML Mode checkout summary payload. Pass the option returned by
+            Landing page checkout summary payload. Pass the option returned by
             `shippingOptions` as `shipping_option` when the checkout contains
             physical items.
           properties:
@@ -19212,7 +19212,7 @@ components:
       required:
         - code
       description: >
-        HTML Mode discount check payload used by
+        Landing page discount check payload used by
         `Scalev.checkout.validateDiscount(payload)`.
       properties:
         code:
