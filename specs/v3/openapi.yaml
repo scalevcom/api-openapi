@@ -2635,7 +2635,7 @@ paths:
       tags: [Analytics Setup]
       operationId: ingestManagedGoogleAdsEvents
       summary: Submit native non-Purchase events using a signed public surface context
-      description: Separate from first-party analytics ingestion. The token binds the current page or store and configured destinations. Purchase and arbitrary Google targets are rejected. Batches are limited to 20 events and 32 KiB of event data, with per-business and per-IP limits. Tokens expire after seven days; renewal requires a valid original signature no older than 30 days and current assignments. Acceptance is not ingestion or attribution confirmation.
+      description: Separate from first-party analytics ingestion. The token binds the current page or store, configured destinations, and conversion mappings used by the browser. If those mappings change, intake returns tracking_configuration_changed (409) and the page must reload; token renewal preserves the original mappings. Purchase and arbitrary Google targets are rejected. Batches are limited to 20 events and 32 KiB of event data, with per-business and per-IP limits. Tokens expire after seven days; renewal requires a valid original signature no older than 30 days and current assignments. Acceptance is not ingestion or attribution confirmation.
       security: []
       requestBody:
         required: true
@@ -2707,6 +2707,12 @@ paths:
           $ref: "#/components/responses/BadRequestResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedResponse"
+        "409":
+          description: The signed conversion mappings changed. Reload the page before sending another interaction.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
         "429":
           description: Tracking rate limit reached
         "503":
