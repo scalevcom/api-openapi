@@ -2550,7 +2550,7 @@ paths:
       summary: Retry a failed Google Ads conversion
       description: Requires the `google_ads:update` scope. Supply exactly one of order_id or event_id. Queues an existing failed or reconnect_required
         obligation with its original payload and transaction ID. Does not backfill
-        orders or change trigger eligibility.
+        orders or change trigger eligibility. Removed integrations return 404; their delivery history remains readable.
       security:
         - bearerAuth: []
         - apiKeyAuth: []
