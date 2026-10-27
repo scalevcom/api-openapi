@@ -15252,7 +15252,8 @@ components:
       additionalProperties: false
       description: >-
         Authoritative merchant tracking selections, limited to 256 KiB. Empty
-        selections send nothing. Defaults are materialized at resource creation,
+        selections send nothing. Trigger and event enablement flags are not used;
+        remove an event selection to stop sending it. Defaults are materialized at resource creation,
         never on read. Purchase eligibility remains controlled by store settings.
         Asset credentials and delivery history are not part of this document.
       properties:
@@ -15285,9 +15286,6 @@ components:
                 type: string
                 enum: [page_open, product_view, search, cart_add, checkout_start, form_submit, widget_click, payment_methods_opened, payment_method_selected, banner_click]
                 description: Interaction that invokes selected provider events. This is not a provider event name. Only interactions supported by the current surface are invoked.
-              enabled:
-                type: boolean
-                default: true
               events:
                 type: array
                 maxItems: 100
@@ -15305,9 +15303,6 @@ components:
           minLength: 1
           maxLength: 100
           description: Exact native event or Google conversion-action name. Purchase, CompletePayment and EVENT_PURCHASE are reserved for eligible orders.
-        enabled:
-          type: boolean
-          default: true
         channels:
           type: array
           uniqueItems: true
