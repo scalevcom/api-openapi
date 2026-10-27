@@ -2635,7 +2635,7 @@ paths:
       tags: [Analytics Setup]
       operationId: ingestManagedGoogleAdsEvents
       summary: Submit native non-Purchase events using a signed public surface context
-      description: Separate from first-party analytics ingestion. The token binds the current page or store, configured destinations, and conversion mappings used by the browser. If those mappings change, intake returns tracking_configuration_changed (409) and the page must reload; token renewal preserves the original mappings. Purchase and arbitrary Google targets are rejected. Batches are limited to 20 events and 32 KiB of event data, with per-business and per-IP limits. Tokens expire after seven days; renewal requires a valid original signature no older than 30 days and current assignments. Acceptance is not ingestion or attribution confirmation.
+      description: Separate from first-party analytics ingestion. The token binds the current page or store, configured destinations, trigger selections and their revision. If the configuration changes, intake returns tracking_configuration_changed (409) and the page must reload; token renewal preserves the original mappings. Purchase and arbitrary Google targets are rejected. Batches are limited to 20 events and 32 KiB of event data, with per-business and per-IP limits. Tokens expire after seven days; renewal requires a valid original signature no older than 30 days and current assignments. Acceptance is not ingestion or attribution confirmation.
       security: []
       requestBody:
         required: true
@@ -2661,14 +2661,27 @@ paths:
                   maxItems: 20
                   items:
                     type: object
-                    required: [event_id, event_name]
+                    required: [event_id]
                     properties:
                       event_id:
                         type: string
                         format: uuid
                       event_name:
                         type: string
-                        pattern: '^[A-Za-z][A-Za-z0-9_]{0,39}$'
+                        maxLength: 100
+                        description: Legacy mapping name, or the selected Google action's display name. New callers use action_id with context and trigger.
+                      destination_id:
+                        type: string
+                        format: uuid
+                      action_id:
+                        type: string
+                        pattern: '^\d{1,30}$'
+                      context:
+                        type: string
+                        description: Signed page, flow step, or store interaction context.
+                      trigger:
+                        type: string
+                        description: Configured non-Purchase interaction key.
                       value:
                         type: number
                         minimum: 0
@@ -15186,21 +15199,163 @@ components:
         still require directive-specific permission in csp_policy. CSP meta tags are
         retained in source but ignored at execution with a validation warning.
       example: '<!doctype html><html lang="id"><head><title>My page</title><style>main { color: #111827; }</style></head><body><main>Hello</main><script>console.log(Scalev.data.get());</script></body></html>'
+    TrackingAssets:
+      type: object
+      additionalProperties: false
+      description: Business-owned asset references. Omitted contextual providers inherit the root selection; an empty array explicitly clears that provider.
+      properties:
+        fb:
+          type: array
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: integer
+            minimum: 1
+        tiktok:
+          type: array
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: integer
+            minimum: 1
+        kwai_client:
+          type: array
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: integer
+            minimum: 1
+        kwai_server:
+          type: array
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: integer
+            minimum: 1
+        google_ads:
+          type: array
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        gtm:
+          type: array
+          maxItems: 1
+          uniqueItems: true
+          items:
+            type: integer
+            minimum: 1
+    TrackingConfig:
+      type: object
+      required: [schema_version, assets, triggers]
+      additionalProperties: false
+      description: >-
+        Authoritative merchant tracking selections, limited to 256 KiB. Empty
+        selections send nothing. Defaults are materialized at resource creation,
+        never on read. Purchase eligibility remains controlled by store settings.
+        Asset credentials and delivery history are not part of this document.
+      properties:
+        schema_version:
+          type: integer
+          enum: [1]
+        assets:
+          $ref: '#/components/schemas/TrackingAssets'
+        context_assets:
+          type: object
+          maxProperties: 100
+          additionalProperties:
+            $ref: '#/components/schemas/TrackingAssets'
+        triggers:
+          type: array
+          maxItems: 500
+          items:
+            type: object
+            required: [id, context, trigger, events]
+            properties:
+              id:
+                type: string
+                minLength: 1
+                maxLength: 200
+              context:
+                type: string
+                maxLength: 250
+                description: 'Owner context: page, flow:<step-id>, storefront:<page-type>, paylink, or lms:<position>; optionally suffixed /widget:<widget-id>. Landing pages do not inherit storefront triggers.'
+              trigger:
+                type: string
+                enum: [page_open, product_view, search, cart_add, checkout_start, form_submit, widget_click, payment_methods_opened, payment_method_selected, banner_click]
+                description: Interaction that invokes selected provider events. This is not a provider event name. Only interactions supported by the current surface are invoked.
+              enabled:
+                type: boolean
+                default: true
+              events:
+                type: array
+                maxItems: 100
+                items:
+                  $ref: '#/components/schemas/TrackingEvent'
+    TrackingEvent:
+      type: object
+      required: [provider, name]
+      properties:
+        provider:
+          type: string
+          enum: [fb, tiktok, kwai_client, kwai_server, google_ads, gtm]
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Exact native event or Google conversion-action name. Purchase, CompletePayment and EVENT_PURCHASE are reserved for eligible orders.
+        enabled:
+          type: boolean
+          default: true
+        channels:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            enum: [browser, server]
+          description: Preserve the provider's supported channels. Kwai client and GTM support browser only; Kwai server supports server only.
+        parameters:
+          type: object
+          additionalProperties: true
+        asset_ids:
+          type: array
+          description: Optional subset of the provider assets selected for this context.
+          items:
+            oneOf:
+              - type: integer
+              - type: string
+                format: uuid
+        destination_id:
+          type: string
+          format: uuid
+          description: Required for Google events; must be assigned in this context.
+        action_id:
+          type: string
+          pattern: '^\d{1,30}$'
+          description: Required for Google conversion actions. The server verifies action ownership and resolves the tag and label.
+        kind:
+          type: string
+          enum: [remarketing]
+          description: Google browser remarketing uses page_view, view_item, view_search_results or add_to_cart instead of action_id. Feed matching and consent still apply.
+        tag_id:
+          type: string
+          readOnly: true
+        conversion_label:
+          type: string
+          readOnly: true
     LandingPageDisplayRequest:
       type: object
       required:
         - render_mode
         - meta
-        - onload_fb_events
-        - onload_tiktok_events
-        - onload_kwai_client_events
-        - onload_kwai_server_events
-        - fb_events_onload_parameters
-        - tiktok_events_onload_parameters
-        - kwai_client_events_onload_parameters
-        - kwai_server_events_onload_parameters
       additionalProperties: true
       properties:
+        tracking_config:
+          $ref: '#/components/schemas/TrackingConfig'
+        tracking_config_revision:
+          type: string
+          description: Opaque revision from the current display. Send it with tracking_config when creating the next display version; stale edits are rejected with 409. Asset and trigger changes are atomic.
         render_mode:
           type: string
           enum:
@@ -15328,6 +15483,11 @@ components:
         where the page's existing store-context rules allow it. Clearing an
         authoritative html_document is rejected with 422.
       properties:
+        tracking_config:
+          $ref: '#/components/schemas/TrackingConfig'
+        tracking_config_revision:
+          type: string
+          description: Opaque revision from the current display. Send it with tracking_config when creating the next display version; stale edits are rejected with 409. Asset and trigger changes are atomic.
         render_mode:
           $ref: "#/components/schemas/LandingPageDisplayRequest/properties/render_mode"
         html_document:
@@ -16703,6 +16863,20 @@ components:
       type: object
       additionalProperties: true
       properties:
+        tracking_config:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/TrackingConfig'
+        tracking_config_revision:
+          type: string
+          description: Opaque revision from the current display. Send it with tracking_config when creating the next display version; stale edits are rejected with 409. Asset and trigger changes are atomic.
+        tracking_config_error:
+          type: string
+          nullable: true
+          description: An actionable compatibility-resolution problem. An unresolved owner remains unmigrated.
+        tracking_context:
+          type: string
         id:
           type: integer
         version:
