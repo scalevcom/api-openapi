@@ -14541,7 +14541,7 @@ components:
       properties:
         enabled:
           type: boolean
-          default: false
+          description: New account connections initialize this to true. Existing saved settings are preserved; disabling it stops browser remarketing. Consent and feed-ID requirements still apply.
         feed_id_source:
           type: string
           enum: [sku, explicit]
@@ -14681,7 +14681,7 @@ components:
         - enabled
     GoogleAdsDestinationCreate:
       type: object
-      description: Connect a Google Ads account. Choose Purchase actions per store using purchase_tracking; page and widget triggers select their own actions.
+      description: Connect a Google Ads account with remarketing enabled by default. Existing accounts retain their saved remarketing settings. Consent evidence, configured triggers and explicit feed-ID matching still govern delivery. Choose Purchase actions per store using purchase_tracking; page and widget triggers select their own actions.
       properties:
         name:
           type: string
