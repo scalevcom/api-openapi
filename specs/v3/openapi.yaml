@@ -14637,6 +14637,32 @@ components:
             - IDR
         enabled:
           type: boolean
+        connection_status:
+          type: string
+          readOnly: true
+          description: Google integration authorization status. Reconnect through dashboard Integrations when required.
+          enum: [connected, disconnected, reconnect_required, removed]
+        access_status:
+          type: string
+          readOnly: true
+          description: Last known account access status; transient refresh failures preserve it.
+          enum: [unknown, accessible, access_lost]
+        access_checked_at:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+          description: Time of the latest attempted account access check, including unsuccessful attempts.
+        access_error:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Safe provider error code from the latest check. No provider payload or credentials.
+        account_status:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Last known Google customer lifecycle status, such as ENABLED, CANCELED, or SUSPENDED.
         event_mappings:
           type: array
           items:
