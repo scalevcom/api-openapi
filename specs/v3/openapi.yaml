@@ -2233,6 +2233,510 @@ paths:
           $ref: "#/components/responses/UnauthorizedResponse"
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
+  /v3/google-ads/destinations:
+    get:
+      tags:
+        - Analytics Setup
+      operationId: listGoogleAdsDestinations
+      summary: List Google Ads destinations
+      description: Requires the `google_ads:list` scope. Includes paused destinations; excludes integrations removed by a dashboard user.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - google_ads:list
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/GoogleAdsDestination"
+                  is_paginated:
+                    type: boolean
+                    enum:
+                      - false
+                required:
+                  - data
+                  - is_paginated
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+    post:
+      tags:
+        - Analytics Setup
+      operationId: createGoogleAdsDestination
+      summary: Create a Google Ads destination
+      description: >-
+        Requires the `google_ads:create` scope and an existing business-owned Google connection.
+        Creates an account asset without selecting a Purchase conversion. Select the receiving
+        Purchase action independently for each store through its `purchase_tracking.google_ads`
+        settings, using the revision from the latest store detail response. An account-only asset
+        sends no Purchase conversions until selected in that store and assigned to the relevant
+        page or storefront. Clearing the store selection stops Google Purchase tracking for new
+        orders; existing order snapshots remain unchanged. The optional `conversion_action_id`
+        remains supported for legacy clients and is verified with Google when supplied. OAuth
+        connection and account discovery are dashboard-only.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - google_ads:create
+      responses:
+        "201":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoogleAdsDestination"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "502":
+          $ref: "#/components/responses/BadGatewayResponse"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoogleAdsDestinationCreate"
+  /v3/google-ads/destinations/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Scalev Google Ads destination ID.
+    get:
+      tags:
+        - Analytics Setup
+      operationId: getGoogleAdsDestination
+      summary: Get a Google Ads destination
+      description: Requires the `google_ads:read` scope. Removed integrations return 404; their delivery history remains readable through the deliveries endpoint.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - google_ads:read
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoogleAdsDestination"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+    patch:
+      tags:
+        - Analytics Setup
+      operationId: updateGoogleAdsDestination
+      summary: Update a Google Ads destination
+      description: Requires the `google_ads:update` scope. Name, enabled, event mappings and remarketing may change. Purchase account and
+        conversion identity are immutable. New mappings require compatible non-Purchase website actions. Existing destinations remain Purchase-only until mappings are explicitly enabled.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - google_ads:update
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoogleAdsDestination"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                enabled:
+                  type: boolean
+                event_mappings:
+                  type: array
+                  maxItems: 32
+                  description: Complete replacement of the child mappings. Omission preserves existing mappings; an empty array disables all funnel mappings.
+                  items:
+                    $ref: "#/components/schemas/GoogleAdsEventMapping"
+                remarketing:
+                  $ref: "#/components/schemas/GoogleAdsRemarketing"
+    delete:
+      tags:
+        - Analytics Setup
+      operationId: disableGoogleAdsDestination
+      summary: Disable a Google Ads destination
+      description: Requires the `google_ads:delete` scope. Disables delivery and the managed browser tag;
+        keeps historical diagnostics.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - google_ads:delete
+      responses:
+        "204":
+          description: No content
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/google-ads/destinations/{id}/validate:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Scalev Google Ads destination ID.
+    post:
+      tags:
+        - Analytics Setup
+      operationId: validateGoogleAdsDestination
+      summary: Validate Google Ads integration
+      description: Requires the `google_ads:update` scope. Sends a synthetic request using Google Data
+        Manager validateOnly. Records no conversion, changes no delivery state, and does not prove
+        attribution.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - google_ads:update
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                event_name:
+                  type: string
+                  default: Purchase
+                  description: Purchase or the exact name of a configured event mapping, including a disabled mapping. Records no conversion and does not enable the mapping.
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  validated:
+                    type: boolean
+                  executed:
+                    type: boolean
+                    enum:
+                      - false
+                  warning_count:
+                    type: integer
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "502":
+          $ref: "#/components/responses/BadGatewayResponse"
+  /v3/google-ads/destinations/{id}/deliveries:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Scalev Google Ads destination ID.
+    get:
+      tags:
+        - Analytics Setup
+      operationId: getGoogleAdsPurchaseDeliveries
+      summary: Read Google Ads ingestion diagnostics for an order or funnel interaction
+      description: Requires the `google_ads:read` scope. Supply exactly one of order_id or event_id, belonging to the current business.
+        Submitted means Google accepted a request for processing. Success and partial_success are
+        batch ingestion results, not attribution evidence. Historical diagnostics remain readable after the integration is removed.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - google_ads:read
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/GoogleAdsDelivery"
+                  is_paginated:
+                    type: boolean
+                    enum:
+                      - false
+                required:
+                  - data
+                  - is_paginated
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+      parameters:
+        - name: order_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: event_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+  /v3/google-ads/destinations/{id}/retry:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Scalev Google Ads destination ID.
+    post:
+      tags:
+        - Analytics Setup
+      operationId: retryGoogleAdsPurchase
+      summary: Retry a failed Google Ads conversion
+      description: Requires the `google_ads:update` scope. Supply exactly one of order_id or event_id. Queues an existing failed or reconnect_required
+        obligation with its original payload and transaction ID. Does not backfill
+        orders or change trigger eligibility. Removed integrations return 404; their delivery history remains readable.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth:
+            - google_ads:update
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoogleAdsDelivery"
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+        "409":
+          $ref: "#/components/responses/ConflictResponse"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                order_id:
+                  type: string
+                  format: uuid
+                event_id:
+                  type: string
+                  format: uuid
+              oneOf:
+                - required: [order_id]
+                - required: [event_id]
+  /v3/google-ads/orders/{order_id}/deliveries:
+    get:
+      tags: [Analytics Setup]
+      operationId: getGoogleAdsOrderDeliveries
+      summary: Read all Google purchase destinations and history for an order
+      description: Requires the `order:read` scope. Uses the order's frozen destination snapshots. Success confirms ingestion, not attribution or bidding use. No configured destinations returns an empty collection.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+        - scalevOAuth: [order:read]
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Frozen purchase destination delivery summaries
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, is_paginated, can_manual_trigger]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/GoogleAdsOrderDelivery"
+                  is_paginated:
+                    type: boolean
+                    enum: [false]
+                  can_manual_trigger:
+                    type: boolean
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "404":
+          $ref: "#/components/responses/NotFoundResponse"
+  /v3/public/google-ads/events:
+    post:
+      tags: [Analytics Setup]
+      operationId: ingestManagedGoogleAdsEvents
+      summary: Submit native non-Purchase events using a signed public surface context
+      description: Separate from first-party analytics ingestion. The token binds the current page or store, configured destinations, trigger selections and their revision. If the configuration changes, intake returns tracking_configuration_changed (409) and the page must reload; token renewal preserves the original mappings. Purchase and arbitrary Google targets are rejected. Batches are limited to 20 events and 32 KiB of event data, with per-business and per-IP limits. Tokens expire after seven days; renewal requires a valid original signature no older than 30 days and current assignments. Acceptance is not ingestion or attribution confirmation.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+                  maxLength: 16384
+                refresh_context:
+                  type: boolean
+                  description: Request a fresh token instead of submitting events.
+                privacy:
+                  type: object
+                  additionalProperties: true
+                  description: Current visit policy token and recipient choices.
+                events:
+                  type: array
+                  minItems: 1
+                  maxItems: 20
+                  items:
+                    type: object
+                    required: [event_id]
+                    properties:
+                      event_id:
+                        type: string
+                        format: uuid
+                      event_name:
+                        type: string
+                        maxLength: 100
+                        description: Legacy mapping name, or the selected Google action's display name. New callers use action_id with context and trigger.
+                      destination_id:
+                        type: string
+                        format: uuid
+                      action_id:
+                        type: string
+                        pattern: '^\d{1,30}$'
+                      context:
+                        type: string
+                        description: Signed page, flow step, or store interaction context.
+                      trigger:
+                        type: string
+                        description: Configured non-Purchase interaction key.
+                      value:
+                        type: number
+                        minimum: 0
+                        maximum: 1000000000000
+                      currency:
+                        type: string
+                        enum: [IDR]
+                      gclid:
+                        type: string
+                        maxLength: 512
+                      gbraid:
+                        type: string
+                        maxLength: 512
+                      wbraid:
+                        type: string
+                        maxLength: 512
+                      customer_email:
+                        type: string
+                        description: Optional actual customer email, normalized and hashed before Google delivery; requires applicable permission.
+                      customer_phone:
+                        type: string
+                        description: Optional actual customer phone, normalized and hashed before Google delivery; requires applicable permission.
+      responses:
+        "202":
+          description: Accepted for managed delivery, or a renewed signed context
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accepted:
+                    type: boolean
+                  token:
+                    type: string
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "409":
+          description: The signed conversion mappings changed. Reload the page before sending another interaction.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
+        "429":
+          description: Tracking rate limit reached
+        "503":
+          description: Tracking temporarily unavailable
   /v3/fb-pixels:
     get:
       tags:
@@ -11608,6 +12112,11 @@ components:
             store:list: List Stores.
             store:read: View Stores.
             store:update: Update Stores.
+            google_ads:list: list Google Ads destinations.
+            google_ads:read: read Google Ads destinations.
+            google_ads:create: create Google Ads destinations.
+            google_ads:update: update Google Ads destinations.
+            google_ads:delete: delete Google Ads destinations.
             fb_pixel:list: List Facebook Pixels.
             fb_pixel:read: View Facebook Pixels.
             fb_pixel:create: Create Facebook Pixels.
@@ -13256,6 +13765,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ApiErrorResponse"
+    BadGatewayResponse:
+      description: The provider could not complete the request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiErrorResponse"
     ConflictResponse:
       description: Conflict
       content:
@@ -13992,6 +14507,289 @@ components:
           schema:
             $ref: "#/components/schemas/BundlePriceOptionExtendedRelation"
   schemas:
+    GoogleAdsEventMapping:
+      type: object
+      required: [event_name, conversion_action_id]
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        event_name:
+          type: string
+          pattern: '^[A-Za-z][A-Za-z0-9_]{0,39}$'
+          description: Scalev event name. Purchase is forbidden, case-insensitively.
+        conversion_action_id:
+          type: string
+          pattern: '^\d{1,30}$'
+        conversion_action_name:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Google conversion-action name verified during configuration; used as the selector label.
+        enabled:
+          type: boolean
+          default: true
+        tag_id:
+          type: string
+          readOnly: true
+        conversion_label:
+          type: string
+          readOnly: true
+    GoogleAdsRemarketing:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          description: New account connections initialize this to true. Existing saved settings are preserved; disabling it stops browser remarketing. Consent and feed-ID requirements still apply.
+        feed_id_source:
+          type: string
+          enum: [sku, explicit]
+        feed_ids:
+          type: object
+          maxProperties: 1000
+          description: Explicit mappings from variant:<numeric ID> or bundle:<numeric bundle-price-option ID> to the exact existing Google feed item ID. Bundle options always need explicit mappings.
+          additionalProperties:
+            type: string
+            minLength: 1
+            maxLength: 150
+    GoogleAdsDeliveryHistory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        attempts:
+          type: integer
+        request_id:
+          type: string
+          nullable: true
+        error_code:
+          type: string
+          nullable: true
+        diagnostics:
+          type: object
+          additionalProperties: true
+        inserted_at:
+          type: string
+          format: date-time
+    GoogleAdsOrderDelivery:
+      type: object
+      properties:
+        destination_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        customer_id:
+          type: string
+        conversion_action_id:
+          type: string
+        status:
+          type: string
+        can_retry:
+          type: boolean
+        last_error:
+          type: string
+          nullable: true
+        request_id:
+          type: string
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/GoogleAdsDeliveryHistory"
+    GoogleAdsDestination:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        connection_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        customer_id:
+          type: string
+          pattern: ^\d{10}$
+        login_customer_id:
+          type: string
+          nullable: true
+        conversion_action_id:
+          type: string
+          nullable: true
+        tag_id:
+          type: string
+          nullable: true
+        conversion_label:
+          type: string
+          nullable: true
+        currency:
+          type: string
+          enum:
+            - IDR
+        enabled:
+          type: boolean
+        connection_status:
+          type: string
+          readOnly: true
+          description: Google integration authorization status. Reconnect through dashboard Integrations when required.
+          enum: [connected, disconnected, reconnect_required, removed]
+        access_status:
+          type: string
+          readOnly: true
+          description: Last known account access status; transient refresh failures preserve it.
+          enum: [unknown, accessible, access_lost]
+        access_checked_at:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+          description: Time of the latest attempted account access check, including unsuccessful attempts.
+        access_error:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Safe provider error code from the latest check. No provider payload or credentials.
+        account_status:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Last known Google customer lifecycle status, such as ENABLED, CANCELED, or SUSPENDED.
+        event_mappings:
+          type: array
+          items:
+            $ref: "#/components/schemas/GoogleAdsEventMapping"
+        remarketing:
+          $ref: "#/components/schemas/GoogleAdsRemarketing"
+      required:
+        - id
+        - name
+        - connection_id
+        - customer_id
+        - conversion_action_id
+        - tag_id
+        - conversion_label
+        - currency
+        - enabled
+    GoogleAdsDestinationCreate:
+      type: object
+      description: Connect a Google Ads account with remarketing enabled by default. Existing accounts retain their saved remarketing settings. Consent evidence, configured triggers and explicit feed-ID matching still govern delivery. Choose Purchase actions per store using purchase_tracking; page and widget triggers select their own actions.
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        connection_id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          pattern: ^\d{10}$
+        login_customer_id:
+          type: string
+          nullable: true
+        conversion_action_id:
+          type: string
+          nullable: true
+          deprecated: true
+          description: Legacy Purchase default. Omit for account-only connections; use the store Purchase settings.
+      required:
+        - name
+        - connection_id
+        - customer_id
+    GoogleAdsDelivery:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        event_id:
+          type: string
+          format: uuid
+          nullable: true
+        event_name:
+          type: string
+          nullable: true
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/GoogleAdsDeliveryHistory"
+        destination_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - pending
+            - sending
+            - submitted
+            - success
+            - partial_success
+            - failed
+            - skipped
+            - reconnect_required
+        event_timestamp:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+          nullable: true
+        attempts:
+          type: integer
+        last_error:
+          type: string
+          nullable: true
+        diagnostics:
+          type: object
+          additionalProperties: true
+        updated_at:
+          type: string
+          format: date-time
+    GoogleAdsCommerceItem:
+      type: object
+      properties:
+        variant_id:
+          type: integer
+          nullable: true
+        bundle_price_option_id:
+          type: integer
+          nullable: true
+        sku:
+          type: string
+          nullable: true
+        quantity:
+          type: number
+    GoogleAdsBrowserPurchase:
+      type: object
+      properties:
+        remarketing:
+          $ref: "#/components/schemas/GoogleAdsRemarketing"
+        id:
+          type: string
+          format: uuid
+        tag_id:
+          type: string
+        conversion_label:
+          type: string
+        transaction_id:
+          type: string
+          format: uuid
+        value:
+          type: number
+        currency:
+          type: string
+          enum:
+            - IDR
     FlexibleObject:
       type: object
       additionalProperties: true
@@ -14440,21 +15238,175 @@ components:
         still require directive-specific permission in csp_policy. CSP meta tags are
         retained in source but ignored at execution with a validation warning.
       example: '<!doctype html><html lang="id"><head><title>My page</title><style>main { color: #111827; }</style></head><body><main>Hello</main><script>console.log(Scalev.data.get());</script></body></html>'
+    TrackingAssets:
+      type: object
+      additionalProperties: false
+      description: Business-owned asset references. Omitted contextual providers inherit the root selection; an empty array explicitly clears that provider.
+      properties:
+        fb:
+          type: array
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: integer
+            minimum: 1
+        tiktok:
+          type: array
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: integer
+            minimum: 1
+        kwai_client:
+          type: array
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: integer
+            minimum: 1
+        kwai_server:
+          type: array
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: integer
+            minimum: 1
+        google_ads:
+          type: array
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        gtm:
+          type: array
+          maxItems: 1
+          uniqueItems: true
+          items:
+            type: integer
+            minimum: 1
+    TrackingConfig:
+      type: object
+      required: [schema_version, assets, triggers]
+      additionalProperties: false
+      description: >-
+        Authoritative merchant tracking selections, limited to 256 KiB. Empty
+        selections send nothing. Trigger and event enablement flags are not used;
+        remove an event selection to stop sending it. New-resource defaults are
+        materialized at creation. A populated document never acquires defaults on
+        read. Editor responses can resolve legacy selections for an owner without
+        a saved document; public runtime responses keep tracking_config null and
+        use legacy tracking until that owner has a saved document. Purchase
+        eligibility remains controlled by store settings. Asset credentials and
+        delivery history are not part of this document.
+      properties:
+        purchase:
+          type: object
+          readOnly: true
+          description: Store-owned Purchase selections, present only on store configurations. Update through the store purchase_tracking fields. General tracking edits preserve this block and cannot change it.
+          properties:
+            google_ads:
+              type: array
+              items:
+                $ref: "#/components/schemas/StoreGooglePurchaseSelection"
+        schema_version:
+          type: integer
+          enum: [1]
+        assets:
+          $ref: '#/components/schemas/TrackingAssets'
+        context_assets:
+          type: object
+          maxProperties: 100
+          additionalProperties:
+            $ref: '#/components/schemas/TrackingAssets'
+        triggers:
+          type: array
+          maxItems: 500
+          items:
+            type: object
+            required: [id, context, trigger, events]
+            properties:
+              id:
+                type: string
+                minLength: 1
+                maxLength: 200
+              context:
+                type: string
+                maxLength: 250
+                description: 'Owner context: page, flow:<step-id>, storefront:<page-type>, paylink, or lms:<position>; optionally suffixed /widget:<widget-id>. Landing pages do not inherit storefront triggers.'
+              trigger:
+                type: string
+                enum: [page_open, product_view, search, cart_add, checkout_start, form_submit, widget_click, payment_methods_opened, payment_method_selected, banner_click]
+                description: Interaction that invokes selected provider events. This is not a provider event name. Only interactions supported by the current surface are invoked.
+              events:
+                type: array
+                maxItems: 100
+                items:
+                  $ref: '#/components/schemas/TrackingEvent'
+    TrackingEvent:
+      type: object
+      required: [provider, name]
+      properties:
+        provider:
+          type: string
+          enum: [fb, tiktok, kwai_client, kwai_server, google_ads, gtm]
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Exact native event or Google conversion-action name. Purchase, CompletePayment and EVENT_PURCHASE are reserved for eligible orders.
+        initialization:
+          type: boolean
+          enum: [true]
+          description: Marks a preserved SDK default allowed only on page_open triggers with name PageView, provider fb, tiktok, or kwai_client, and channels exactly [browser]. Keep this metadata when retaining that selection. Explicit merchant-selected PageView events omit it and use the provider event call with their parameters and interaction identity.
+        channels:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            enum: [browser, server]
+          description: Preserve the provider's supported channels. Kwai client and GTM support browser only; Kwai server supports server only.
+        parameters:
+          type: object
+          additionalProperties: true
+        asset_ids:
+          type: array
+          description: Optional subset of the provider assets selected for this context.
+          items:
+            oneOf:
+              - type: integer
+              - type: string
+                format: uuid
+        destination_id:
+          type: string
+          format: uuid
+          description: Required for Google events; must be assigned in this context.
+        action_id:
+          type: string
+          pattern: '^\d{1,30}$'
+          description: Required for Google conversion actions. The server verifies action ownership and resolves the tag and label.
+        kind:
+          type: string
+          enum: [remarketing]
+          description: Google browser remarketing uses page_view, view_item, view_search_results or add_to_cart instead of action_id. Feed matching and consent still apply.
+        tag_id:
+          type: string
+          readOnly: true
+        conversion_label:
+          type: string
+          readOnly: true
     LandingPageDisplayRequest:
       type: object
       required:
         - render_mode
         - meta
-        - onload_fb_events
-        - onload_tiktok_events
-        - onload_kwai_client_events
-        - onload_kwai_server_events
-        - fb_events_onload_parameters
-        - tiktok_events_onload_parameters
-        - kwai_client_events_onload_parameters
-        - kwai_server_events_onload_parameters
       additionalProperties: true
       properties:
+        tracking_config:
+          $ref: '#/components/schemas/TrackingConfig'
+        tracking_config_revision:
+          type: string
+          description: Opaque revision from the current display. Send it with tracking_config when creating the next display version; stale edits are rejected with 409. Asset and trigger changes are atomic.
         render_mode:
           type: string
           enum:
@@ -14502,6 +15454,13 @@ components:
           allOf:
             - $ref: "#/components/schemas/LandingPageFormDisplayRequest"
           description: HTML Checkout configuration. Omit or send null for HTML Sales pages.
+        google_ads_destination_ids:
+          type: array
+          maxItems: 10
+          description: Business-owned Scalev Google Ads destination IDs. Server purchase timing follows the store Meta CAPI triggers.
+          items:
+            type: string
+            format: uuid
         fb_pixel_ids:
           type: array
           description: >
@@ -14575,6 +15534,11 @@ components:
         where the page's existing store-context rules allow it. Clearing an
         authoritative html_document is rejected with 422.
       properties:
+        tracking_config:
+          $ref: '#/components/schemas/TrackingConfig'
+        tracking_config_revision:
+          type: string
+          description: Opaque revision from the current display. Send it with tracking_config when creating the next display version; stale edits are rejected with 409. Asset and trigger changes are atomic.
         render_mode:
           $ref: "#/components/schemas/LandingPageDisplayRequest/properties/render_mode"
         html_document:
@@ -14593,6 +15557,13 @@ components:
           $ref: "#/components/schemas/LandingPageDisplayRequest/properties/meta"
         form_display:
           $ref: "#/components/schemas/LandingPageDisplayRequest/properties/form_display"
+        google_ads_destination_ids:
+          type: array
+          maxItems: 10
+          description: Business-owned Scalev Google Ads destination IDs. Server purchase timing follows the store Meta CAPI triggers.
+          items:
+            type: string
+            format: uuid
         fb_pixel_ids:
           $ref: "#/components/schemas/LandingPageDisplayRequest/properties/fb_pixel_ids"
         tiktok_pixel_ids:
@@ -15245,6 +16216,51 @@ components:
         page_size:
           type: integer
       additionalProperties: false
+    StorePurchaseTracking:
+      type: object
+      description: Store-owned Google Purchase action selections. Only assigned Google accounts receive events. Existing order and delivery snapshots keep their original targets. Legacy destinations supply defaults until this store saves an explicit selection, including an empty list.
+      properties:
+        revision:
+          type: string
+          readOnly: true
+        google_ads:
+          type: array
+          maxItems: 100
+          items:
+            allOf:
+              - $ref: "#/components/schemas/StoreGooglePurchaseSelection"
+              - type: object
+                properties:
+                  provider:
+                    type: string
+                    enum: [google_ads]
+                  name:
+                    type: string
+                  tag_id:
+                    type: string
+                  conversion_label:
+                    type: string
+    StorePurchaseTrackingUpdate:
+      type: object
+      required: [google_ads]
+      additionalProperties: false
+      properties:
+        google_ads:
+          type: array
+          maxItems: 100
+          description: One action per connected destination. An empty list stops Google Purchase tracking for new orders in this store. Only enabled website PURCHASE actions from the destination's conversion owner are accepted.
+          items:
+            $ref: "#/components/schemas/StoreGooglePurchaseSelection"
+    StoreGooglePurchaseSelection:
+      type: object
+      required: [destination_id, action_id]
+      properties:
+        destination_id:
+          type: string
+          format: uuid
+        action_id:
+          type: string
+          pattern: ^\d{1,30}$
     BusinessStore:
       type: object
       additionalProperties: true
@@ -15278,6 +16294,8 @@ components:
           nullable: true
           type: object
           additionalProperties: true
+        purchase_tracking:
+          $ref: "#/components/schemas/StorePurchaseTracking"
         payment_methods:
           type: array
           items:
@@ -15421,6 +16439,11 @@ components:
           type: boolean
         is_whatsapp_link_download:
           type: boolean
+        purchase_tracking:
+          $ref: "#/components/schemas/StorePurchaseTrackingUpdate"
+        purchase_tracking_revision:
+          type: string
+          description: Required with purchase_tracking. Use the revision from the latest store detail response; stale writes return 409 and change neither timing nor actions.
         non_cod_purchase_triggers:
           type: array
           items:
@@ -15943,6 +16966,22 @@ components:
       type: object
       additionalProperties: true
       properties:
+        tracking_config:
+          type: object
+          nullable: true
+          description: Public runtime responses return null until this display has saved tracking configuration and continue using its legacy settings. Editor responses may expose resolved legacy defaults without saving or activating them. A populated document is authoritative, including empty selections.
+          allOf:
+            - $ref: '#/components/schemas/TrackingConfig'
+        tracking_config_revision:
+          type: string
+          nullable: true
+          description: Authoring revision from the editor response. Send it with tracking_config when creating the next display version; stale edits are rejected with 409. Asset and trigger changes are atomic. Public runtime responses may return null; do not use those responses as an editing revision.
+        tracking_config_error:
+          type: string
+          nullable: true
+          description: An actionable compatibility-resolution problem. An unresolved owner remains unmigrated.
+        tracking_context:
+          type: string
         id:
           type: integer
         version:
@@ -18934,6 +19973,12 @@ components:
         gclid:
           type: string
           nullable: true
+        gbraid:
+          type: string
+          nullable: true
+        wbraid:
+          type: string
+          nullable: true
         ttp:
           type: string
           nullable: true
@@ -19424,6 +20469,18 @@ components:
         - pg_payment_info
         - orderlines
       properties:
+        google_ads_items:
+          type: array
+          readOnly: true
+          description: Purchased items for explicitly configured browser remarketing. Feed matching uses the destination configuration.
+          items:
+            $ref: "#/components/schemas/GoogleAdsCommerceItem"
+        google_ads_purchase:
+          type: array
+          readOnly: true
+          description: Eligible Google browser conversions using the immutable server transaction ID and value. Empty before the configured purchase trigger.
+          items:
+            $ref: "#/components/schemas/GoogleAdsBrowserPurchase"
         id:
           $ref: "#/components/schemas/OrderPrimaryKey"
         business:
@@ -23151,6 +24208,18 @@ components:
       type: object
     Order:
       properties:
+        google_ads_items:
+          type: array
+          readOnly: true
+          description: Purchased items for explicitly configured browser remarketing. Feed matching uses the destination configuration.
+          items:
+            $ref: "#/components/schemas/GoogleAdsCommerceItem"
+        google_ads_purchase:
+          type: array
+          readOnly: true
+          description: Eligible Google browser conversions with the immutable server transaction ID and value. Empty before the configured trigger.
+          items:
+            $ref: "#/components/schemas/GoogleAdsBrowserPurchase"
         gross_revenue_for_dropshipper:
           description: Gross revenue for dropshipper after discounts
           format: decimal
@@ -25708,6 +26777,10 @@ components:
       type: object
     TriggerPurchase:
       properties:
+        google:
+          type: object
+          additionalProperties: true
+          description: Google purchase queue result; ingestion status is asynchronous.
         kwai:
           additionalProperties: true
           description: Kwai purchase trigger response
@@ -30078,6 +31151,14 @@ components:
           nullable: true
           maxLength: 1000
         gclid:
+          type: string
+          nullable: true
+          maxLength: 1000
+        gbraid:
+          type: string
+          nullable: true
+          maxLength: 1000
+        wbraid:
           type: string
           nullable: true
           maxLength: 1000
