@@ -15292,9 +15292,13 @@ components:
       description: >-
         Authoritative merchant tracking selections, limited to 256 KiB. Empty
         selections send nothing. Trigger and event enablement flags are not used;
-        remove an event selection to stop sending it. Defaults are materialized at resource creation,
-        never on read. Purchase eligibility remains controlled by store settings.
-        Asset credentials and delivery history are not part of this document.
+        remove an event selection to stop sending it. New-resource defaults are
+        materialized at creation. A populated document never acquires defaults on
+        read. Editor responses can resolve legacy selections for an owner without
+        a saved document; public runtime responses keep tracking_config null and
+        use legacy tracking until that owner has a saved document. Purchase
+        eligibility remains controlled by store settings. Asset credentials and
+        delivery history are not part of this document.
       properties:
         purchase:
           type: object
@@ -15351,6 +15355,10 @@ components:
           minLength: 1
           maxLength: 100
           description: Exact native event or Google conversion-action name. Purchase, CompletePayment and EVENT_PURCHASE are reserved for eligible orders.
+        initialization:
+          type: boolean
+          enum: [true]
+          description: Marks a preserved SDK default allowed only on page_open triggers with name PageView, provider fb, tiktok, or kwai_client, and channels exactly [browser]. Keep this metadata when retaining that selection. Explicit merchant-selected PageView events omit it and use the provider event call with their parameters and interaction identity.
         channels:
           type: array
           uniqueItems: true
@@ -16961,11 +16969,13 @@ components:
         tracking_config:
           type: object
           nullable: true
+          description: Public runtime responses return null until this display has saved tracking configuration and continue using its legacy settings. Editor responses may expose resolved legacy defaults without saving or activating them. A populated document is authoritative, including empty selections.
           allOf:
             - $ref: '#/components/schemas/TrackingConfig'
         tracking_config_revision:
           type: string
-          description: Opaque revision from the current display. Send it with tracking_config when creating the next display version; stale edits are rejected with 409. Asset and trigger changes are atomic.
+          nullable: true
+          description: Authoring revision from the editor response. Send it with tracking_config when creating the next display version; stale edits are rejected with 409. Asset and trigger changes are atomic. Public runtime responses may return null; do not use those responses as an editing revision.
         tracking_config_error:
           type: string
           nullable: true
