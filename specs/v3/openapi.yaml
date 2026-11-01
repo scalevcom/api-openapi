@@ -20975,17 +20975,6 @@ components:
         - shipping_cost
         - orderlines
       properties:
-        tracking_form_delivery:
-          type: string
-          enum: [server_v1]
-          readOnly: true
-          description: >-
-            Present only when this accepted order owns the frozen server form-submission
-            selections under server_v1, including explicit empty selections. A runtime
-            that received the matching public capability may omit its direct Meta,
-            TikTok and SnackVideo server form sends. Absence requires the compatible
-            direct path. This acknowledges delivery ownership, not provider acceptance
-            or attribution, and does not change browser or Purchase delivery.
         id:
           $ref: "#/components/schemas/OrderPrimaryKey"
         secret_slug:
