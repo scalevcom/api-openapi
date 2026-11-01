@@ -15365,6 +15365,16 @@ components:
           type: boolean
           enum: [true]
           description: Marks a preserved SDK default allowed only on page_open triggers with name PageView, provider fb, tiktok, or kwai_client, and channels exactly [browser]. Keep this metadata when retaining that selection. Explicit merchant-selected PageView events omit it and use the provider event call with their parameters and interaction identity.
+        legacy_document_only:
+          type: boolean
+          enum: [true]
+          description: >-
+            Preserved legacy Google delivery metadata, valid only for Google Ads
+            page_open selections on a page or checkout-flow step. Both browser
+            and server channels run only for an initial rendered document,
+            including hydration. Retain this marker when keeping an existing
+            selection. Newly selected events omit it and run on the configured
+            page-open interaction, including client-side navigation.
         legacy_document_server_only:
           type: boolean
           enum: [true]
@@ -15443,7 +15453,8 @@ components:
       description: >-
         Required beside every supplied tracking_config, including new page creation.
         Version 1 declares that the writer preserves same-name channel bindings,
-        initialization markers, legacy_document_server_only, parameter_variants and additional event metadata.
+        initialization markers, legacy_document_only, legacy_document_server_only,
+        parameter_variants and additional event metadata.
         It is a request capability, separate from tracking_config.schema_version.
         Missing or unsupported versions return 409; update the client and reload
         the current editor response before retrying. Omit for legacy-only writes.
