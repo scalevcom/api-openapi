@@ -15369,6 +15369,30 @@ components:
         parameters:
           type: object
           additionalProperties: true
+        parameter_variants:
+          type: object
+          additionalProperties: false
+          description: >-
+            Complete effective parameter maps preserving legacy renderer and channel
+            behavior. Each present map overrides parameters for that renderer/channel;
+            an empty map is authoritative. An absent map falls back to parameters.
+            Preserve these maps and separate same-name channel bindings on read/write.
+            An intentional parameter edit changes only that parameter in the selected
+            binding's parameters and every existing variant. The actual serving
+            renderer selects the variant, including compiled Builder HTML and Vue fallback.
+          properties:
+            vue_browser:
+              type: object
+              additionalProperties: true
+            vue_server:
+              type: object
+              additionalProperties: true
+            html_browser:
+              type: object
+              additionalProperties: true
+            html_server:
+              type: object
+              additionalProperties: true
         asset_ids:
           type: array
           description: Optional subset of the provider assets selected for this context.
@@ -20010,6 +20034,11 @@ components:
           type: object
           nullable: true
           additionalProperties: true
+          properties:
+            tracking_renderer:
+              type: string
+              enum: [vue, html]
+              description: Actual checkout renderer, supplied by the runtime. New orders freeze it with configured form-submission selections. Missing or unrecognized values use vue; later order edits do not rewrite the snapshot.
       additionalProperties: true
     PagePublicCheckoutShippingOptionsRequest:
       type: object
@@ -21719,6 +21748,23 @@ components:
         - user_data
         - events
       properties:
+        tracking_context:
+          type: string
+          description: Configured page, storefront, or widget interaction context. When present, the server validates the selected event and asset against the stored configuration.
+        tracking_trigger:
+          type: string
+          description: Interaction key from the saved tracking configuration.
+        tracking_asset_id:
+          type: integer
+          description: Business-owned provider asset assigned to this context.
+        tracking_token:
+          type: string
+          description: Optional signed runtime capability for the published configuration and allowed context. Preserve the token supplied by the runtime.
+        tracking_renderer:
+          type: string
+          enum: [vue, html]
+          default: vue
+          description: Actual renderer sending the configured interaction. Selects the stored server parameter variant; does not grant access to other events or assets. Older clients default to vue.
         event_source_url:
           type: string
           format: uri
@@ -21795,6 +21841,23 @@ components:
         - user
         - events
       properties:
+        tracking_context:
+          type: string
+          description: Configured page, storefront, or widget interaction context. When present, the server validates the selected event and asset against the stored configuration.
+        tracking_trigger:
+          type: string
+          description: Interaction key from the saved tracking configuration.
+        tracking_asset_id:
+          type: integer
+          description: Business-owned provider asset assigned to this context.
+        tracking_token:
+          type: string
+          description: Optional signed runtime capability for the published configuration and allowed context. Preserve the token supplied by the runtime.
+        tracking_renderer:
+          type: string
+          enum: [vue, html]
+          default: vue
+          description: Actual renderer sending the configured interaction. Selects the stored server parameter variant; does not grant access to other events or assets. Older clients default to vue.
         event_source_url:
           type: string
           format: uri
@@ -21869,6 +21932,23 @@ components:
         - click_id
         - events
       properties:
+        tracking_context:
+          type: string
+          description: Configured page, storefront, or widget interaction context. When present, the server validates the selected event and asset against the stored configuration.
+        tracking_trigger:
+          type: string
+          description: Interaction key from the saved tracking configuration.
+        tracking_asset_id:
+          type: integer
+          description: Business-owned provider asset assigned to this context.
+        tracking_token:
+          type: string
+          description: Optional signed runtime capability for the published configuration and allowed context. Preserve the token supplied by the runtime.
+        tracking_renderer:
+          type: string
+          enum: [vue, html]
+          default: vue
+          description: Actual renderer sending the configured interaction. Selects the stored server parameter variant; does not grant access to other events or assets. Older clients default to vue.
         click_id:
           type: string
           description: SnackVideo click ID.
