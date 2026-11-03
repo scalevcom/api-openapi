@@ -14675,6 +14675,26 @@ components:
             $ref: "#/components/schemas/GoogleAdsEventMapping"
         remarketing:
           $ref: "#/components/schemas/GoogleAdsRemarketing"
+        default_purchase:
+          type: object
+          nullable: true
+          readOnly: true
+          description: The account's default Purchase action, separate from the legacy conversion_action_id. Stores that never chose an action for this account receive it, and new stores start with it. It is set in the Scalev dashboard; existing store selections, explicit clears and order snapshots are unaffected until a merchant applies it to all stores.
+          required: [action_id, name, tag_id, conversion_label, updated_at]
+          properties:
+            action_id:
+              type: string
+              pattern: ^\d{1,30}$
+            name:
+              type: string
+              nullable: true
+            tag_id:
+              type: string
+            conversion_label:
+              type: string
+            updated_at:
+              type: string
+              format: date-time
       required:
         - id
         - name
@@ -16305,6 +16325,13 @@ components:
         revision:
           type: string
           readOnly: true
+        google_ads_cleared:
+          type: array
+          maxItems: 100
+          description: Destinations explicitly set to no Purchase action in this store. Accounts in neither list are unset and can receive their account default Purchase action. In a selection saved without this list, every omitted account counts as cleared.
+          items:
+            type: string
+            format: uuid
         google_ads:
           type: array
           maxItems: 100
@@ -16333,6 +16360,13 @@ components:
           description: One action per connected destination. An empty list stops Google Purchase tracking for new orders in this store. Only enabled website PURCHASE actions from the destination's conversion owner are accepted.
           items:
             $ref: "#/components/schemas/StoreGooglePurchaseSelection"
+        google_ads_cleared:
+          type: array
+          maxItems: 100
+          description: Optional. Destinations explicitly set to no Purchase action. When sent, accounts listed in neither google_ads nor this list stay unset and can later receive their account default. When omitted, every account not in google_ads is treated as cleared, as before.
+          items:
+            type: string
+            format: uuid
     StoreGooglePurchaseSelection:
       type: object
       required: [destination_id, action_id]
