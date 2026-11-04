@@ -15359,7 +15359,7 @@ components:
               context:
                 type: string
                 maxLength: 250
-                description: 'Owner context: page, flow:<step-id>, storefront:<page-type>, paylink, or lms:<position>; optionally suffixed /widget:<widget-id>. Landing pages do not inherit storefront triggers.'
+                description: 'Owner context: page, flow:<step-id>, storefront:<page-type>, paylink, or lms:<position>; optionally suffixed /widget:<widget-id>. Widget IDs are opaque exact strings including spaces, punctuation and Unicode; empty IDs, control characters and nested widget delimiters are invalid. Landing pages do not inherit storefront triggers.'
               trigger:
                 type: string
                 enum: [page_open, product_view, search, cart_add, checkout_start, form_submit, widget_click, payment_methods_opened, payment_method_selected, banner_click]
@@ -15380,7 +15380,34 @@ components:
           type: string
           minLength: 1
           maxLength: 100
-          description: Exact native event or Google conversion-action name. Purchase, CompletePayment and EVENT_PURCHASE are reserved for eligible orders.
+          description: Exact native event or Google conversion-action name. New Purchase, CompletePayment and EVENT_PURCHASE bindings are reserved for store Purchase settings. A migration-created legacy_purchase binding can be retained unchanged or removed.
+        legacy_purchase:
+          type: boolean
+          enum: [true]
+          description: >-
+            Migration-created compatibility marker for an existing non-Google
+            Purchase binding. Preserve the exact binding and recipients when
+            editing; it may be removed but cannot be created, retargeted, moved
+            or changed through authoring. Form delivery retains its legacy event
+            identity, including server-owned delivery. Does not change store
+            Purchase policy or allow Google Purchase aliases.
+        legacy_renderer:
+          type: string
+          enum: [vue, html]
+          description: >-
+            Migration-created renderer selector, only for kwai_client browser
+            widget_click bindings. Vue retains legacy server-event selections;
+            HTML retains client-event selections. Keep each binding unchanged,
+            including same-name bindings; it may be removed but cannot be created
+            or edited through authoring. Selection happens before deduplication.
+        legacy_null_parameters:
+          type: boolean
+          enum: [true]
+          description: >-
+            Migration-created marker preserving a null Kwai browser SDK parameter
+            argument. Only valid with legacy_renderer vue, empty parameter maps,
+            and a kwai_client widget_click binding. Retain unchanged or remove
+            the entire binding; authoring cannot create it.
         initialization:
           type: boolean
           enum: [true]
