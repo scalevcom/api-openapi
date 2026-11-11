@@ -20668,6 +20668,12 @@ components:
           description: Eligible Google browser conversions using the immutable server transaction ID and value. Empty before the configured purchase trigger.
           items:
             $ref: "#/components/schemas/GoogleAdsBrowserPurchase"
+        capi_purchase_value:
+          type: string
+          format: decimal
+          nullable: true
+          readOnly: true
+          description: Order value reported to conversion events, based on the store's CAPI purchase value type.
         id:
           $ref: "#/components/schemas/OrderPrimaryKey"
         business:
@@ -24458,6 +24464,12 @@ components:
           description: Eligible Google browser conversions with the immutable server transaction ID and value. Empty before the configured trigger.
           items:
             $ref: "#/components/schemas/GoogleAdsBrowserPurchase"
+        capi_purchase_value:
+          type: string
+          format: decimal
+          nullable: true
+          readOnly: true
+          description: Order value reported to conversion events, based on the store's CAPI purchase value type.
         gross_revenue_for_dropshipper:
           description: Gross revenue for dropshipper after discounts
           format: decimal
