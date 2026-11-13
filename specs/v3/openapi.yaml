@@ -14600,11 +14600,18 @@ components:
           type: string
         status:
           type: string
+          description: submitted means accepted for processing; success means Google processed this record, not ad attribution. pending can mean waiting for eligibility, initial delivery, or an automatic retry.
         can_retry:
           type: boolean
         last_error:
           type: string
           nullable: true
+          description: Safe reason code. awaiting_purchase_eligibility is returned only while the order is ineligible; eligible orders waiting for their first delivery have no error.
+        next_attempt_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Next scheduled delivery attempt. A pending retry is automatic and cannot also be manually retried.
         request_id:
           type: string
           nullable: true
