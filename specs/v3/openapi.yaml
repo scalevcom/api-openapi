@@ -2291,7 +2291,9 @@ paths:
         sends no Purchase conversions until selected in that store and assigned to the relevant
         page or storefront. Clearing the store selection stops Google Purchase tracking for new
         orders; existing order snapshots remain unchanged. The optional `conversion_action_id`
-        remains supported for legacy clients and is verified with Google when supplied. OAuth
+        remains supported for legacy clients and is verified with Google when supplied. Enabled
+        PURCHASE actions may use UPLOAD_CLICKS for server-only imports or WEBPAGE for existing
+        website tracking. Action type and tag metadata are derived from Google. OAuth
         connection and account discovery are dashboard-only.
       security:
         - bearerAuth: []
@@ -2362,7 +2364,9 @@ paths:
       operationId: updateGoogleAdsDestination
       summary: Update a Google Ads destination
       description: Requires the `google_ads:update` scope. Name, enabled, event mappings and remarketing may change. Purchase account and
-        conversion identity are immutable. New mappings require compatible non-Purchase website actions. Existing destinations remain Purchase-only until mappings are explicitly enabled.
+        conversion identity and type are immutable. New mappings require compatible WEBPAGE actions;
+        UPLOAD_CLICKS Purchase actions cannot be used for browser interactions. Existing destinations
+        remain Purchase-only until mappings are explicitly enabled.
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -14515,6 +14519,7 @@ components:
   schemas:
     GoogleAdsEventMapping:
       type: object
+      description: Legacy browser event mapping. Only WEBPAGE actions are supported; imported Purchase actions belong in store Purchase settings.
       required: [event_name, conversion_action_id]
       properties:
         id:
@@ -14524,7 +14529,7 @@ components:
         event_name:
           type: string
           pattern: '^[A-Za-z][A-Za-z0-9_]{0,39}$'
-          description: Scalev event name. Purchase is forbidden, case-insensitively.
+          description: Scalev browser event name. The selected action must use WEBPAGE, including any legacy website Purchase action.
         conversion_action_id:
           type: string
           pattern: '^\d{1,30}$'
@@ -14595,11 +14600,18 @@ components:
           type: string
         status:
           type: string
+          description: submitted means accepted for processing; success means Google processed this record, not ad attribution. pending can mean waiting for eligibility, initial delivery, or an automatic retry.
         can_retry:
           type: boolean
         last_error:
           type: string
           nullable: true
+          description: Safe reason code. awaiting_purchase_eligibility is returned only while the order is ineligible; eligible orders waiting for their first delivery have no error.
+        next_attempt_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Next scheduled delivery attempt. A pending retry is automatic and cannot also be manually retried.
         request_id:
           type: string
           nullable: true
@@ -14631,6 +14643,11 @@ components:
         conversion_action_id:
           type: string
           nullable: true
+        conversion_action_type:
+          type: string
+          enum: [WEBPAGE, UPLOAD_CLICKS]
+          readOnly: true
+          description: Legacy destination action type. WEBPAGE is the compatibility default for account-only destinations; a store-selected Purchase action can have a different type.
         tag_id:
           type: string
           nullable: true
@@ -14680,18 +14697,24 @@ components:
           nullable: true
           readOnly: true
           description: The account's default Purchase action, separate from the legacy conversion_action_id. Stores that never chose an action for this account receive it, and new stores start with it. It is set in the Scalev dashboard; existing store selections, explicit clears and order snapshots are unaffected until a merchant applies it to all stores.
-          required: [action_id, name, tag_id, conversion_label, updated_at]
+          required: [action_id, action_type, name, tag_id, conversion_label, updated_at]
           properties:
             action_id:
               type: string
               pattern: ^\d{1,30}$
+            action_type:
+              type: string
+              enum: [WEBPAGE, UPLOAD_CLICKS]
+              description: UPLOAD_CLICKS purchases are server-only and have no tag or conversion label.
             name:
               type: string
               nullable: true
             tag_id:
               type: string
+              nullable: true
             conversion_label:
               type: string
+              nullable: true
             updated_at:
               type: string
               format: date-time
@@ -14701,6 +14724,7 @@ components:
         - connection_id
         - customer_id
         - conversion_action_id
+        - conversion_action_type
         - tag_id
         - conversion_label
         - currency
@@ -16372,10 +16396,17 @@ components:
                     enum: [google_ads]
                   name:
                     type: string
+                  action_type:
+                    type: string
+                    enum: [WEBPAGE, UPLOAD_CLICKS]
+                    readOnly: true
+                    description: Google-verified action type, frozen in new order snapshots. Imported Purchases are never returned as browser Purchase events.
                   tag_id:
                     type: string
+                    nullable: true
                   conversion_label:
                     type: string
+                    nullable: true
     StorePurchaseTrackingUpdate:
       type: object
       required: [google_ads]
@@ -16384,7 +16415,7 @@ components:
         google_ads:
           type: array
           maxItems: 100
-          description: One action per connected destination. An empty list stops Google Purchase tracking for new orders in this store. Only enabled website PURCHASE actions from the destination's conversion owner are accepted.
+          description: One action per connected destination. An empty list stops Google Purchase tracking for new orders in this store. Enabled PURCHASE actions of type UPLOAD_CLICKS or WEBPAGE from the destination's conversion owner are accepted. Type, name and tag metadata are verified with Google; caller-supplied metadata cannot override them.
           items:
             $ref: "#/components/schemas/StoreGooglePurchaseSelection"
         google_ads_cleared:
