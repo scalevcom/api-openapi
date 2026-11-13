@@ -14651,6 +14651,7 @@ components:
         tag_id:
           type: string
           nullable: true
+          description: Account-level base Google tag (AW-ID), discovered from Google's conversion tracking settings independently of the selected Purchase action. Account refresh repairs a missing value when available. A server-only UPLOAD_CLICKS Purchase can coexist with this browser tag; its own conversion tag and label remain unset.
         conversion_label:
           type: string
           nullable: true
