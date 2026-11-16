@@ -2445,7 +2445,11 @@ paths:
       summary: Validate Google Ads integration
       description: Requires the `google_ads:update` scope. Sends a synthetic request using Google Data
         Manager validateOnly. Records no conversion, changes no delivery state, and does not prove
-        attribution.
+        attribution. Google account prerequisites produce HTTP 409 with error_code
+        customer_data_terms_not_accepted (review and accept customer data terms in Google Ads),
+        enhanced_conversions_not_enabled (enable enhanced conversions for leads), or
+        enhanced_conversions_policy_restricted (resolve the data-policy restriction with Google Ads support).
+        Complete setup in the conversion-owning account under Goals > Conversions > Settings before retrying.
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -2489,6 +2493,8 @@ paths:
           $ref: "#/components/responses/NotFoundResponse"
         "502":
           $ref: "#/components/responses/BadGatewayResponse"
+        "409":
+          $ref: "#/components/responses/ConflictResponse"
   /v3/google-ads/destinations/{id}/deliveries:
     parameters:
       - name: id
@@ -14580,6 +14586,7 @@ components:
         error_code:
           type: string
           nullable: true
+          description: Safe provider reason. customer_data_terms_not_accepted and enhanced_conversions_not_enabled require Google Ads setup before retrying. enhanced_conversions_policy_restricted requires Google Ads support. Unknown failures retain google_request_failed.
         diagnostics:
           type: object
           additionalProperties: true
@@ -14606,7 +14613,7 @@ components:
         last_error:
           type: string
           nullable: true
-          description: Safe reason code. awaiting_purchase_eligibility is returned only while the order is ineligible; eligible orders waiting for their first delivery have no error.
+          description: Safe reason code. awaiting_purchase_eligibility is returned only while the order is ineligible; eligible orders waiting for their first delivery have no error. customer_data_terms_not_accepted and enhanced_conversions_not_enabled require Google Ads setup before retrying. enhanced_conversions_policy_restricted requires Google Ads support. Unknown failures retain google_request_failed.
         next_attempt_at:
           type: string
           format: date-time
@@ -14800,6 +14807,7 @@ components:
         last_error:
           type: string
           nullable: true
+          description: Safe provider reason. customer_data_terms_not_accepted and enhanced_conversions_not_enabled require Google Ads setup before retrying. enhanced_conversions_policy_restricted requires Google Ads support. Unknown failures retain google_request_failed.
         diagnostics:
           type: object
           additionalProperties: true
