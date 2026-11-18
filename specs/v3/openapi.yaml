@@ -1787,7 +1787,10 @@ paths:
         `is_published: true` and `current_page_display_id` to publish it.
         A saved checkout form initializes an unbound page's `store_id` from
         `page_display.form_display.store_id`, including unpublished drafts.
-        The store must belong to the same business.
+        The store must belong to the same business. An unpublished HTML
+        Checkout draft may be saved before it has a product; creating it
+        published requires at least one `variant_id` or
+        `bundle_price_option_id`.
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -1889,7 +1892,8 @@ paths:
         display, or `is_published: false` with `current_page_display_id: null`
         to unpublish the page. Once assigned, the page's `store_id` cannot be
         changed or cleared, including by unpublishing or selecting a display
-        without a checkout form.
+        without a checkout form. Publishing an HTML Checkout display whose form
+        has no `variant_id` or `bundle_price_option_id` is rejected with 400.
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -15862,15 +15866,17 @@ components:
           items:
             type: integer
           description:
-            Selected product variants. HTML Checkout requires at least one
-            `variant_id` or `bundle_price_option_id`.
+            Selected product variants. A published HTML Checkout display
+            requires at least one `variant_id` or `bundle_price_option_id`; an
+            unpublished draft may have none yet.
         bundle_price_option_ids:
           type: array
           items:
             type: integer
           description:
-            Selected bundle price options. HTML Checkout requires at least one
-            `variant_id` or `bundle_price_option_id`.
+            Selected bundle price options. A published HTML Checkout display
+            requires at least one `variant_id` or `bundle_price_option_id`; an
+            unpublished draft may have none yet.
         after_submit_event:
           type: string
           description: >
