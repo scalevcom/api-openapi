@@ -3002,7 +3002,7 @@ paths:
         - Analytics Setup
       operationId: deleteTiktokPixel
       summary: Delete a TikTok pixel
-      description: "Requires the `tiktok_pixel:delete` scope."
+      description: "Requires the `tiktok_pixel:delete` scope. Deletes the pixel and removes its assignments from the business's stores and all saved page versions, including checkout flows and event recipients."
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -3138,7 +3138,7 @@ paths:
         - Analytics Setup
       operationId: deleteKwaiPixel
       summary: Delete a SnackVideo pixel
-      description: "Requires the `kwai_pixel:delete` scope."
+      description: "Requires the `kwai_pixel:delete` scope. Deletes the pixel and removes its assignments from the business's stores and all saved page versions, including checkout flows and event recipients."
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -3271,7 +3271,7 @@ paths:
         - Analytics Setup
       operationId: deleteGtmContainer
       summary: Delete a Google Tag Manager container
-      description: "Requires the `gtm:delete` scope."
+      description: "Requires the `gtm:delete` scope. Deletes the container and removes its assignments from the business's stores and all saved page versions, including checkout flows and event recipients. Also clears the container from legacy forms."
       security:
         - bearerAuth: []
         - apiKeyAuth: []
