@@ -2869,7 +2869,7 @@ paths:
         - Analytics Setup
       operationId: deleteFacebookPixel
       summary: Delete a Facebook pixel
-      description: "Requires the `fb_pixel:delete` scope."
+      description: "Requires the `fb_pixel:delete` scope. Deletes the pixel and removes its assignments from the business's stores and all saved page versions, including checkout flows and event recipients."
       security:
         - bearerAuth: []
         - apiKeyAuth: []
