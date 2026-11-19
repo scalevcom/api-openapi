@@ -10087,7 +10087,11 @@ paths:
         - WABA
       operationId: listWabaCustomers
       summary: List WABA customers
-      description: "Requires the `waba_account:operate` scope."
+      description:
+        "Requires the `waba_account:operate` scope. Each item is a WABA
+        conversation; `whatsapp_customer.wa_user_id` is the `wa_user_id` path
+        parameter used by the customer message endpoints, such as `GET
+        /v3/waba-accounts/{waba_unique_id}/customers/{wa_user_id}/messages`."
       security:
         - bearerAuth: []
         - apiKeyAuth: []
@@ -12551,8 +12555,15 @@ components:
       name: wa_user_id
       in: path
       required: true
+      description:
+        Scalev's internal WhatsApp customer ID, prefixed with `wa_user_`. It
+        is not the customer's phone number, `wa_id`, or Meta user ID; passing a
+        phone number returns `404`. Get it from
+        `data[].whatsapp_customer.wa_user_id` in `GET
+        /v3/waba-accounts/{unique_id}/customers`.
       schema:
         type: string
+        example: wa_user_3kV9pQx7LmT2bZ8nRw4cYd6H
     Wamid:
       name: wamid
       in: path
