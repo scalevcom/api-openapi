@@ -410,7 +410,7 @@ paths:
         - Storefront
       operationId: searchStorefrontLocations
       summary: Search storefront delivery locations
-      description: Public storefront endpoint. Supports direct province, city, district, or subdistrict search.
+      description: Public storefront endpoint. Returns up to 25 matches for a province, city, district, or subdistrict. Use a more specific search term to narrow the results.
       parameters:
         - name: search
           in: query
@@ -423,20 +423,12 @@ paths:
           schema:
             type: integer
             minimum: 1
-            maximum: 100
-        - name: next_cursor
-          in: query
-          required: false
-          schema:
-            type: string
-          description: Cursor returned by the previous response. Use only one of `next_cursor` or `previous_cursor`.
-        - name: previous_cursor
-          in: query
-          required: false
-          schema:
-            type: string
-          description: Cursor returned by the previous response. Use only one of `next_cursor` or `previous_cursor`.
+            maximum: 25
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "503":
+          $ref: "#/components/responses/LocationSearchBusyResponse"
         "200":
           description: Location search results
           content:
@@ -792,7 +784,7 @@ paths:
         Page-scoped public endpoint for landing page location lookup. Requires the
         page public API key for the `page_unique_id` path page and validates
         the browser origin against domains attached to the page, or the
-        business domains when the page has no attached domains.
+        business domains when the page has no attached domains. Returns up to 25 matches. Use a more specific search term to narrow the results.
       parameters:
         - name: search
           in: query
@@ -805,20 +797,12 @@ paths:
           schema:
             type: integer
             minimum: 1
-            maximum: 100
-        - name: next_cursor
-          in: query
-          required: false
-          schema:
-            type: string
-          description: Cursor returned by the previous response. Use only one of `next_cursor` or `previous_cursor`.
-        - name: previous_cursor
-          in: query
-          required: false
-          schema:
-            type: string
-          description: Cursor returned by the previous response. Use only one of `next_cursor` or `previous_cursor`.
+            maximum: 25
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "503":
+          $ref: "#/components/responses/LocationSearchBusyResponse"
         "200":
           description: Location search results
           content:
@@ -5290,6 +5274,10 @@ paths:
         - bearerAuth: []
         - apiKeyAuth: []
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "503":
+          $ref: "#/components/responses/LocationSearchBusyResponse"
         "200":
           $ref: "#/components/responses/ListLocationsResponse"
         "401":
@@ -5297,10 +5285,9 @@ paths:
         "403":
           $ref: "#/components/responses/ForbiddenResponse"
       description:
-        "Requires the `order:create` scope. Retrieve a cursor-paginated
-        list of locations with optional search."
+        "Requires the `order:create` scope. Returns up to 25 matches. Use a more specific search term to narrow the results. Pagination is unsupported. On HTTP 503, retry the same request after Retry-After seconds."
       parameters:
-        - description: Number of items per page.
+        - description: Maximum number of matches to return.
           in: query
           name: page_size
           required: false
@@ -5309,18 +5296,6 @@ paths:
             maximum: 25
             minimum: 1
             type: integer
-        - description: Opaque cursor for the next page.
-          in: query
-          name: next_cursor
-          required: false
-          schema:
-            type: string
-        - description: Opaque cursor for the previous page.
-          in: query
-          name: previous_cursor
-          required: false
-          schema:
-            type: string
         - description: Search term for location names
           in: query
           name: search
@@ -13464,6 +13439,18 @@ components:
           schema:
             $ref: "#/components/schemas/OAuthBillingWithdrawalRequest"
   responses:
+    LocationSearchBusyResponse:
+      description: Location search is temporarily at capacity or unavailable. Retry the same request after the indicated delay.
+      headers:
+        Retry-After:
+          description: Delay in seconds before retrying.
+          schema:
+            type: integer
+            minimum: 1
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiErrorResponse"
     SuccessResponse:
       description: Success
       content:
@@ -19599,9 +19586,7 @@ components:
       additionalProperties: false
     StorefrontLocationListResponse:
       type: object
-      required:
-        - data
-        - is_paginated
+      required: [data, is_paginated]
       properties:
         data:
           type: array
@@ -19609,18 +19594,7 @@ components:
             $ref: "#/components/schemas/StorefrontLocation"
         is_paginated:
           type: boolean
-        has_next:
-          type: boolean
-        has_previous:
-          type: boolean
-        next_cursor:
-          type: string
-          nullable: true
-        previous_cursor:
-          type: string
-          nullable: true
-        page_size:
-          type: integer
+          enum: [false]
       additionalProperties: false
     StorefrontProvince:
       type: object
@@ -23054,31 +23028,17 @@ components:
       additionalProperties: false
     ListLocationsResponseBody:
       type: object
-      required:
-        - data
-        - is_paginated
+      required: [data, is_paginated]
       properties:
         data:
           type: array
+          maxItems: 25
           items:
             $ref: "#/components/schemas/Location"
         is_paginated:
           type: boolean
-          enum:
-            - true
-          example: true
-        has_next:
-          default: false
-          example: false
-          nullable: false
-          type: boolean
-        page_size:
-          default: 25
-          example: 25
-          nullable: false
-          type: integer
-      additionalProperties: true
-      description: Paginated list payload for v3.
+          enum: [false]
+      additionalProperties: false
     ShippingCostRequest:
       description: Schema for requesting shipping cost
       properties:
