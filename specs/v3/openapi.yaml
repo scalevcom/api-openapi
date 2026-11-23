@@ -5816,6 +5816,92 @@ paths:
       description:
         "Requires the `order:create` scope. Create a new order with the
         provided details."
+  /v3/orders/statistics/by-product:
+    get:
+      tags: [Orders]
+      operationId: getOrderStatisticsByProduct
+      summary: Get order counts and gross revenue by product
+      description: >-
+        Requires the `order:statistics:read` scope. Send up to 300 comma-separated
+        product IDs that share a draft-time window. Each distinct product appears
+        once in input order. Each matching order contributes its full gross revenue
+        once per product, even when it has multiple matching lines or variants.
+        An order with two requested products contributes to both. With status
+        grouping, products without matching orders return an empty results array.
+        Without grouping they return one row with zero count and revenue.
+        Uses the same order visibility and default non-spam filter as order statistics.
+        Additional filter names are rejected.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      parameters:
+        - in: query
+          name: product_ids
+          required: true
+          description: Comma-separated positive integer IDs, at most 300 entries before deduplication.
+          schema:
+            type: string
+            maxLength: 6000
+            example: "123,456"
+        - in: query
+          name: draft_time_since
+          description: Inclusive lower timestamp. Defaults to 31 days before the upper timestamp.
+          schema: {type: string, format: date-time}
+        - in: query
+          name: draft_time_until
+          description: Upper timestamp uses the existing statistics convention of adding one day and excluding that instant. Defaults to local midnight today. The supplied timestamps may be at most 62 days apart.
+          schema: {type: string, format: date-time}
+        - in: query
+          name: datetime_type
+          schema: {type: string, enum: [draft_time], default: draft_time}
+        - in: query
+          name: breakdown_date
+          schema: {type: string, enum: ["off"], default: "off"}
+        - in: query
+          name: tz
+          description: IANA time zone for the default date window.
+          schema: {type: string, default: Asia/Jakarta}
+        - in: query
+          name: is_breakdown_status
+          schema: {type: boolean, default: false}
+      responses:
+        "200":
+          description: Order statistics for each requested product.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, is_paginated]
+                properties:
+                  is_paginated: {type: boolean, enum: [false]}
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      required: [product_id, results]
+                      properties:
+                        product_id: {type: integer, format: int64}
+                        results:
+                          type: array
+                          items:
+                            type: object
+                            required: [count, gross_revenue]
+                            properties:
+                              count: {type: integer, minimum: 0}
+                              gross_revenue: {type: integer}
+                              status: {type: string, nullable: true}
+        "400":
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
+        "503":
+          description: The ClickHouse reporting store is disabled or unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiErrorResponse"
   /v3/orders/statistics:
     get:
       tags:
